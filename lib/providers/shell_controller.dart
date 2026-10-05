@@ -35,7 +35,7 @@ class ShellController extends ChangeNotifier {
 
   bool menuOpen = false;
 
-  static double bandHeight(double navBottom) => math.max(56, navBottom + 30);
+  static double bandHeight(double navBottom) => math.max(56, navBottom + 40);
 
   final GlobalKey folderPanelKey = GlobalKey();
 
