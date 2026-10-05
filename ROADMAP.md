@@ -4,8 +4,6 @@
 
 - Improve folder opening animation to be more one ui inspired
 
-- Theme launcher settings to be orange like app icon
-
 - Add app drawer memory instead of apps always filling up the whole page
 
 - Allow moving through folders
@@ -47,6 +45,8 @@
 - ~~Add clearer indication between putting a app in between 2 apps and putting a app in a folder in app drawer~~
 
 - ~~In app drawer make it so when you click reload all apps it will be perttier then just a toast saying how many apps are reloaded~~
+
+- ~~Rehaul color options in settings~~
 
 - ~~Be able to hide apps~~
 
