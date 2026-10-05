@@ -22,14 +22,45 @@ class DrawerView extends StatefulWidget {
   State<DrawerView> createState() => _DrawerViewState();
 }
 
+enum _ReloadPhase { loading, done, failed }
+
 class _DrawerViewState extends State<DrawerView> {
   final _pages = PageController();
   final _search = TextEditingController();
   final _focus = FocusNode();
   int _pageCount = 1;
 
+  _ReloadPhase _phase = _ReloadPhase.loading;
+  bool _bannerVisible = false;
+  int _reloadCount = 0;
+  Timer? _hideTimer;
+
+  bool get _reloading => _bannerVisible && _phase == _ReloadPhase.loading;
+
+  Future<void> _reload() async {
+    if (_reloading) return;
+    _hideTimer?.cancel();
+    final model = context.read<LauncherModel>();
+    setState(() {
+      _phase = _ReloadPhase.loading;
+      _bannerVisible = true;
+    });
+    final minWait = Future<void>.delayed(const Duration(milliseconds: 800));
+    final count = await model.reloadApps();
+    await minWait;
+    if (!mounted) return;
+    setState(() {
+      _reloadCount = count ?? 0;
+      _phase = count == null ? _ReloadPhase.failed : _ReloadPhase.done;
+    });
+    _hideTimer = Timer(const Duration(milliseconds: 1600), () {
+      if (mounted) setState(() => _bannerVisible = false);
+    });
+  }
+
   @override
   void dispose() {
+    _hideTimer?.cancel();
     _pages.dispose();
     _search.dispose();
     _focus.dispose();
@@ -79,17 +110,45 @@ class _DrawerViewState extends State<DrawerView> {
     final insets = MediaQuery.viewInsetsOf(context).bottom;
     final searching = _search.text.trim().isNotEmpty;
 
-    return Column(
+    return Stack(
+      fit: StackFit.expand,
       children: [
-        SizedBox(height: pad.top + 12),
-        _SearchPill(
-          controller: _search,
-          focus: _focus,
-          onChanged: () => setState(() {}),
+        Column(
+          children: [
+            SizedBox(height: pad.top + 12),
+            _SearchPill(
+              controller: _search,
+              focus: _focus,
+              onChanged: () => setState(() {}),
+              onReload: () => unawaited(_reload()),
+            ),
+            const SizedBox(height: 14),
+            Expanded(
+              child: searching
+                  ? _results(t)
+                  : AnimatedOpacity(
+                      opacity: _reloading ? 0.35 : 1,
+                      duration: const Duration(milliseconds: 200),
+                      child: _grid(t),
+                    ),
+            ),
+            SizedBox(
+              height: searching ? math.max(insets, navBottom) : navBottom,
+            ),
+          ],
         ),
-        const SizedBox(height: 14),
-        Expanded(child: searching ? _results(t) : _grid(t)),
-        SizedBox(height: searching ? math.max(insets, navBottom) : navBottom),
+        Positioned(
+          top: pad.top + 12 + 52 + 10,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: _ReloadBanner(
+              visible: _bannerVisible,
+              phase: _phase,
+              count: _reloadCount,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -250,18 +309,99 @@ class _DrawerViewState extends State<DrawerView> {
   }
 }
 
-Future<void> _reloadApps(BuildContext context) async {
-  final model = context.read<LauncherModel>();
-  final messenger = ScaffoldMessenger.maybeOf(context);
-  final count = await model.reloadApps();
-  messenger?.showSnackBar(
-    SnackBar(
-      content: Text(
-        count == null ? 'Couldn’t reload apps' : 'Reloaded $count apps',
+class _ReloadBanner extends StatelessWidget {
+  const _ReloadBanner({
+    required this.visible,
+    required this.phase,
+    required this.count,
+  });
+
+  final bool visible;
+  final _ReloadPhase phase;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    final label = switch (phase) {
+      _ReloadPhase.loading => 'Reloading apps…',
+      _ReloadPhase.done => '$count apps loaded',
+      _ReloadPhase.failed => 'Couldn’t reload apps',
+    };
+    final icon = switch (phase) {
+      _ReloadPhase.loading => const SizedBox(
+        key: ValueKey('spin'),
+        width: 18,
+        height: 18,
+        child: CircularProgressIndicator(
+          strokeWidth: 2.4,
+          color: LaunchRTheme.accent,
+        ),
       ),
-      duration: const Duration(seconds: 2),
-    ),
-  );
+      _ReloadPhase.done => const Icon(
+        Icons.check_circle_rounded,
+        key: ValueKey('ok'),
+        color: LaunchRTheme.accent,
+        size: 20,
+      ),
+      _ReloadPhase.failed => Icon(
+        Icons.error_outline_rounded,
+        key: const ValueKey('err'),
+        color: t.drawerText,
+        size: 20,
+      ),
+    };
+
+    return IgnorePointer(
+      child: AnimatedSlide(
+        offset: visible ? Offset.zero : const Offset(0, -0.8),
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+        child: AnimatedOpacity(
+          opacity: visible ? 1 : 0,
+          duration: const Duration(milliseconds: 200),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+            decoration: BoxDecoration(
+              color: t.menuBg,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33000000),
+                  blurRadius: 14,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  transitionBuilder: (child, anim) =>
+                      ScaleTransition(scale: anim, child: child),
+                  child: icon,
+                ),
+                const SizedBox(width: 10),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCubic,
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: t.drawerText,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _SearchPill extends StatelessWidget {
@@ -269,11 +409,13 @@ class _SearchPill extends StatelessWidget {
     required this.controller,
     required this.focus,
     required this.onChanged,
+    required this.onReload,
   });
 
   final TextEditingController controller;
   final FocusNode focus;
   final VoidCallback onChanged;
+  final VoidCallback onReload;
 
   @override
   Widget build(BuildContext context) {
@@ -327,7 +469,7 @@ class _SearchPill extends StatelessWidget {
               if (v == 'wallpaper') {
                 unawaited(LauncherChannel.instance.openWallpaperPicker());
               }
-              if (v == 'reload') unawaited(_reloadApps(context));
+              if (v == 'reload') onReload();
             },
             itemBuilder: (_) => [
               PopupMenuItem(
