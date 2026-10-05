@@ -7,6 +7,7 @@ import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/icon_shapes.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/widgets/hidden_apps_sheet.dart';
 
 void showLaunchRSettings(BuildContext context) {
   showModalBottomSheet<void>(
@@ -196,6 +197,24 @@ class _SettingsSheet extends StatelessWidget {
                 },
               ),
               header('System'),
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                leading: Icon(
+                  Icons.visibility_off_outlined,
+                  color: t.drawerText,
+                ),
+                title: Text(
+                  'Hidden apps',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  model.hiddenCount == 0
+                      ? 'None'
+                      : '${model.hiddenCount} hidden',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                onTap: () => showHiddenApps(context),
+              ),
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
                 leading: Icon(Icons.wallpaper_rounded, color: t.drawerText),
