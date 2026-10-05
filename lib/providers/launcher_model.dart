@@ -23,11 +23,13 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   static const _kRows = 'launch_r_rows';
   static const _kDefaultPage = 'launch_r_default_page';
   static const _kPinnedPages = 'launch_r_pinned_pages';
+  static const _kHidden = 'launch_r_hidden';
 
   static const maxHomePages = 10;
 
   SharedPreferences? _prefs;
   final Map<String, LauncherApp> _apps = {};
+  final Set<String> _hidden = {};
   List<LItem?> _drawer = [];
   List<List<LItem?>> _home = [];
   List<LItem?> _dock = [];
@@ -42,6 +44,11 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   int iconRevision = 0;
 
   int get appCount => _apps.length;
+  int get hiddenCount => _apps.keys.where(_hidden.contains).length;
+  List<LauncherApp> get hiddenApps => [
+    for (final a in _apps.values)
+      if (_hidden.contains(a.package)) a,
+  ]..sort(_byLabel);
   int get homeCols => _homeCols;
   int get homeRows => _homeRows;
   int get defaultPage => _defaultPage;
@@ -85,6 +92,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     final starts = <LauncherApp>[];
     final contains = <LauncherApp>[];
     for (final a in _apps.values) {
+      if (_hidden.contains(a.package)) continue;
       final l = a.label.toLowerCase();
       if (l.startsWith(q)) {
         starts.add(a);
@@ -199,6 +207,9 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     final p = _prefs!;
     _homeCols = p.getInt(_kCols) ?? 4;
     _homeRows = p.getInt(_kRows) ?? 6;
+    _hidden
+      ..clear()
+      ..addAll(p.getStringList(_kHidden) ?? const <String>[]);
 
     _drawer = _decodeList(p.getString(_kDrawer));
     _dock = _decodeList(p.getString(_kDock));
@@ -262,6 +273,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     await p.setInt(_kRows, _homeRows);
     await p.setInt(_kDefaultPage, _defaultPage);
     await p.setInt(_kPinnedPages, _pinnedPages);
+    await p.setStringList(_kHidden, _hidden.toList());
     await p.setString(_kDrawer, _enc(_drawer));
     await p.setString(_kDock, _enc(_dock));
     await p.setString(
@@ -284,17 +296,33 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     _apps
       ..clear()
       ..addEntries(list.map((a) => MapEntry(a.package, a)));
+    _reconcile();
+  }
 
+  bool _isVisible(String pkg) =>
+      _apps.containsKey(pkg) && !_hidden.contains(pkg);
+
+  void hideApp(String pkg) {
+    if (!_hidden.add(pkg)) return;
+    _reconcile();
+    _commit();
+  }
+
+  void unhideApp(String pkg) {
+    if (!_hidden.remove(pkg)) return;
+    _reconcile();
+    _commit();
+  }
+
+  void _reconcile() {
     final seen = <String>{};
     final cleaned = <LItem?>[];
     for (final it in _drawer) {
       switch (it) {
         case AppItem(:final pkg):
-          if (_apps.containsKey(pkg) && seen.add(pkg)) cleaned.add(it);
+          if (_isVisible(pkg) && seen.add(pkg)) cleaned.add(it);
         case FolderItem f:
-          final pk = f.pkgs
-              .where((p) => _apps.containsKey(p) && seen.add(p))
-              .toList();
+          final pk = f.pkgs.where((p) => _isVisible(p) && seen.add(p)).toList();
           if (pk.length >= 2) {
             cleaned.add(f.copyWith(pkgs: pk));
           } else if (pk.length == 1) {
@@ -304,8 +332,11 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
           break;
       }
     }
-    final fresh = list.where((a) => !seen.contains(a.package)).toList()
-      ..sort(_byLabel);
+    final fresh =
+        _apps.values
+            .where((a) => _isVisible(a.package) && !seen.contains(a.package))
+            .toList()
+          ..sort(_byLabel);
     cleaned.addAll(fresh.map((a) => AppItem(a.package)));
     _drawer = cleaned;
 
@@ -324,9 +355,9 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
       case null:
         return null;
       case AppItem(:final pkg):
-        return _apps.containsKey(pkg) ? it : null;
+        return _isVisible(pkg) ? it : null;
       case FolderItem f:
-        final pk = f.pkgs.where(_apps.containsKey).toList();
+        final pk = f.pkgs.where(_isVisible).toList();
         if (pk.length >= 2) return f.copyWith(pkgs: pk);
         if (pk.length == 1) return AppItem(pk.first);
         return null;
