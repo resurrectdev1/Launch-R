@@ -33,8 +33,8 @@ class _SettingsSheet extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 18, 24, 6),
       child: Text(
         text,
-        style: const TextStyle(
-          color: LaunchRTheme.accent,
+        style: TextStyle(
+          color: t.accentText,
           fontWeight: FontWeight.w700,
           fontSize: 13,
         ),
