@@ -17,9 +17,8 @@ class HomeDropHint extends StatelessWidget {
         !shell.dragToHome &&
         (d.fromFolder == null || shell.leftFolder);
     final active = shell.inHomeBand;
-    final band = ShellController.bandHeight(
-      MediaQuery.viewPaddingOf(context).bottom,
-    );
+    final navBottom = MediaQuery.viewPaddingOf(context).bottom;
+    final band = ShellController.bandHeight(navBottom);
 
     return Positioned(
       left: 0,
@@ -27,40 +26,43 @@ class HomeDropHint extends StatelessWidget {
       bottom: 0,
       height: band,
       child: IgnorePointer(
-        child: AnimatedOpacity(
-          opacity: show ? 1 : 0,
-          duration: const Duration(milliseconds: 160),
-          child: Center(
-            child: AnimatedScale(
-              scale: active ? 1.08 : 1,
-              duration: const Duration(milliseconds: 140),
-              curve: Curves.easeOutCubic,
-              child: AnimatedContainer(
+        child: Padding(
+          padding: EdgeInsets.only(bottom: navBottom),
+          child: AnimatedOpacity(
+            opacity: show ? 1 : 0,
+            duration: const Duration(milliseconds: 160),
+            child: Center(
+              child: AnimatedScale(
+                scale: active ? 1.08 : 1,
                 duration: const Duration(milliseconds: 140),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 9,
-                ),
-                decoration: BoxDecoration(
-                  color: active
-                      ? LaunchRTheme.accent
-                      : LaunchRTheme(Brightness.dark).dragBarBg,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.add_to_home_screen_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Hold here to add to Home',
-                      style: TextStyle(color: Colors.white, fontSize: 13),
-                    ),
-                  ],
+                curve: Curves.easeOutCubic,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 140),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 9,
+                  ),
+                  decoration: BoxDecoration(
+                    color: active
+                        ? LaunchRTheme.accent
+                        : LaunchRTheme(Brightness.dark).dragBarBg,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.add_to_home_screen_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Hold here to add to Home',
+                        style: TextStyle(color: Colors.white, fontSize: 13),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
