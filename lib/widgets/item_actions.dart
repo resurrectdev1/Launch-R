@@ -77,6 +77,7 @@ Future<void> showItemMenu(
                 Icons.remove_circle_outline_rounded,
                 'Remove',
               ),
+      _entry(t, 'hide', Icons.visibility_off_outlined, 'Hide app'),
       _entry(t, 'info', Icons.info_outline_rounded, 'App info'),
       _entry(t, 'uninstall', Icons.delete_outline_rounded, 'Uninstall'),
     ],
@@ -115,6 +116,16 @@ Future<void> showItemMenu(
       );
     case 'remove':
       model.removeFromHome(item.id);
+    case 'hide':
+      final pkg = (item as AppItem).pkg;
+      final label = model.labelForPkg(pkg);
+      model.hideApp(pkg);
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text('$label hidden. Manage in Launcher settings'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
     case 'info':
       LauncherChannel.instance.openAppInfo((item as AppItem).pkg);
     case 'uninstall':
