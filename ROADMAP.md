@@ -1,16 +1,10 @@
 # Roadmap of Launch-R! different from a change log because everything here is planned but not done.
 
-- App logo and color theme
-
-- Fix "hold here to add to home" button not having padding for three button navigation mode
-
 - Make dragging apps in app drawer to another drawer smoother better experince
 
 - Improve folder opening animation to be more one ui inspired
 
 - Theme launcher settings to be orange like app icon
-
-- In app drawer make it so when you click reload all apps it will be perttier then just a toast saying how many apps are reloaded
 
 - Add app drawer memory instead of apps always filling up the whole page
 
@@ -52,4 +46,10 @@
 
 - ~~Add clearer indication between putting a app in between 2 apps and putting a app in a folder in app drawer~~
 
+- ~~In app drawer make it so when you click reload all apps it will be perttier then just a toast saying how many apps are reloaded~~
+
 - ~~Be able to hide apps~~
+
+- ~~App logo and color theme~~
+
+- ~~Fix "hold here to add to home" button not having padding for three button navigation mode~~
