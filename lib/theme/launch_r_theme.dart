@@ -9,9 +9,11 @@ class LaunchRTheme {
 
   bool get dark => brightness == Brightness.dark;
 
-  static const accent = Color(0xFF3E91FF);
+  static const accent = Color(0xFFF26A27);
   static const badge = Color(0xFFFF5B22);
 
+  Color get accentText =>
+      dark ? const Color(0xFFFF8A4C) : const Color(0xFFD4521A);
   Color get drawerScrim =>
       dark ? const Color(0xD9101014) : const Color(0xE6F3F3F8);
   Color get drawerText => dark ? Colors.white : const Color(0xFF1B1B1F);
