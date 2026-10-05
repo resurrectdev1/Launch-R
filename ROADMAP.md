@@ -12,8 +12,6 @@
 
 - Add clearer indication between putting a app in between 2 apps and putting a app in a folder in app drawer
 
-- Be able to hide apps
-
 - Add app drawer memory instead of apps always filling up the whole page
 
 - Allow moving through folders
@@ -51,3 +49,5 @@
 - ~~Change blue lines as indicators of where app will be when dragging to instead be grids~~
 
 - ~~Remove hacky implementation of "show wallpaper" using access all files permisson~~
+
+- ~~Be able to hide apps~~
