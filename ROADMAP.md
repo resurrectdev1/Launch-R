@@ -8,6 +8,8 @@
 
 - Improve folder opening animation to be more one ui inspired
 
+- Theme launcher settings to be orange like app icon
+
 - In app drawer make it so when you click reload all apps it will be perttier then just a toast saying how many apps are reloaded
 
 - Add app drawer memory instead of apps always filling up the whole page
