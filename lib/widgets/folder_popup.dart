@@ -141,133 +141,171 @@ class _PanelState extends State<_Panel> {
         opacity: ((v - 0.9) / 0.1).clamp(0.0, 1.0),
         child: Transform.scale(scale: v, child: child),
       ),
-      child: Container(
-        key: shell.folderPanelKey,
-        width: panelW,
-        padding: const EdgeInsets.fromLTRB(12, 18, 12, 10),
-        decoration: ShapeDecoration(
-          color: panelBg,
-          shape: ContinuousRectangleBorder(
-            borderRadius: BorderRadius.circular(58),
+      child: DragTarget<DragData>(
+        onWillAcceptWithDetails: (d) => d.data.fromFolder == widget.folder.fid,
+        onAcceptWithDetails: (_) {},
+        builder: (context, _, _) => Container(
+          key: shell.folderPanelKey,
+          width: panelW,
+          padding: const EdgeInsets.fromLTRB(12, 18, 12, 10),
+          decoration: ShapeDecoration(
+            color: panelBg,
+            shape: ContinuousRectangleBorder(
+              borderRadius: BorderRadius.circular(58),
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                const SizedBox(width: 40),
-                Expanded(
-                  child: TextField(
-                    controller: _title,
-                    autofocus: widget.autofocusTitle,
-                    textAlign: TextAlign.center,
-                    maxLength: 24,
-                    style: TextStyle(
-                      color: t.drawerText,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w600,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const SizedBox(width: 40),
+                  Expanded(
+                    child: TextField(
+                      controller: _title,
+                      autofocus: widget.autofocusTitle,
+                      textAlign: TextAlign.center,
+                      maxLength: 24,
+                      style: TextStyle(
+                        color: t.drawerText,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      cursorColor: t.accent,
+                      decoration: InputDecoration(
+                        counterText: '',
+                        isCollapsed: true,
+                        border: InputBorder.none,
+                        hintText: 'Folder name',
+                        hintStyle: TextStyle(color: t.drawerTextMuted),
+                      ),
+                      onSubmitted: (_) => _commit(),
+                      onTapOutside: (_) {
+                        _commit();
+                        FocusManager.instance.primaryFocus?.unfocus();
+                      },
                     ),
-                    cursorColor: t.accent,
-                    decoration: InputDecoration(
-                      counterText: '',
-                      isCollapsed: true,
-                      border: InputBorder.none,
-                      hintText: 'Folder name',
-                      hintStyle: TextStyle(color: t.drawerTextMuted),
-                    ),
-                    onSubmitted: (_) => _commit(),
-                    onTapOutside: (_) {
-                      _commit();
-                      FocusManager.instance.primaryFocus?.unfocus();
-                    },
                   ),
-                ),
-                Semantics(
-                  button: true,
-                  label: 'Folder color',
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () {
-                      _commit();
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      showFolderColorPicker(
-                        context,
-                        widget.zone,
-                        widget.folder.fid,
-                      );
-                    },
-                    child: SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: Center(
-                        child: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: tint != null
-                                ? Color(tint)
-                                : t.folderBgDrawer,
-                            border: Border.all(
-                              color: t.drawerTextMuted,
-                              width: 1.5,
+                  Semantics(
+                    button: true,
+                    label: 'Folder color',
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        _commit();
+                        FocusManager.instance.primaryFocus?.unfocus();
+                        showFolderColorPicker(
+                          context,
+                          widget.zone,
+                          widget.folder.fid,
+                        );
+                      },
+                      child: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: Center(
+                          child: Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: tint != null
+                                  ? Color(tint)
+                                  : t.folderBgDrawer,
+                              border: Border.all(
+                                color: t.drawerTextMuted,
+                                width: 1.5,
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: rows * _cellH,
-              child: PageView.builder(
-                controller: _pages,
-                itemCount: pageCount,
-                itemBuilder: (context, p) {
-                  final slice = pkgs.skip(p * _perPage).take(_perPage).toList();
-                  return Column(
-                    children: [
-                      for (var r = 0; r < rows; r++)
-                        SizedBox(
-                          height: _cellH,
-                          child: Row(
-                            children: [
-                              for (var c = 0; c < _cols; c++)
-                                SizedBox(
-                                  width: cellW,
-                                  child: r * _cols + c < slice.length
-                                      ? _PopupCell(
-                                          key: ValueKey(slice[r * _cols + c]),
-                                          pkg: slice[r * _cols + c],
-                                          zone: widget.zone,
-                                          fid: widget.folder.fid,
-                                          width: cellW,
-                                          style: style,
-                                        )
-                                      : null,
-                                ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  );
-                },
+                ],
               ),
-            ),
-            if (pageCount > 1)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: PageDots(
+              const SizedBox(height: 12),
+              SizedBox(
+                height: rows * _cellH,
+                child: PageView.builder(
                   controller: _pages,
-                  count: pageCount,
-                  color: t.drawerText,
+                  itemCount: pageCount,
+                  itemBuilder: (context, p) {
+                    final slice = pkgs
+                        .skip(p * _perPage)
+                        .take(_perPage)
+                        .toList();
+                    return Column(
+                      children: [
+                        for (var r = 0; r < rows; r++)
+                          SizedBox(
+                            height: _cellH,
+                            child: Row(
+                              children: [
+                                for (var c = 0; c < _cols; c++)
+                                  SizedBox(
+                                    width: cellW,
+                                    child: r * _cols + c < slice.length
+                                        ? _PopupCell(
+                                            key: ValueKey(slice[r * _cols + c]),
+                                            pkg: slice[r * _cols + c],
+                                            zone: widget.zone,
+                                            fid: widget.folder.fid,
+                                            width: cellW,
+                                            style: style,
+                                          )
+                                        : _EndSlot(
+                                            zone: widget.zone,
+                                            fid: widget.folder.fid,
+                                          ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    );
+                  },
                 ),
               ),
-          ],
+              if (pageCount > 1)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: PageDots(
+                    controller: _pages,
+                    count: pageCount,
+                    color: t.drawerText,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EndSlot extends StatelessWidget {
+  const _EndSlot({required this.zone, required this.fid});
+
+  final Zone zone;
+  final String fid;
+
+  @override
+  Widget build(BuildContext context) {
+    final model = context.read<LauncherModel>();
+    final accent = LaunchRTheme.of(context).accent;
+    return DragTarget<DragData>(
+      onWillAcceptWithDetails: (d) => d.data.fromFolder == fid,
+      onAcceptWithDetails: (d) {
+        final dragged = d.data.item;
+        if (dragged is AppItem) model.moveToEndInFolder(zone, fid, dragged.pkg);
+      },
+      builder: (context, candidate, _) => AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        margin: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          color: candidate.isNotEmpty ? accent.withValues(alpha: 0.25) : null,
+          borderRadius: BorderRadius.circular(22),
         ),
       ),
     );
