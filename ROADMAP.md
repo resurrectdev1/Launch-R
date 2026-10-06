@@ -6,6 +6,8 @@
 
 - Make home page editor sheet nicer
 
+- Add custom font and text scaling
+
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
 
 - Add widget support
