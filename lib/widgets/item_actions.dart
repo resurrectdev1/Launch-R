@@ -29,7 +29,12 @@ void openItem(BuildContext context, LItem item, Zone zone) {
     case AppItem(:final pkg):
       launchFrom(context, pkg);
     case FolderItem(:final fid):
-      context.read<ShellController>().openFolder(zone, fid);
+      Rect? from;
+      final box = context.findRenderObject();
+      if (box is RenderBox && box.attached) {
+        from = box.localToGlobal(Offset.zero) & box.size;
+      }
+      context.read<ShellController>().openFolder(zone, fid, from: from);
   }
 }
 
