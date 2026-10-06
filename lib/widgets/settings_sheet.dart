@@ -195,6 +195,21 @@ class _SettingsSheet extends StatelessWidget {
                 value: s.lockLayout,
                 onChanged: s.setLockLayout,
               ),
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
+                  'Remember app positions',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  model.drawerFree
+                      ? 'Apps screen keeps empty spots where you leave them'
+                      : 'Apps always fill in from the start',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                value: model.drawerFree,
+                onChanged: model.setDrawerFree,
+              ),
               header('Icons'),
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 6, 24, 10),
