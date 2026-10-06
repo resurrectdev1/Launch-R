@@ -96,29 +96,51 @@ class FolderGlyph extends StatelessWidget {
     final fit = shape == IconShape.circle || shape == IconShape.teardrop
         ? 0.82
         : 1.0;
-    final mini = size * 0.23 * fit;
-    final gap = size * 0.05 * fit;
     final shown = pkgs.take(9).toList();
+    final n = shown.length;
+
+    final int cols;
+    final double miniFrac;
+    final double gapFrac;
+    if (n <= 1) {
+      cols = 1;
+      miniFrac = 0.52;
+      gapFrac = 0;
+    } else if (n <= 4) {
+      cols = 2;
+      miniFrac = 0.37;
+      gapFrac = 0.07;
+    } else {
+      cols = 3;
+      miniFrac = 0.235;
+      gapFrac = 0.045;
+    }
+    final mini = size * miniFrac * fit;
+    final gap = size * gapFrac * fit;
+
+    final rows = <List<String>>[
+      for (var i = 0; i < n; i += cols)
+        shown.sublist(i, i + cols > n ? n : i + cols),
+    ];
+
     final grid = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (var r = 0; r < 3; r++)
-          if (r * 3 < shown.length)
-            Padding(
-              padding: EdgeInsets.only(top: r > 0 ? gap : 0),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (var c = 0; c < 3; c++)
-                    Padding(
-                      padding: EdgeInsets.only(left: c > 0 ? gap : 0),
-                      child: r * 3 + c < shown.length
-                          ? AppIconImage(pkg: shown[r * 3 + c], size: mini)
-                          : SizedBox(width: mini, height: mini),
-                    ),
-                ],
-              ),
+        for (var r = 0; r < rows.length; r++)
+          Padding(
+            padding: EdgeInsets.only(top: r > 0 ? gap : 0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (var c = 0; c < rows[r].length; c++)
+                  Padding(
+                    padding: EdgeInsets.only(left: c > 0 ? gap : 0),
+                    child: AppIconImage(pkg: rows[r][c], size: mini),
+                  ),
+              ],
             ),
+          ),
       ],
     );
 
