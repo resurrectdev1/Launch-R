@@ -1,593 +1,266 @@
-import 'dart:async';
-import 'dart:math' as math;
-import 'dart:ui' as ui;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
-import 'package:launch_r/providers/shell_controller.dart';
+import 'package:launch_r/services/icon_cache.dart';
+import 'package:launch_r/theme/icon_shapes.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
-import 'package:launch_r/widgets/app_icon.dart';
-import 'package:launch_r/widgets/draggable_item.dart';
-import 'package:launch_r/widgets/edge_flipper.dart';
-import 'package:launch_r/widgets/folder_color_picker.dart';
-import 'package:launch_r/widgets/item_actions.dart';
-import 'package:launch_r/widgets/keep_alive.dart';
-import 'package:launch_r/widgets/page_dots.dart';
 
-const _openCurve = Cubic(0.22, 1.12, 0.36, 1.0);
-
-const _panelRadius = 58.0;
-
-class FolderPopup extends StatefulWidget {
-  const FolderPopup({super.key});
+class AppIconImage extends StatefulWidget {
+  const AppIconImage({super.key, required this.pkg, required this.size});
+  final String pkg;
+  final double size;
 
   @override
-  State<FolderPopup> createState() => _FolderPopupState();
+  State<AppIconImage> createState() => _AppIconImageState();
 }
 
-class _FolderPopupState extends State<FolderPopup>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _anim = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 380),
-    reverseDuration: const Duration(milliseconds: 250),
-  );
-  late final Animation<double> _t = CurvedAnimation(
-    parent: _anim,
-    curve: _openCurve,
-    reverseCurve: Curves.easeInOutCubic,
-  );
-  late final ShellController _shell;
-  bool _open = false;
-  bool _closing = false;
+class _AppIconImageState extends State<AppIconImage> {
+  Uint8List? _bytes;
+  int? _rev;
 
   @override
   void initState() {
     super.initState();
-    _shell = context.read<ShellController>();
-    _shell.addListener(_onShell);
-    _onShell();
-  }
-
-  void _onShell() {
-    final open = _shell.folder != null;
-    if (open && !_open) {
-      _open = true;
-      _closing = false;
-      unawaited(_anim.forward(from: 0));
-    } else if (!open && _open) {
-      _open = false;
-      _closing = false;
-      _anim.stop();
-      _anim.value = 0;
-    }
-    if (open && _shell.folderClosing && !_closing) {
-      _closing = true;
-      unawaited(
-        _anim.reverse().then((_) {
-          if (mounted && _shell.folderClosing) _shell.finishCloseFolder();
-        }),
-      );
-    }
+    _resolve();
   }
 
   @override
-  void dispose() {
-    _shell.removeListener(_onShell);
-    _anim.dispose();
-    super.dispose();
+  void didUpdateWidget(AppIconImage old) {
+    super.didUpdateWidget(old);
+    if (old.pkg != widget.pkg) _resolve();
+  }
+
+  void _resolve() {
+    final pkg = widget.pkg;
+    _bytes = IconCache.instance.peek(pkg);
+    if (_bytes == null) _fetch();
+  }
+
+  void _fetch() {
+    final pkg = widget.pkg;
+    IconCache.instance.load(pkg).then((b) {
+      if (mounted && b != null && widget.pkg == pkg) {
+        setState(() => _bytes = b);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final shell = context.watch<ShellController>();
-    final model = context.watch<LauncherModel>();
-    final open = shell.folder;
-    if (open == null) return const SizedBox.shrink();
-
-    final folder = model.folderOf(open.zone, open.fid);
-    if (folder == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) shell.finishCloseFolder();
-      });
-      return const SizedBox.shrink();
+    final rev = context.select<LauncherModel, int>((m) => m.iconRevision);
+    if (_rev != null && _rev != rev) {
+      final cached = IconCache.instance.peek(widget.pkg);
+      if (cached != null) {
+        _bytes = cached;
+      } else {
+        _fetch();
+      }
     }
-
-    final t = LaunchRTheme.of(context);
-    final screen = MediaQuery.sizeOf(context);
-    final fullW = screen.width - 36;
-    final slotW = (fullW - 24) / 4;
-    final cols = folder.pkgs.length <= 2 ? 3 : 4;
-    final panelW = cols * slotW + 24;
-    final from = open.from;
-    final iconSize = from == null
-        ? panelW * 0.4
-        : math.min(from.width * 0.6, 60.0);
-    final s0 = (iconSize / panelW).clamp(0.08, 0.9);
-    final origin = from == null
-        ? screen.center(Offset.zero)
-        : Offset(
-            from.center.dx,
-            from.center.dy + (from.height > iconSize * 1.35 ? -9 : 0),
-          );
-    final tint = folder.color;
-    final panelBg = tint == null
-        ? t.popupBg
-        : Color.alphaBlend(Color(tint).withValues(alpha: 0.28), t.popupBg);
-
-    final hidden = shell.leftFolder;
-    return Positioned.fill(
-      child: IgnorePointer(
-        ignoring: hidden,
-        child: AnimatedOpacity(
-          opacity: hidden ? 0 : 1,
-          duration: const Duration(milliseconds: 120),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: AnimatedBuilder(
-                  animation: _t,
-                  builder: (context, _) {
-                    final v = _t.value.clamp(0.0, 1.0);
-                    Widget fill = ColoredBox(
-                      color: Color.fromRGBO(0, 0, 0, 0.35 * v),
-                    );
-                    final sigma = 9.0 * v;
-                    if (sigma > 0.1) {
-                      fill = BackdropFilter(
-                        filter: ui.ImageFilter.blur(
-                          sigmaX: sigma,
-                          sigmaY: sigma,
-                        ),
-                        child: fill,
-                      );
-                    }
-                    return GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: shell.closeFolder,
-                      child: fill,
-                    );
-                  },
-                ),
-              ),
-              Center(
-                child: AnimatedBuilder(
-                  animation: _t,
-                  builder: (context, child) {
-                    final v = _t.value;
-                    final scale = s0 + (1 - s0) * v;
-                    final shift =
-                        (origin - screen.center(Offset.zero)) * (1 - v);
-                    return Opacity(
-                      opacity: (v / 0.3).clamp(0.0, 1.0),
-                      child: Transform.translate(
-                        offset: shift,
-                        child: Transform.scale(scale: scale, child: child),
-                      ),
-                    );
-                  },
-                  child: _PanelDecor(
-                    shellKey: shell.folderPanelKey,
-                    t: _t,
-                    s0: s0,
-                    iconRadius: iconSize * 0.62,
-                    width: panelW,
-                    color: panelBg,
-                    folderFid: folder.fid,
-                    child: _FolderPage(
-                      key: ValueKey(folder.fid),
-                      zone: open.zone,
-                      folder: folder,
-                      autofocusTitle: shell.renameRequested,
-                      panelW: panelW,
-                      cols: cols,
-                      reveal: _t,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PanelDecor extends StatelessWidget {
-  const _PanelDecor({
-    required this.shellKey,
-    required this.t,
-    required this.s0,
-    required this.iconRadius,
-    required this.width,
-    required this.color,
-    required this.folderFid,
-    required this.child,
-  });
-
-  final GlobalKey shellKey;
-  final Animation<double> t;
-  final double s0;
-  final double iconRadius;
-  final double width;
-  final Color color;
-  final String folderFid;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return DragTarget<DragData>(
-      onWillAcceptWithDetails: (d) => d.data.fromFolder == folderFid,
-      onAcceptWithDetails: (_) {},
-      builder: (context, _, _) => AnimatedBuilder(
-        animation: t,
-        builder: (context, child) {
-          final v = t.value;
-          final k = v.clamp(0.0, 1.0);
-          final scale = math.max(0.05, s0 + (1 - s0) * v);
-          final rendered = iconRadius + (_panelRadius - iconRadius) * k;
-          return Container(
-            key: shellKey,
-            width: width,
-            padding: const EdgeInsets.fromLTRB(12, 18, 12, 10),
-            decoration: ShapeDecoration(
-              color: color,
-              shape: ContinuousRectangleBorder(
-                borderRadius: BorderRadius.circular(rendered / scale),
-              ),
+    _rev = rev;
+    return SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: _bytes == null
+          ? null
+          : Image.memory(
+              _bytes!,
+              width: widget.size,
+              height: widget.size,
+              gaplessPlayback: true,
+              filterQuality: FilterQuality.medium,
             ),
-            child: child,
-          );
-        },
-        child: child,
-      ),
     );
   }
 }
 
-class _FolderPage extends StatefulWidget {
-  const _FolderPage({
+class FolderGlyph extends StatelessWidget {
+  const FolderGlyph({
     super.key,
-    required this.zone,
-    required this.folder,
-    required this.autofocusTitle,
-    required this.panelW,
-    required this.cols,
-    required this.reveal,
+    required this.pkgs,
+    required this.size,
+    required this.bg,
   });
 
-  final Zone zone;
-  final FolderItem folder;
-  final bool autofocusTitle;
-  final double panelW;
-  final int cols;
-  final Animation<double> reveal;
-
-  @override
-  State<_FolderPage> createState() => _FolderPageState();
-}
-
-class _FolderPageState extends State<_FolderPage> {
-  static const _perPage = 16;
-  static const _cellH = 98.0;
-
-  final _pages = PageController();
-  late final TextEditingController _title;
-  late final LauncherModel _model;
-  int _pageCount = 1;
-
-  @override
-  void initState() {
-    super.initState();
-    _model = context.read<LauncherModel>();
-    _title = TextEditingController(text: widget.folder.name);
-  }
-
-  String get _name =>
-      _title.text.trim().isEmpty ? 'Folder' : _title.text.trim();
-
-  void _commit() => _model.renameFolder(widget.zone, widget.folder.fid, _name);
-
-  void _flip(int delta) {
-    if (!_pages.hasClients) return;
-    final cur = _pages.page?.round() ?? 0;
-    final next = cur + delta;
-    if (next < 0 || next >= _pageCount) return;
-    unawaited(
-      _pages.animateToPage(
-        next,
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    final name = _name;
-    final model = _model;
-    final zone = widget.zone;
-    final fid = widget.folder.fid;
-    scheduleMicrotask(() => model.renameFolder(zone, fid, name));
-    _title.dispose();
-    _pages.dispose();
-    super.dispose();
-  }
+  final List<String> pkgs;
+  final double size;
+  final Color bg;
 
   @override
   Widget build(BuildContext context) {
-    final t = LaunchRTheme.of(context);
-    final cols = widget.cols;
-    final cellW = (widget.panelW - 24) / cols;
-    final pkgs = widget.folder.pkgs;
-    final pageCount = math.max(1, (pkgs.length / _perPage).ceil());
-    _pageCount = pageCount;
-    final rows = math.min(
-      4,
-      math.max(1, (math.min(pkgs.length, _perPage) / cols).ceil()),
+    final shape = context.select<LauncherSettings, IconShape>(
+      (s) => s.iconShape,
     );
-    final style = CellStyle(
-      label: t.drawerText,
-      shadows: const [],
-      folderBg: t.folderBgDrawer,
-    );
-    final tint = widget.folder.color;
+    final fit = shape == IconShape.circle || shape == IconShape.teardrop
+        ? 0.82
+        : 1.0;
+    final shown = pkgs.take(9).toList();
+    final n = shown.length;
 
-    return Column(
+    final int cols;
+    final double miniFrac;
+    final double gapFrac;
+    if (n <= 1) {
+      cols = 1;
+      miniFrac = 0.52;
+      gapFrac = 0;
+    } else if (n <= 4) {
+      cols = 2;
+      miniFrac = 0.37;
+      gapFrac = 0.07;
+    } else {
+      cols = 3;
+      miniFrac = 0.235;
+      gapFrac = 0.045;
+    }
+    final mini = size * miniFrac * fit;
+    final gap = size * gapFrac * fit;
+
+    final rows = <List<String>>[
+      for (var i = 0; i < n; i += cols)
+        shown.sublist(i, i + cols > n ? n : i + cols),
+    ];
+
+    final grid = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          children: [
-            const SizedBox(width: 40),
-            Expanded(
-              child: TextField(
-                controller: _title,
-                autofocus: widget.autofocusTitle,
-                textAlign: TextAlign.center,
-                maxLength: 24,
-                style: TextStyle(
-                  color: t.drawerText,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w600,
-                ),
-                cursorColor: t.accent,
-                decoration: InputDecoration(
-                  counterText: '',
-                  isCollapsed: true,
-                  border: InputBorder.none,
-                  hintText: 'Folder name',
-                  hintStyle: TextStyle(color: t.drawerTextMuted),
-                ),
-                onSubmitted: (_) => _commit(),
-                onTapOutside: (_) {
-                  _commit();
-                  FocusManager.instance.primaryFocus?.unfocus();
-                },
-              ),
-            ),
-            Semantics(
-              button: true,
-              label: 'Folder color',
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  _commit();
-                  FocusManager.instance.primaryFocus?.unfocus();
-                  showFolderColorPicker(
-                    context,
-                    widget.zone,
-                    widget.folder.fid,
-                  );
-                },
-                child: SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Center(
-                    child: Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: tint != null ? Color(tint) : t.folderBgDrawer,
-                        border: Border.all(
-                          color: t.drawerTextMuted,
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: rows * _cellH,
-          child: Stack(
-            children: [
-              PageView.builder(
-                controller: _pages,
-                itemCount: pageCount,
-                itemBuilder: (context, p) {
-                  final slice = pkgs.skip(p * _perPage).take(_perPage).toList();
-                  return PageKeepAlive(
-                    child: Column(
-                      children: [
-                        for (var r = 0; r < rows; r++)
-                          SizedBox(
-                            height: _cellH,
-                            child: Row(
-                              children: [
-                                for (var c = 0; c < cols; c++)
-                                  SizedBox(
-                                    width: cellW,
-                                    child: r * cols + c < slice.length
-                                        ? _PopupCell(
-                                            key: ValueKey(slice[r * cols + c]),
-                                            pkg: slice[r * cols + c],
-                                            index: r * cols + c,
-                                            zone: widget.zone,
-                                            fid: widget.folder.fid,
-                                            width: cellW,
-                                            style: style,
-                                            reveal: widget.reveal,
-                                          )
-                                        : _EndSlot(
-                                            zone: widget.zone,
-                                            fid: widget.folder.fid,
-                                          ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              if (pageCount > 1)
-                Positioned.fill(
-                  child: EdgeFlipper(
-                    onPrev: () => _flip(-1),
-                    onNext: () => _flip(1),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        if (pageCount > 1)
+        for (var r = 0; r < rows.length; r++)
           Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: PageDots(
-              controller: _pages,
-              count: pageCount,
-              color: t.drawerText,
+            padding: EdgeInsets.only(top: r > 0 ? gap : 0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (var c = 0; c < rows[r].length; c++)
+                  Padding(
+                    padding: EdgeInsets.only(left: c > 0 ? gap : 0),
+                    child: AppIconImage(pkg: rows[r][c], size: mini),
+                  ),
+              ],
             ),
           ),
       ],
     );
+
+    if (shape == IconShape.squircle) {
+      return Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        decoration: ShapeDecoration(
+          color: bg,
+          shape: ContinuousRectangleBorder(
+            borderRadius: BorderRadius.circular(size * 0.62),
+          ),
+        ),
+        child: grid,
+      );
+    }
+    return ClipPath(
+      clipper: IconShapeClipper(shape),
+      child: Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        color: bg,
+        child: grid,
+      ),
+    );
   }
 }
 
-class _EndSlot extends StatelessWidget {
-  const _EndSlot({required this.zone, required this.fid});
-
-  final Zone zone;
-  final String fid;
+class BadgeDot extends StatelessWidget {
+  const BadgeDot({super.key, required this.count});
+  final int count;
 
   @override
   Widget build(BuildContext context) {
-    final model = context.read<LauncherModel>();
-    final accent = LaunchRTheme.of(context).accent;
-    return DragTarget<DragData>(
-      onWillAcceptWithDetails: (d) => d.data.fromFolder == fid,
-      onAcceptWithDetails: (d) {
-        final dragged = d.data.item;
-        if (dragged is AppItem) model.moveToEndInFolder(zone, fid, dragged.pkg);
-      },
-      builder: (context, candidate, _) => AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        margin: const EdgeInsets.all(5),
-        decoration: BoxDecoration(
-          color: candidate.isNotEmpty ? accent.withValues(alpha: 0.25) : null,
-          borderRadius: BorderRadius.circular(22),
+    return Container(
+      constraints: const BoxConstraints(minWidth: 19, minHeight: 19),
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        color: LaunchRTheme.badge,
+        borderRadius: BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Text(
+        count > 99 ? '99+' : '$count',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          height: 1.1,
         ),
       ),
     );
   }
 }
 
-class _PopupCell extends StatelessWidget {
-  const _PopupCell({
+class ItemVisual extends StatelessWidget {
+  const ItemVisual({
     super.key,
-    required this.pkg,
-    required this.index,
-    required this.zone,
-    required this.fid,
+    required this.item,
+    required this.label,
+    required this.iconSize,
     required this.width,
     required this.style,
-    required this.reveal,
+    this.badge = 0,
+    this.showLabel = true,
   });
 
-  final String pkg;
-  final int index;
-  final Zone zone;
-  final String fid;
+  final LItem item;
+  final String label;
+  final double iconSize;
   final double width;
   final CellStyle style;
-  final Animation<double> reveal;
+  final int badge;
+  final bool showLabel;
 
   @override
   Widget build(BuildContext context) {
-    final model = context.watch<LauncherModel>();
-    final locked = context.watch<LauncherSettings>().lockLayout;
-    final accent = LaunchRTheme.of(context).accent;
-    final item = AppItem(pkg);
-    final visual = ItemVisual(
-      item: item,
-      label: model.labelForPkg(pkg),
-      badge: model.badgeOf(item),
-      iconSize: 54,
+    final glyph = switch (item) {
+      AppItem(:final pkg) => AppIconImage(pkg: pkg, size: iconSize),
+      FolderItem(:final pkgs, :final color) => FolderGlyph(
+        pkgs: pkgs,
+        size: iconSize,
+        bg: color != null ? Color(color) : style.folderBg,
+      ),
+    };
+    return SizedBox(
       width: width,
-      style: style,
-    );
-
-    final cell = DragTarget<DragData>(
-      onWillAcceptWithDetails: (d) =>
-          d.data.fromFolder == fid && d.data.item.id != item.id,
-      onAcceptWithDetails: (d) {
-        final dragged = d.data.item;
-        if (dragged is AppItem) {
-          model.reorderInFolder(zone, fid, dragged.pkg, pkg);
-        }
-      },
-      builder: (context, candidate, rejected) {
-        final active = candidate.isNotEmpty;
-        final resting = SizedBox.expand(
-          child: Center(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                color: active ? accent.withValues(alpha: 0.25) : null,
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: visual,
-            ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              glyph,
+              if (badge > 0)
+                Positioned(top: -6, right: -8, child: BadgeDot(count: badge)),
+            ],
           ),
-        );
-        return DraggableItem(
-          item: item,
-          zone: zone,
-          fromFolder: fid,
-          locked: locked,
-          feedbackSize: Size(width, 88),
-          feedback: visual,
-          onTap: () => launchFrom(context, pkg),
-          onMenu: (pos) =>
-              showItemMenu(context, pos, item, zone, fromFolder: fid),
-          child: resting,
-        );
-      },
-    );
-
-    final start = (0.22 + 0.025 * index).clamp(0.0, 0.7);
-    final stagger = Interval(start, 1, curve: Curves.easeOutCubic);
-    return AnimatedBuilder(
-      animation: reveal,
-      child: cell,
-      builder: (context, child) {
-        final p = stagger.transform(reveal.value.clamp(0.0, 1.0));
-        if (p >= 1) return child!;
-        return Opacity(
-          opacity: p,
-          child: Transform.scale(scale: 0.7 + 0.3 * p, child: child),
-        );
-      },
+          if (showLabel) ...[
+            const SizedBox(height: 7),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: style.label,
+                  fontSize: 12,
+                  height: 1.1,
+                  shadows: style.shadows,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
