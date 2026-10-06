@@ -4,7 +4,7 @@
 <h1 align="center">Launch-R</h1>
 <h2 align="center">Find your space.</h2>
 
-Tired of the same old ctrl c & ctrl v Android home launchers? So am I and thus I present **Launch-R!** inspired by one ui home but much better, **Launch-R** is packed with numerous QOL features and brilliantly designed by yours truely (ResurrectDev1)
+Tired of the same old ctrl c & ctrl v Android home launchers? So am I and thus I present **Launch-R!** inspired by one ui home but much better, **Launch-R** is packed with numerous QOL features and brilliantly designed by yours truly (ResurrectDev1)
 
 <p align="center">
 <img width="200" src="https://github.com/resurrectdev1/Launch-R/blob/main/assets/screenshot_1.png">
