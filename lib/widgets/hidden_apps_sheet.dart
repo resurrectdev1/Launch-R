@@ -85,7 +85,7 @@ class _HiddenAppsSheet extends StatelessWidget {
                       ),
                       trailing: TextButton(
                         style: TextButton.styleFrom(
-                          foregroundColor: LaunchRTheme.accent,
+                          foregroundColor: t.accentText,
                         ),
                         onPressed: () => model.unhideApp(app.package),
                         child: const Text('Unhide'),
