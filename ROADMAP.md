@@ -1,6 +1,6 @@
-# Roadmap of Launch-R! different from a change log because everything here is planned but not done.
+# Roadmap of Launch-R! Different from a changelog because everything here is planned but not done.
 
-- Make dragging apps in app drawer to another drawer smoother better experince
+- Make dragging apps in the app drawer to another drawer smoother, for a better experience
 
 - Add backup
 
@@ -8,9 +8,9 @@
 
 - Be able to password or bio-metric lock apps
 
-- Add widget suppourt
+- Add widget support
 
-- Add custom icon pack suppourt
+- Add custom icon pack support
 
 # Completed features go here.
 
@@ -18,7 +18,7 @@
 
 - ~~Allow Folders to be recolored~~
 
-- ~~Fix keyboard opening making some apps stretch wierd~~
+- ~~Fix keyboard opening making some apps stretch weird~~
 
 - ~~Make holding homescreen open menu of options with default home page (Must always have one home page), add page, remove page, plus wallpaper, widgets (not functional yet) and settings~~
 
@@ -38,7 +38,7 @@
 
 - ~~Add clearer indication between putting a app in between 2 apps and putting a app in a folder in app drawer~~
 
-- ~~In app drawer make it so when you click reload all apps it will be perttier then just a toast saying how many apps are reloaded~~
+- ~~In app drawer make it so when you click reload all apps it will be prettier than just a toast saying how many apps are reloaded~~
 
 - ~~Rehaul color options in settings~~
 
@@ -54,4 +54,4 @@
 
 - ~~Improve folder opening animation to be more one ui inspired~~
 
-- ~~Improve folder look especially when few apps are in it becuase it looks odd~~
+- ~~Improve folder look especially when few apps are in it because it looks odd~~
