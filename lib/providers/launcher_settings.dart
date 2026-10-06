@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:launch_r/models/launcher_models.dart';
+import 'package:launch_r/theme/launch_r_theme.dart';
 
 class LauncherSettings extends ChangeNotifier {
   SharedPreferences? _prefs;
 
-  ThemeMode _themeMode = ThemeMode.system;
+  AppearanceMode _appearance = AppearanceMode.orangeFactory;
+  Color? _customAccent;
   bool _darkHomeText = false;
   int _drawerCols = 4;
   bool _lockLayout = false;
   bool _showBadges = true;
   IconShape _iconShape = IconShape.squircle;
 
-  ThemeMode get themeMode => _themeMode;
+  AppearanceMode get appearance => _appearance;
+
+  Color? get customAccent => _customAccent;
+  Color get accent => _customAccent ?? LaunchRTheme.defaultAccent;
   bool get darkHomeText => _darkHomeText;
   int get drawerCols => _drawerCols;
   bool get lockLayout => _lockLayout;
@@ -21,8 +26,14 @@ class LauncherSettings extends ChangeNotifier {
 
   Future<void> init() async {
     final p = _prefs = await SharedPreferences.getInstance();
-    final t = p.getInt('theme_mode') ?? 0;
-    if (t >= 0 && t < ThemeMode.values.length) _themeMode = ThemeMode.values[t];
+    final saved = p.getString('appearance');
+    if (saved != null) {
+      _appearance = AppearanceMode.fromName(saved);
+    } else if (p.getInt('theme_mode') == 1) {
+      _appearance = AppearanceMode.whiteMinimal;
+    }
+    final accentArgb = p.getInt('custom_accent');
+    if (accentArgb != null) _customAccent = Color(accentArgb | 0xFF000000);
     _darkHomeText = p.getBool('dark_home_text') ?? false;
     _drawerCols = p.getInt('drawer_cols') ?? 4;
     _lockLayout = p.getBool('lock_layout') ?? false;
@@ -30,10 +41,23 @@ class LauncherSettings extends ChangeNotifier {
     _iconShape = IconShape.fromName(p.getString('icon_shape'));
   }
 
-  Future<void> setThemeMode(ThemeMode m) async {
-    _themeMode = m;
+  Future<void> setAppearance(AppearanceMode m) async {
+    if (m == _appearance) return;
+    _appearance = m;
     notifyListeners();
-    await _prefs?.setInt('theme_mode', m.index);
+    await _prefs?.setString('appearance', m.name);
+  }
+
+  Future<void> setCustomAccent(Color? c) async {
+    final opaque = c == null ? null : Color(c.toARGB32() | 0xFF000000);
+    if (opaque == _customAccent) return;
+    _customAccent = opaque;
+    notifyListeners();
+    if (opaque == null) {
+      await _prefs?.remove('custom_accent');
+    } else {
+      await _prefs?.setInt('custom_accent', opaque.toARGB32());
+    }
   }
 
   Future<void> setDarkHomeText(bool v) async {
