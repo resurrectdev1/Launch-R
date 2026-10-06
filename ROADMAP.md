@@ -4,6 +4,8 @@
 
 - Fix horizontal view pixel overflows
 
+- Make home page editor sheet nicer
+
 - Add widget support
 
 - Add custom icon pack support
