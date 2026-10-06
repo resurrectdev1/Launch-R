@@ -7,6 +7,7 @@ import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/icon_shapes.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/widgets/accent_picker_sheet.dart';
 import 'package:launch_r/widgets/hidden_apps_sheet.dart';
 
 void showLaunchRSettings(BuildContext context) {
@@ -82,19 +83,56 @@ class _SettingsSheet extends StatelessWidget {
               header('Appearance'),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: SegmentedButton<ThemeMode>(
-                  showSelectedIcon: false,
-                  segments: const [
-                    ButtonSegment(
-                      value: ThemeMode.system,
-                      label: Text('System'),
-                    ),
-                    ButtonSegment(value: ThemeMode.light, label: Text('Light')),
-                    ButtonSegment(value: ThemeMode.dark, label: Text('Dark')),
+                child: Row(
+                  children: [
+                    for (final m in AppearanceMode.values) ...[
+                      if (m != AppearanceMode.values.first)
+                        const SizedBox(width: 10),
+                      Expanded(
+                        child: _ThemeCard(
+                          mode: m,
+                          accent: s.accent,
+                          selected: s.appearance == m,
+                          onTap: () => s.setAppearance(m),
+                        ),
+                      ),
+                    ],
                   ],
-                  selected: {s.themeMode},
-                  onSelectionChanged: (v) => s.setThemeMode(v.first),
                 ),
+              ),
+              const SizedBox(height: 6),
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                leading: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: s.accent,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: t.drawerTextMuted, width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: s.accent.withValues(alpha: 0.45),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                ),
+                title: Text(
+                  'Accent color',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  s.customAccent == null
+                      ? 'Orange (default)'
+                      : '#${hexOfColor(s.customAccent!)}',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                trailing: Icon(
+                  Icons.chevron_right_rounded,
+                  color: t.drawerTextMuted,
+                ),
+                onTap: () => showAccentPicker(context),
               ),
               SwitchListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
@@ -272,13 +310,9 @@ class _ShapeChoice extends StatelessWidget {
                 child: ClipPath(
                   clipper: IconShapeClipper(shape),
                   child: ColoredBox(
-                    color: selected ? LaunchRTheme.accent : t.folderBgDrawer,
+                    color: selected ? t.accent : t.folderBgDrawer,
                     child: selected
-                        ? const Icon(
-                            Icons.check_rounded,
-                            color: Colors.white,
-                            size: 22,
-                          )
+                        ? Icon(Icons.check_rounded, color: t.onAccent, size: 22)
                         : null,
                   ),
                 ),
@@ -295,6 +329,110 @@ class _ShapeChoice extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ThemeCard extends StatelessWidget {
+  const _ThemeCard({
+    required this.mode,
+    required this.accent,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final AppearanceMode mode;
+  final Color accent;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    final p = LaunchRTheme.forMode(mode, accent);
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '${mode.label} theme',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Column(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              height: 72,
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: p.menuBg,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: selected
+                      ? accent
+                      : t.drawerTextMuted.withValues(alpha: 0.35),
+                  width: selected ? 2.5 : 1,
+                ),
+              ),
+              child: Stack(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Container(
+                        width: 26,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: accent,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Container(
+                        width: 38,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: p.drawerTextMuted,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (selected)
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: accent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.check_rounded,
+                          size: 13,
+                          color: LaunchRTheme.onColor(accent),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              mode.label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              style: TextStyle(
+                color: selected ? t.drawerText : t.drawerTextMuted,
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+              ),
+            ),
+          ],
         ),
       ),
     );
