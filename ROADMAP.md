@@ -14,6 +14,8 @@
 
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
 
+- Add material you suppourt
+
 - Add fuzzy search suppourt
 
 - Add private space suppourt
