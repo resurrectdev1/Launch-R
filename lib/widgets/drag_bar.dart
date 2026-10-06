@@ -80,7 +80,7 @@ class _Bar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: LaunchRTheme(Brightness.dark).dragBarBg,
+        color: LaunchRTheme.of(context).dragBarBg,
         borderRadius: BorderRadius.circular(30),
       ),
       child: Row(children: actions.map((a) => Expanded(child: a)).toList()),
