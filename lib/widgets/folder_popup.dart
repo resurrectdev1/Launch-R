@@ -168,7 +168,7 @@ class _PanelState extends State<_Panel> {
                       fontSize: 19,
                       fontWeight: FontWeight.w600,
                     ),
-                    cursorColor: LaunchRTheme.accent,
+                    cursorColor: t.accent,
                     decoration: InputDecoration(
                       counterText: '',
                       isCollapsed: true,
@@ -322,7 +322,7 @@ class _PopupCell extends StatelessWidget {
               padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
                 color: active
-                    ? LaunchRTheme.accent.withValues(alpha: 0.25)
+                    ? LaunchRTheme.of(context).accent.withValues(alpha: 0.25)
                     : null,
                 borderRadius: BorderRadius.circular(22),
               ),
