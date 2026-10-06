@@ -4,8 +4,6 @@
 
 - Improve folder opening animation to be more one ui inspired
 
-- Add app drawer memory instead of apps always filling up the whole page
-
 - Allow moving through folders
 
 - Add backup
@@ -53,3 +51,5 @@
 - ~~App logo and color theme~~
 
 - ~~Fix "hold here to add to home" button not having padding for three button navigation mode~~
+
+- ~~Add app drawer memory instead of apps always filling up the whole page + Tidy up pages option~~
