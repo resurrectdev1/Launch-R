@@ -329,19 +329,16 @@ class _ReloadBanner extends StatelessWidget {
       _ReloadPhase.failed => 'Couldn’t reload apps',
     };
     final icon = switch (phase) {
-      _ReloadPhase.loading => const SizedBox(
-        key: ValueKey('spin'),
+      _ReloadPhase.loading => SizedBox(
+        key: const ValueKey('spin'),
         width: 18,
         height: 18,
-        child: CircularProgressIndicator(
-          strokeWidth: 2.4,
-          color: LaunchRTheme.accent,
-        ),
+        child: CircularProgressIndicator(strokeWidth: 2.4, color: t.accent),
       ),
-      _ReloadPhase.done => const Icon(
+      _ReloadPhase.done => Icon(
         Icons.check_circle_rounded,
-        key: ValueKey('ok'),
-        color: LaunchRTheme.accent,
+        key: const ValueKey('ok'),
+        color: t.accent,
         size: 20,
       ),
       _ReloadPhase.failed => Icon(
@@ -440,7 +437,7 @@ class _SearchPill extends StatelessWidget {
                 if (r.isNotEmpty) launchFrom(context, r.first.package);
               },
               textInputAction: TextInputAction.search,
-              cursorColor: LaunchRTheme.accent,
+              cursorColor: t.accent,
               style: TextStyle(
                 color: t.drawerText,
                 fontSize: 17,
