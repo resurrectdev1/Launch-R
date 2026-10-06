@@ -8,8 +8,6 @@
 
 - Allow moving through folders
 
-- Rehaul color options in settings
-
 - Add backup
 
 - Make color hex picker look and colors etc simmilar to my Grove app
@@ -47,6 +45,8 @@
 - ~~Add clearer indication between putting a app in between 2 apps and putting a app in a folder in app drawer~~
 
 - ~~In app drawer make it so when you click reload all apps it will be perttier then just a toast saying how many apps are reloaded~~
+
+- ~~Rehaul color options in settings~~
 
 - ~~Be able to hide apps~~
 
