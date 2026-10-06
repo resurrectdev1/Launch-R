@@ -24,6 +24,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   static const _kDefaultPage = 'launch_r_default_page';
   static const _kPinnedPages = 'launch_r_pinned_pages';
   static const _kHidden = 'launch_r_hidden';
+  static const _kDrawerFree = 'launch_r_drawer_free';
 
   static const maxHomePages = 10;
 
@@ -39,6 +40,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   int _defaultPage = 0;
   int _pinnedPages = 1;
   bool _ready = false;
+  bool _drawerFree = true;
   bool notificationAccess = false;
 
   int iconRevision = 0;
@@ -58,7 +60,12 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
 
   bool homePageIsEmpty(int page) =>
       page < 0 || page >= _home.length || _home[page].every((e) => e == null);
-  List<LItem> get drawer => _drawer.cast<LItem>();
+  List<LItem> get drawer => _drawer.whereType<LItem>().toList();
+
+  List<LItem?> get drawerSlots => List.unmodifiable(_drawer);
+
+  bool get drawerFree => _drawerFree;
+  bool get drawerHasGaps => _drawer.contains(null);
   List<List<LItem?>> get home => _home;
   List<LItem?> get dock => _dock;
   bool get isHomeEmpty =>
@@ -207,6 +214,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     final p = _prefs!;
     _homeCols = p.getInt(_kCols) ?? 4;
     _homeRows = p.getInt(_kRows) ?? 6;
+    _drawerFree = p.getBool(_kDrawerFree) ?? true;
     _hidden
       ..clear()
       ..addAll(p.getStringList(_kHidden) ?? const <String>[]);
@@ -274,6 +282,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     await p.setInt(_kDefaultPage, _defaultPage);
     await p.setInt(_kPinnedPages, _pinnedPages);
     await p.setStringList(_kHidden, _hidden.toList());
+    await p.setBool(_kDrawerFree, _drawerFree);
     await p.setString(_kDrawer, _enc(_drawer));
     await p.setString(_kDock, _enc(_dock));
     await p.setString(
@@ -285,6 +294,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _commit() {
+    _normalizeDrawer();
     notifyListeners();
     unawaited(_persist());
   }
@@ -320,17 +330,26 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     for (final it in _drawer) {
       switch (it) {
         case AppItem(:final pkg):
-          if (_isVisible(pkg) && seen.add(pkg)) cleaned.add(it);
+          if (_isVisible(pkg) && seen.add(pkg)) {
+            cleaned.add(it);
+          } else if (_drawerFree) {
+            cleaned.add(null);
+          }
         case FolderItem f:
           final pk = f.pkgs.where((p) => _isVisible(p) && seen.add(p)).toList();
           if (pk.length >= 2) {
             cleaned.add(f.copyWith(pkgs: pk));
           } else if (pk.length == 1) {
             cleaned.add(AppItem(pk.first));
+          } else if (_drawerFree) {
+            cleaned.add(null);
           }
         case null:
-          break;
+          if (_drawerFree) cleaned.add(null);
       }
+    }
+    while (cleaned.isNotEmpty && cleaned.last == null) {
+      cleaned.removeLast();
     }
     final fresh =
         _apps.values
@@ -389,7 +408,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
       } else if (rest.length == 1) {
         loc.list[loc.index] = AppItem(rest.first);
       } else if (d.zone == Zone.drawer) {
-        loc.list.removeAt(loc.index);
+        _vacateDrawerSlot(loc.index);
       } else {
         loc.list[loc.index] = null;
       }
@@ -399,7 +418,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     if (loc == null) return null;
     final it = loc.item;
     if (d.zone == Zone.drawer) {
-      loc.list.removeAt(loc.index);
+      _vacateDrawerSlot(loc.index);
     } else {
       loc.list[loc.index] = null;
     }
@@ -408,15 +427,58 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
 
   String _newFid() => DateTime.now().microsecondsSinceEpoch.toRadixString(36);
 
+  void _vacateDrawerSlot(int i) {
+    if (_drawerFree) {
+      _drawer[i] = null;
+    } else {
+      _drawer.removeAt(i);
+    }
+  }
+
+  void _normalizeDrawer() {
+    if (_drawerFree) {
+      while (_drawer.isNotEmpty && _drawer.last == null) {
+        _drawer.removeLast();
+      }
+    } else {
+      _drawer.removeWhere((e) => e == null);
+    }
+  }
+
+  void _insertShift(int at, LItem it) {
+    final i = at.clamp(0, _drawer.length);
+    _drawer.insert(i, it);
+    if (!_drawerFree) return;
+    for (var j = i + 1; j < _drawer.length; j++) {
+      if (_drawer[j] == null) {
+        _drawer.removeAt(j);
+        return;
+      }
+    }
+  }
+
+  void setDrawerFree(bool v) {
+    if (v == _drawerFree) return;
+    _drawerFree = v;
+    _commit();
+  }
+
+  void tidyDrawer() {
+    if (!_drawer.contains(null)) return;
+    _drawer.removeWhere((e) => e == null);
+    _commit();
+  }
+
   void drawerInsert(DragData d, String targetId, {required bool after}) {
     if (d.item.id == targetId) return;
     final moved = _detach(d);
     if (moved == null) return;
     final i = _drawer.indexWhere((e) => e?.id == targetId);
     if (i < 0) {
+      _normalizeDrawer();
       _drawer.add(moved);
     } else {
-      _drawer.insert(after ? i + 1 : i, moved);
+      _insertShift(after ? i + 1 : i, moved);
     }
     _commit();
   }
@@ -424,7 +486,28 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   void drawerAppend(DragData d) {
     final moved = _detach(d);
     if (moved == null) return;
+    _normalizeDrawer();
     _drawer.add(moved);
+    _commit();
+  }
+
+  void drawerPlace(DragData d, int index) {
+    final moved = _detach(d);
+    if (moved == null) return;
+    if (!_drawerFree) {
+      _drawer.add(moved);
+    } else if (index < _drawer.length && _drawer[index] != null) {
+      _insertShift(index, moved);
+    } else {
+      while (_drawer.length < index) {
+        _drawer.add(null);
+      }
+      if (index < _drawer.length) {
+        _drawer[index] = moved;
+      } else {
+        _drawer.add(moved);
+      }
+    }
     _commit();
   }
 
@@ -656,15 +739,29 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     _commit();
   }
 
-  void reorderInFolder(Zone z, String fid, String pkg, String beforePkg) {
-    if (pkg == beforePkg) return;
+  void reorderInFolder(Zone z, String fid, String pkg, String targetPkg) {
+    if (pkg == targetPkg) return;
     final loc = _findRoot(z, 'f:$fid');
     final f = loc?.item;
     if (loc == null || f is! FolderItem) return;
-    final pk = [...f.pkgs]..remove(pkg);
-    final i = pk.indexOf(beforePkg);
-    if (i < 0) return;
-    pk.insert(i, pkg);
+    final from = f.pkgs.indexOf(pkg);
+    final to = f.pkgs.indexOf(targetPkg);
+    if (from < 0 || to < 0) return;
+    final pk = [...f.pkgs]
+      ..removeAt(from)
+      ..insert(to, pkg);
+    loc.list[loc.index] = f.copyWith(pkgs: pk);
+    _commit();
+  }
+
+  void moveToEndInFolder(Zone z, String fid, String pkg) {
+    final loc = _findRoot(z, 'f:$fid');
+    final f = loc?.item;
+    if (loc == null || f is! FolderItem) return;
+    if (!f.pkgs.contains(pkg) || f.pkgs.last == pkg) return;
+    final pk = [...f.pkgs]
+      ..remove(pkg)
+      ..add(pkg);
     loc.list[loc.index] = f.copyWith(pkgs: pk);
     _commit();
   }
@@ -675,8 +772,11 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     if (loc == null || f is! FolderItem) return;
     final apps = f.pkgs.map(AppItem.new).toList();
     if (z == Zone.drawer) {
-      loc.list.removeAt(loc.index);
-      loc.list.insertAll(loc.index, apps);
+      final at = loc.index;
+      _drawer[at] = apps.first;
+      for (var k = 1; k < apps.length; k++) {
+        _insertShift(at + k, apps[k]);
+      }
     } else {
       loc.list[loc.index] = apps.first;
       for (final a in apps.skip(1)) {
