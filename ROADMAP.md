@@ -2,15 +2,15 @@
 
 - Make dragging apps in the app drawer to another drawer smoother, for a better experience
 
-- Add backup
-
 - Fix horizontal view pixel overflows
-
-- Be able to password or bio-metric lock apps
 
 - Add widget support
 
 - Add custom icon pack support
+
+- Be able to password or bio-metric lock apps
+
+- Add backup later
 
 # Completed features go here.
 
