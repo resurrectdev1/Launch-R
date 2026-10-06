@@ -4,11 +4,9 @@
 
 - Improve folder opening animation to be more one ui inspired
 
-- Allow moving through folders
+- Allow moving apps through folders within folder
 
 - Add backup
-
-- Make color hex picker look and colors etc simmilar to my Grove app
 
 - Be able to password or bio-metric lock apps
 
