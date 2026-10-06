@@ -89,10 +89,10 @@ class _DrawerViewState extends State<DrawerView> {
     );
   }
 
-  void _drop(DragData d, Hover h, LItem? target) {
+  void _drop(DragData d, Hover h, LItem? target, int index) {
     final model = context.read<LauncherModel>();
     if (target == null) {
-      model.drawerAppend(d);
+      model.drawerPlace(d, index);
       return;
     }
     if (h == Hover.merge) {
@@ -156,7 +156,7 @@ class _DrawerViewState extends State<DrawerView> {
   Widget _grid(LaunchRTheme t) {
     final model = context.watch<LauncherModel>();
     final settings = context.watch<LauncherSettings>();
-    final items = model.drawer;
+    final items = model.drawerSlots;
     final style = CellStyle(
       label: t.drawerText,
       shadows: const [],
@@ -190,7 +190,7 @@ class _DrawerViewState extends State<DrawerView> {
             width: cw,
             style: style,
             locked: settings.lockLayout,
-            onDrop: (d, h) => _drop(d, h, item),
+            onDrop: (d, h) => _drop(d, h, item, idx),
           );
         }
 
@@ -467,6 +467,7 @@ class _SearchPill extends StatelessWidget {
                 unawaited(LauncherChannel.instance.openWallpaperPicker());
               }
               if (v == 'reload') onReload();
+              if (v == 'tidy') context.read<LauncherModel>().tidyDrawer();
             },
             itemBuilder: (_) => [
               PopupMenuItem(
@@ -483,6 +484,14 @@ class _SearchPill extends StatelessWidget {
                   style: TextStyle(color: t.drawerText),
                 ),
               ),
+              if (context.read<LauncherModel>().drawerHasGaps)
+                PopupMenuItem(
+                  value: 'tidy',
+                  child: Text(
+                    'Tidy up apps',
+                    style: TextStyle(color: t.drawerText),
+                  ),
+                ),
               PopupMenuItem(
                 value: 'reload',
                 child: Text(
