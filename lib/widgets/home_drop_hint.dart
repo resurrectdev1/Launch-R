@@ -9,6 +9,7 @@ class HomeDropHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
     final shell = context.watch<ShellController>();
     final d = shell.drag;
     final show =
@@ -43,23 +44,24 @@ class HomeDropHint extends StatelessWidget {
                     vertical: 9,
                   ),
                   decoration: BoxDecoration(
-                    color: active
-                        ? LaunchRTheme.accent
-                        : LaunchRTheme(Brightness.dark).dragBarBg,
+                    color: active ? t.accent : t.dragBarBg,
                     borderRadius: BorderRadius.circular(24),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         Icons.add_to_home_screen_rounded,
-                        color: Colors.white,
+                        color: active ? t.onAccent : Colors.white,
                         size: 18,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
                         'Hold here to add to Home',
-                        style: TextStyle(color: Colors.white, fontSize: 13),
+                        style: TextStyle(
+                          color: active ? t.onAccent : Colors.white,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
