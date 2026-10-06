@@ -7,14 +7,28 @@ import 'package:launch_r/theme/launch_r_theme.dart';
 class LaunchRApp extends StatelessWidget {
   const LaunchRApp({super.key});
 
-  ThemeData _theme(Brightness b) => ThemeData(
-    useMaterial3: true,
-    brightness: b,
-    colorSchemeSeed: LaunchRTheme.accent,
-    scaffoldBackgroundColor: Colors.transparent,
-    canvasColor: Colors.transparent,
-    snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),
-  );
+  ThemeData _theme(AppearanceMode mode, Color accent) {
+    final lt = LaunchRTheme.forMode(mode, accent);
+    var scheme = ColorScheme.fromSeed(
+      seedColor: accent,
+      brightness: lt.brightness,
+    ).copyWith(primary: accent, onPrimary: lt.onAccent);
+    if (lt.amoled) scheme = scheme.copyWith(surface: Colors.black);
+    return ThemeData(
+      useMaterial3: true,
+      brightness: lt.brightness,
+      colorScheme: scheme,
+      scaffoldBackgroundColor: Colors.transparent,
+      canvasColor: Colors.transparent,
+      dialogTheme: lt.amoled
+          ? const DialogThemeData(backgroundColor: Color(0xFF121212))
+          : null,
+      snackBarTheme: const SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+      ),
+      extensions: [lt],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +37,8 @@ class LaunchRApp extends StatelessWidget {
       title: 'Launch-R',
       debugShowCheckedModeBanner: false,
       color: Colors.transparent,
-      themeMode: settings.themeMode,
-      theme: _theme(Brightness.light),
-      darkTheme: _theme(Brightness.dark),
+      themeMode: ThemeMode.light,
+      theme: _theme(settings.appearance, settings.accent),
       home: const LauncherShell(),
     );
   }
