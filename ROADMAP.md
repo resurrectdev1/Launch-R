@@ -6,6 +6,10 @@
 
 - Make home page editor sheet nicer
 
+- Make consistent animations for all features within app
+
+- Tags for apps that when you search for that keyword all the tagged apps you tagged will show up (like the Kvæsitso launcher)
+
 - Add custom font and text scaling
 
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
