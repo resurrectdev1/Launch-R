@@ -14,6 +14,8 @@
 
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
 
+- Option to add new apps to homescreen
+
 - Add material you suppourt
 
 - Add fuzzy search suppourt
