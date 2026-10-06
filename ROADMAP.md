@@ -6,8 +6,6 @@
 
 - Fix horizontal view pixel overflows
 
-- Improve folder look especially when few apps are in it becuase it looks wierd
-
 - Be able to password or bio-metric lock apps
 
 - Add widget suppourt
@@ -55,3 +53,5 @@
 - ~~Allow moving apps through folders within folder~~
 
 - ~~Improve folder opening animation to be more one ui inspired~~
+
+- ~~Improve folder look especially when few apps are in it becuase it looks odd~~
