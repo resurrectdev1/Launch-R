@@ -120,7 +120,7 @@ class _FolderColorSheetState extends State<_FolderColorSheet> {
               shape: BoxShape.circle,
               color: color ?? t.folderBgDrawer,
               border: Border.all(
-                color: selected ? LaunchRTheme.accent : t.drawerTextMuted,
+                color: selected ? t.accent : t.drawerTextMuted,
                 width: selected ? 3 : 1,
               ),
             ),
@@ -207,9 +207,7 @@ class _FolderColorSheetState extends State<_FolderColorSheet> {
                         shape: BoxShape.circle,
                         color: customColor ?? t.folderBgDrawer,
                         border: Border.all(
-                          color: custom
-                              ? LaunchRTheme.accent
-                              : t.drawerTextMuted,
+                          color: custom ? t.accent : t.drawerTextMuted,
                           width: custom ? 3 : 1,
                         ),
                       ),
@@ -228,7 +226,7 @@ class _FolderColorSheetState extends State<_FolderColorSheet> {
                           fontSize: 16,
                           letterSpacing: 1.2,
                         ),
-                        cursorColor: LaunchRTheme.accent,
+                        cursorColor: t.accent,
                         decoration: InputDecoration(
                           isDense: true,
                           filled: true,
