@@ -1,31 +1,124 @@
 import 'package:flutter/material.dart';
 
-class LaunchRTheme {
-  final Brightness brightness;
-  const LaunchRTheme(this.brightness);
+enum AppearanceMode {
+  orangeFactory('Orange Factory', Brightness.dark),
+  amoledBlack('AMOLED Black', Brightness.dark),
+  whiteMinimal('White Minimal', Brightness.light);
 
-  factory LaunchRTheme.of(BuildContext context) =>
-      LaunchRTheme(Theme.of(context).brightness);
+  const AppearanceMode(this.label, this.brightness);
+  final String label;
+  final Brightness brightness;
+
+  static AppearanceMode fromName(String? name) =>
+      AppearanceMode.values.firstWhere(
+        (m) => m.name == name,
+        orElse: () => AppearanceMode.orangeFactory,
+      );
+}
+
+class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
+  const LaunchRTheme(
+    this.brightness, {
+    this.amoled = false,
+    this.accent = defaultAccent,
+  });
+
+  factory LaunchRTheme.of(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.extension<LaunchRTheme>() ?? LaunchRTheme(theme.brightness);
+  }
+
+  factory LaunchRTheme.forMode(AppearanceMode mode, Color accent) =>
+      LaunchRTheme(
+        mode.brightness,
+        amoled: mode == AppearanceMode.amoledBlack,
+        accent: accent,
+      );
+
+  final Brightness brightness;
+  final bool amoled;
+  final Color accent;
+
+  static const defaultAccent = Color(0xFFF26A27);
+  static const badge = Color(0xFFFF5B22);
 
   bool get dark => brightness == Brightness.dark;
 
-  static const accent = Color(0xFFF26A27);
-  static const badge = Color(0xFFFF5B22);
+  Color get onAccent => onColor(accent);
 
-  Color get accentText =>
-      dark ? const Color(0xFFFF8A4C) : const Color(0xFFD4521A);
-  Color get drawerScrim =>
-      dark ? const Color(0xD9101014) : const Color(0xE6F3F3F8);
+  Color get accentText => readableOn(accent, menuBg);
+
+  Color get drawerScrim {
+    if (amoled) return const Color(0xFF000000);
+    return dark ? const Color(0xD9101014) : const Color(0xE6F3F3F8);
+  }
+
   Color get drawerText => dark ? Colors.white : const Color(0xFF1B1B1F);
   Color get drawerTextMuted =>
       dark ? const Color(0xB3FFFFFF) : const Color(0x991B1B1F);
   Color get searchBg =>
       dark ? const Color(0x26FFFFFF) : const Color(0x14000000);
-  Color get folderBgDrawer =>
-      dark ? const Color(0x59FFFFFF) : const Color(0x1F000000);
-  Color get menuBg => dark ? const Color(0xFF2B2B31) : const Color(0xFFF7F7FB);
-  Color get popupBg => dark ? const Color(0xF2303036) : const Color(0xF2F5F5F9);
-  Color get dragBarBg => const Color(0xEE1D1D22);
+  Color get folderBgDrawer {
+    if (amoled) return const Color(0x40FFFFFF);
+    return dark ? const Color(0x59FFFFFF) : const Color(0x1F000000);
+  }
+
+  Color get menuBg {
+    if (amoled) return const Color(0xFF000000);
+    return dark ? const Color(0xFF2B2B31) : const Color(0xFFF7F7FB);
+  }
+
+  Color get popupBg {
+    if (amoled) return const Color(0xFF0D0D0D);
+    return dark ? const Color(0xF2303036) : const Color(0xF2F5F5F9);
+  }
+
+  Color get dragBarBg =>
+      amoled ? const Color(0xEE1A1A1A) : const Color(0xEE1D1D22);
+
+  static Color onColor(Color background) => background.computeLuminance() > 0.55
+      ? const Color(0xFF1B1B1F)
+      : Colors.white;
+
+  static Color readableOn(Color color, Color bg, {double minRatio = 4.5}) {
+    double ratio(Color a, Color b) {
+      final la = a.computeLuminance();
+      final lb = b.computeLuminance();
+      final hi = la > lb ? la : lb;
+      final lo = la > lb ? lb : la;
+      return (hi + 0.05) / (lo + 0.05);
+    }
+
+    final lighten = bg.computeLuminance() < 0.5;
+    var hsl = HSLColor.fromColor(color.withValues(alpha: 1));
+    for (var i = 0; i < 25 && ratio(hsl.toColor(), bg) < minRatio; i++) {
+      final l = hsl.lightness + (lighten ? 0.04 : -0.04);
+      hsl = hsl.withLightness(l.clamp(0.0, 1.0));
+    }
+    return hsl.toColor();
+  }
+
+  @override
+  LaunchRTheme copyWith({
+    Brightness? brightness,
+    bool? amoled,
+    Color? accent,
+  }) => LaunchRTheme(
+    brightness ?? this.brightness,
+    amoled: amoled ?? this.amoled,
+    accent: accent ?? this.accent,
+  );
+
+  @override
+  LaunchRTheme lerp(ThemeExtension<LaunchRTheme>? other, double t) {
+    if (other is! LaunchRTheme) return this;
+    final to = t < 0.5 ? this : other;
+    return LaunchRTheme(
+      to.brightness,
+      amoled: to.amoled,
+      accent: Color.lerp(accent, other.accent, t) ?? other.accent,
+    );
+  }
 }
 
 class CellStyle {
