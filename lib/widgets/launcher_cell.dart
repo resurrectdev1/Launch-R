@@ -222,6 +222,7 @@ class _LauncherCellState extends State<LauncherCell> {
         : _hover == Hover.after
         ? -0.07
         : 0.0;
+    final accent = LaunchRTheme.of(context).accent;
     final resting = SizedBox.expand(
       child: Stack(
         clipBehavior: Clip.none,
@@ -241,12 +242,10 @@ class _LauncherCellState extends State<LauncherCell> {
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: merging
-                          ? LaunchRTheme.accent.withValues(alpha: 0.18)
+                          ? accent.withValues(alpha: 0.18)
                           : Colors.transparent,
                       border: Border.all(
-                        color: merging
-                            ? LaunchRTheme.accent
-                            : Colors.transparent,
+                        color: merging ? accent : Colors.transparent,
                         width: 2,
                       ),
                       borderRadius: BorderRadius.circular(24),
@@ -277,6 +276,7 @@ class _LauncherCellState extends State<LauncherCell> {
 
 extension on _LauncherCellState {
   Widget _bar({required bool left, required bool on}) {
+    final accent = LaunchRTheme.of(context).accent;
     return Positioned(
       left: left ? 2 : null,
       right: left ? null : 2,
@@ -289,13 +289,10 @@ extension on _LauncherCellState {
           child: Container(
             width: 4,
             decoration: BoxDecoration(
-              color: LaunchRTheme.accent,
+              color: accent,
               borderRadius: BorderRadius.circular(2),
               boxShadow: [
-                BoxShadow(
-                  color: LaunchRTheme.accent.withValues(alpha: 0.6),
-                  blurRadius: 8,
-                ),
+                BoxShadow(color: accent.withValues(alpha: 0.6), blurRadius: 8),
               ],
             ),
           ),
