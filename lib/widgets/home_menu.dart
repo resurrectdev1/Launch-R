@@ -313,6 +313,7 @@ class _PageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
     return Semantics(
       button: true,
       selected: current,
@@ -327,7 +328,7 @@ class _PageCard extends StatelessWidget {
             color: const Color(0x26FFFFFF),
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: current ? LaunchRTheme.accent : const Color(0x33FFFFFF),
+              color: current ? t.accent : const Color(0x33FFFFFF),
               width: current ? 2.5 : 1,
             ),
           ),
@@ -446,6 +447,7 @@ class _CircleBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
     return Semantics(
       button: true,
       enabled: enabled,
@@ -459,7 +461,7 @@ class _CircleBtn extends StatelessWidget {
           height: 42,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: active ? LaunchRTheme.accent : const Color(0x33FFFFFF),
+            color: active ? t.accent : const Color(0x33FFFFFF),
           ),
           child: Icon(
             icon,
