@@ -10,6 +10,8 @@
 
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
 
+- Add fuzzy search suppourt
+
 - Add widget support
 
 - Add custom icon pack support
