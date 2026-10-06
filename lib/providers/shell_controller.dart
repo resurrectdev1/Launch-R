@@ -7,7 +7,9 @@ import 'package:launch_r/models/launcher_models.dart';
 class OpenFolder {
   final Zone zone;
   final String fid;
-  const OpenFolder(this.zone, this.fid);
+
+  final Rect? from;
+  const OpenFolder(this.zone, this.fid, {this.from});
 }
 
 class ShellController extends ChangeNotifier {
@@ -61,15 +63,25 @@ class ShellController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void openFolder(Zone zone, String fid, {bool rename = false}) {
-    folder = OpenFolder(zone, fid);
+  bool folderClosing = false;
+
+  void openFolder(Zone zone, String fid, {bool rename = false, Rect? from}) {
+    folder = OpenFolder(zone, fid, from: from);
+    folderClosing = false;
     renameRequested = rename;
     notifyListeners();
   }
 
   void closeFolder() {
+    if (folder == null || folderClosing) return;
+    folderClosing = true;
+    notifyListeners();
+  }
+
+  void finishCloseFolder() {
     if (folder == null) return;
     folder = null;
+    folderClosing = false;
     renameRequested = false;
     leftFolder = false;
     notifyListeners();
@@ -142,6 +154,7 @@ class ShellController extends ChangeNotifier {
     leftFolder = false;
     if (wasOut) {
       folder = null;
+      folderClosing = false;
       renameRequested = false;
     }
     notifyListeners();
