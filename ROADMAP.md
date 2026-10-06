@@ -2,11 +2,11 @@
 
 - Make dragging apps in app drawer to another drawer smoother better experince
 
-- Improve folder opening animation to be more one ui inspired
-
-- Allow moving apps through folders within folder
-
 - Add backup
+
+- Fix horizontal view pixel overflows
+
+- Improve folder look especially when few apps are in it becuase it looks wierd
 
 - Be able to password or bio-metric lock apps
 
@@ -51,3 +51,7 @@
 - ~~Fix "hold here to add to home" button not having padding for three button navigation mode~~
 
 - ~~Add app drawer memory instead of apps always filling up the whole page + Tidy up pages option~~
+
+- ~~Allow moving apps through folders within folder~~
+
+- ~~Improve folder opening animation to be more one ui inspired~~
