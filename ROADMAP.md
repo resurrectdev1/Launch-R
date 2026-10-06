@@ -16,6 +16,8 @@
 
 - Add fuzzy search suppourt
 
+- Add private space suppourt
+
 - Add widget support
 
 - Add custom icon pack support
