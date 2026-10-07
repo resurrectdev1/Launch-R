@@ -10,7 +10,7 @@
 
 - Tags for apps that when you search for that keyword all the tagged apps you tagged will show up (like the Kvæsitso launcher)
 
-- Add custom font and text scaling
+- Add custom font and text scaling & optional text bolding
 
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
 
