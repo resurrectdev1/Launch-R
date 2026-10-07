@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
@@ -30,6 +31,8 @@ class _SettingsSheet extends StatelessWidget {
     final model = context.watch<LauncherModel>();
     final ch = LauncherChannel.instance;
     final grid = '${model.homeCols}x${model.homeRows}';
+    final materialYou =
+        s.appearance == AppearanceMode.materialYou && t.dynamicScheme != null;
 
     Widget header(String text) => Padding(
       padding: const EdgeInsets.fromLTRB(24, 18, 24, 6),
@@ -82,38 +85,50 @@ class _SettingsSheet extends StatelessWidget {
                 ),
               ),
               header('Appearance'),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Row(
+              RadioGroup<AppearanceMode>(
+                groupValue: s.appearance,
+                onChanged: (m) {
+                  if (m == null) return;
+                  HapticFeedback.selectionClick();
+                  unawaited(s.setAppearance(m));
+                },
+                child: Column(
                   children: [
-                    for (final m in AppearanceMode.values) ...[
-                      if (m != AppearanceMode.values.first)
-                        const SizedBox(width: 10),
-                      Expanded(
-                        child: _ThemeCard(
-                          mode: m,
-                          accent: s.accent,
-                          selected: s.appearance == m,
-                          onTap: () => s.setAppearance(m),
+                    for (final m in AppearanceMode.values)
+                      if (m != AppearanceMode.materialYou || s.dynamicAvailable)
+                        RadioListTile<AppearanceMode>(
+                          value: m,
+                          activeColor: t.accent,
+                          fillColor: WidgetStateProperty.resolveWith(
+                            (states) => states.contains(WidgetState.selected)
+                                ? t.accent
+                                : t.drawerTextMuted,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                          ),
+                          title: Text(
+                            m.label,
+                            style: TextStyle(color: t.drawerText),
+                          ),
                         ),
-                      ),
-                    ],
                   ],
                 ),
               ),
               const SizedBox(height: 6),
               ListTile(
+                enabled: !materialYou,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
                 leading: Container(
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: s.accent,
+                    color: t.accent,
                     shape: BoxShape.circle,
                     border: Border.all(color: t.drawerTextMuted, width: 1),
                     boxShadow: [
                       BoxShadow(
-                        color: s.accent.withValues(alpha: 0.45),
+                        color: t.accent.withValues(alpha: 0.45),
                         blurRadius: 8,
                       ),
                     ],
@@ -121,19 +136,25 @@ class _SettingsSheet extends StatelessWidget {
                 ),
                 title: Text(
                   'Accent color',
-                  style: TextStyle(color: t.drawerText),
+                  style: TextStyle(
+                    color: materialYou ? t.drawerTextMuted : t.drawerText,
+                  ),
                 ),
                 subtitle: Text(
-                  s.customAccent == null
+                  materialYou
+                      ? 'Following your wallpaper'
+                      : s.customAccent == null
                       ? 'Orange (default)'
                       : '#${hexOfColor(s.customAccent!)}',
                   style: TextStyle(color: t.drawerTextMuted),
                 ),
-                trailing: Icon(
-                  Icons.chevron_right_rounded,
-                  color: t.drawerTextMuted,
-                ),
-                onTap: () => showAccentPicker(context),
+                trailing: materialYou
+                    ? null
+                    : Icon(
+                        Icons.chevron_right_rounded,
+                        color: t.drawerTextMuted,
+                      ),
+                onTap: materialYou ? null : () => showAccentPicker(context),
               ),
               SwitchListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
@@ -378,110 +399,6 @@ class _ShapeChoice extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ThemeCard extends StatelessWidget {
-  const _ThemeCard({
-    required this.mode,
-    required this.accent,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final AppearanceMode mode;
-  final Color accent;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = LaunchRTheme.of(context);
-    final p = LaunchRTheme.forMode(mode, accent);
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: '${mode.label} theme',
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Column(
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              height: 72,
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: p.menuBg,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: selected
-                      ? accent
-                      : t.drawerTextMuted.withValues(alpha: 0.35),
-                  width: selected ? 2.5 : 1,
-                ),
-              ),
-              child: Stack(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Container(
-                        width: 26,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: accent,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Container(
-                        width: 38,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: p.drawerTextMuted,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (selected)
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: Container(
-                        width: 18,
-                        height: 18,
-                        decoration: BoxDecoration(
-                          color: accent,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.check_rounded,
-                          size: 13,
-                          color: LaunchRTheme.onColor(accent),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              mode.label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              style: TextStyle(
-                color: selected ? t.drawerText : t.drawerTextMuted,
-                fontSize: 12,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
-              ),
-            ),
-          ],
         ),
       ),
     );
