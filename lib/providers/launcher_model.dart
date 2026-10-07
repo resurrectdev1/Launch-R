@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:launch_r/models/launcher_models.dart';
+import 'package:launch_r/services/fuzzy_search.dart';
 import 'package:launch_r/services/icon_cache.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 
@@ -25,12 +26,16 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   static const _kPinnedPages = 'launch_r_pinned_pages';
   static const _kHidden = 'launch_r_hidden';
   static const _kDrawerFree = 'launch_r_drawer_free';
+  static const _kTags = 'launch_r_tags';
+  static const maxTagLength = 24;
+  static const maxTagsPerApp = 12;
 
   static const maxHomePages = 10;
 
   SharedPreferences? _prefs;
   final Map<String, LauncherApp> _apps = {};
   final Set<String> _hidden = {};
+  final Map<String, Set<String>> _tags = {};
   List<LItem?> _drawer = [];
   List<List<LItem?>> _home = [];
   List<LItem?> _dock = [];
@@ -94,22 +99,65 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   String labelForPkg(String pkg) => _apps[pkg]?.label ?? pkg;
 
   List<LauncherApp> search(String query) {
-    final q = query.trim().toLowerCase();
+    final q = query.trim();
     if (q.isEmpty) return const [];
-    final starts = <LauncherApp>[];
-    final contains = <LauncherApp>[];
+    final scored = <(int, LauncherApp)>[];
     for (final a in _apps.values) {
       if (_hidden.contains(a.package)) continue;
-      final l = a.label.toLowerCase();
-      if (l.startsWith(q)) {
-        starts.add(a);
-      } else if (l.contains(q)) {
-        contains.add(a);
+      final s = scoreApp(q, a.label, _tags[a.package] ?? const <String>{});
+      if (s > 0) scored.add((s, a));
+    }
+    scored.sort((x, y) {
+      final c = y.$1.compareTo(x.$1);
+      return c != 0 ? c : _byLabel(x.$2, y.$2);
+    });
+    return [for (final e in scored) e.$2];
+  }
+
+  static String normalizeTag(String raw) {
+    final t = raw.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+    return t.length > maxTagLength ? t.substring(0, maxTagLength).trim() : t;
+  }
+
+  List<String> tagsOf(String pkg) =>
+      (_tags[pkg]?.toList() ?? <String>[])..sort();
+
+  List<MapEntry<String, int>> get tagCounts {
+    final counts = <String, int>{};
+    for (final e in _tags.entries) {
+      if (!_apps.containsKey(e.key)) continue;
+      for (final t in e.value) {
+        counts[t] = (counts[t] ?? 0) + 1;
       }
     }
-    starts.sort(_byLabel);
-    contains.sort(_byLabel);
-    return [...starts, ...contains];
+    return counts.entries.toList()..sort((a, b) {
+      final c = b.value.compareTo(a.value);
+      return c != 0 ? c : a.key.compareTo(b.key);
+    });
+  }
+
+  bool addTag(String pkg, String raw) {
+    final tag = normalizeTag(raw);
+    if (tag.isEmpty) return false;
+    final set = _tags.putIfAbsent(pkg, () => <String>{});
+    if (set.length >= maxTagsPerApp || !set.add(tag)) {
+      if (set.isEmpty) _tags.remove(pkg);
+      return false;
+    }
+    _commitTags();
+    return true;
+  }
+
+  void removeTag(String pkg, String tag) {
+    final set = _tags[pkg];
+    if (set == null || !set.remove(tag)) return;
+    if (set.isEmpty) _tags.remove(pkg);
+    _commitTags();
+  }
+
+  void _commitTags() {
+    notifyListeners();
+    unawaited(_persist());
   }
 
   Future<void> init() async {
@@ -219,6 +267,22 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
       ..clear()
       ..addAll(p.getStringList(_kHidden) ?? const <String>[]);
 
+    _tags.clear();
+    final rawTags = p.getString(_kTags);
+    if (rawTags != null) {
+      try {
+        final j = jsonDecode(rawTags);
+        if (j is Map) {
+          for (final e in j.entries) {
+            final v = e.value;
+            if (e.key is! String || v is! List) continue;
+            final set = v.whereType<String>().toSet();
+            if (set.isNotEmpty) _tags[e.key as String] = set;
+          }
+        }
+      } catch (_) {}
+    }
+
     _drawer = _decodeList(p.getString(_kDrawer));
     _dock = _decodeList(p.getString(_kDock));
     while (_dock.length < _homeCols) {
@@ -283,6 +347,10 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     await p.setInt(_kPinnedPages, _pinnedPages);
     await p.setStringList(_kHidden, _hidden.toList());
     await p.setBool(_kDrawerFree, _drawerFree);
+    await p.setString(
+      _kTags,
+      jsonEncode({for (final e in _tags.entries) e.key: e.value.toList()}),
+    );
     await p.setString(_kDrawer, _enc(_drawer));
     await p.setString(_kDock, _enc(_dock));
     await p.setString(
