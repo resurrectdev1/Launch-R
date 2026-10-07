@@ -11,6 +11,9 @@ import 'package:launch_r/services/launcher_channel.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
+  unawaited(
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
+  );
   LauncherChannel.instance.init();
 
   final settings = LauncherSettings();
