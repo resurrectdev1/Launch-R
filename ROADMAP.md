@@ -12,9 +12,7 @@
 
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
 
-- Option to add new apps to homescreen
-
-- Add material you suppourt
+- Option to add new apps to homescreen in settings (all newly installed apps will go to homescreen automaticlly)
 
 - Add private space suppourt
 
@@ -73,3 +71,5 @@
 - ~~Tags for apps that when you search for that keyword all the tagged apps you tagged will show up (like the Kvæsitso launcher)~~
 
 - ~~Add fuzzy search suppourt~~
+
+- ~~Add material you suppourt~~
