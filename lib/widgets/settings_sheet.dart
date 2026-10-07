@@ -232,6 +232,21 @@ class _SettingsSheet extends StatelessWidget {
                 value: model.drawerFree,
                 onChanged: model.setDrawerFree,
               ),
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
+                  'Add new apps to home',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  model.autoAddNew
+                      ? 'Newly installed apps are placed on your home screen'
+                      : 'New apps only appear in the apps screen',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                value: model.autoAddNew,
+                onChanged: model.setAutoAddNew,
+              ),
               header('Icons'),
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 6, 24, 10),
