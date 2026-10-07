@@ -12,6 +12,7 @@ class LauncherSettings extends ChangeNotifier {
   int _drawerCols = 4;
   bool _lockLayout = false;
   bool _showBadges = true;
+  bool _fuzzySearch = true;
   IconShape _iconShape = IconShape.squircle;
 
   AppearanceMode get appearance => _appearance;
@@ -22,6 +23,7 @@ class LauncherSettings extends ChangeNotifier {
   int get drawerCols => _drawerCols;
   bool get lockLayout => _lockLayout;
   bool get showBadges => _showBadges;
+  bool get fuzzySearch => _fuzzySearch;
   IconShape get iconShape => _iconShape;
 
   Future<void> init() async {
@@ -38,6 +40,7 @@ class LauncherSettings extends ChangeNotifier {
     _drawerCols = p.getInt('drawer_cols') ?? 4;
     _lockLayout = p.getBool('lock_layout') ?? false;
     _showBadges = p.getBool('show_badges') ?? true;
+    _fuzzySearch = p.getBool('fuzzy_search') ?? true;
     _iconShape = IconShape.fromName(p.getString('icon_shape'));
   }
 
@@ -82,6 +85,13 @@ class LauncherSettings extends ChangeNotifier {
     _showBadges = v;
     notifyListeners();
     await _prefs?.setBool('show_badges', v);
+  }
+
+  Future<void> setFuzzySearch(bool v) async {
+    if (v == _fuzzySearch) return;
+    _fuzzySearch = v;
+    notifyListeners();
+    await _prefs?.setBool('fuzzy_search', v);
   }
 
   Future<void> setIconShape(IconShape v) async {
