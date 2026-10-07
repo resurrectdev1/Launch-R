@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 enum AppearanceMode {
   orangeFactory('Orange Factory', Brightness.dark),
   amoledBlack('AMOLED Black', Brightness.dark),
-  whiteMinimal('White Minimal', Brightness.light);
+  whiteMinimal('White Minimal', Brightness.light),
+  materialYou('Material You', Brightness.dark);
 
   const AppearanceMode(this.label, this.brightness);
   final String label;
@@ -21,6 +22,7 @@ class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
     this.brightness, {
     this.amoled = false,
     this.accent = defaultAccent,
+    this.dynamicScheme,
   });
 
   factory LaunchRTheme.of(BuildContext context) {
@@ -28,16 +30,29 @@ class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
     return theme.extension<LaunchRTheme>() ?? LaunchRTheme(theme.brightness);
   }
 
-  factory LaunchRTheme.forMode(AppearanceMode mode, Color accent) =>
-      LaunchRTheme(
-        mode.brightness,
-        amoled: mode == AppearanceMode.amoledBlack,
-        accent: accent,
+  factory LaunchRTheme.forMode(
+    AppearanceMode mode,
+    Color accent, {
+    ColorScheme? dynamicScheme,
+  }) {
+    if (mode == AppearanceMode.materialYou && dynamicScheme != null) {
+      return LaunchRTheme(
+        dynamicScheme.brightness,
+        accent: dynamicScheme.primary,
+        dynamicScheme: dynamicScheme,
       );
+    }
+    return LaunchRTheme(
+      mode.brightness,
+      amoled: mode == AppearanceMode.amoledBlack,
+      accent: accent,
+    );
+  }
 
   final Brightness brightness;
   final bool amoled;
   final Color accent;
+  final ColorScheme? dynamicScheme;
 
   static const defaultAccent = Color(0xFFF26A27);
   static const badge = Color(0xFFFF5B22);
@@ -64,11 +79,15 @@ class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
   }
 
   Color get menuBg {
+    final d = dynamicScheme;
+    if (d != null) return d.surfaceContainerHigh;
     if (amoled) return const Color(0xFF000000);
     return dark ? const Color(0xFF2B2B31) : const Color(0xFFF7F7FB);
   }
 
   Color get popupBg {
+    final d = dynamicScheme;
+    if (d != null) return d.surfaceContainerHighest.withValues(alpha: 0.95);
     if (amoled) return const Color(0xFF0D0D0D);
     return dark ? const Color(0xF2303036) : const Color(0xF2F5F5F9);
   }
@@ -103,10 +122,12 @@ class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
     Brightness? brightness,
     bool? amoled,
     Color? accent,
+    ColorScheme? dynamicScheme,
   }) => LaunchRTheme(
     brightness ?? this.brightness,
     amoled: amoled ?? this.amoled,
     accent: accent ?? this.accent,
+    dynamicScheme: dynamicScheme ?? this.dynamicScheme,
   );
 
   @override
@@ -117,6 +138,7 @@ class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
       to.brightness,
       amoled: to.amoled,
       accent: Color.lerp(accent, other.accent, t) ?? other.accent,
+      dynamicScheme: to.dynamicScheme,
     );
   }
 }
