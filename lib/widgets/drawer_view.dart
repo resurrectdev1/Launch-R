@@ -251,7 +251,7 @@ class _DrawerViewState extends State<DrawerView> {
   Widget _results(LaunchRTheme t) {
     final model = context.watch<LauncherModel>();
     final settings = context.watch<LauncherSettings>();
-    final results = model.search(_search.text);
+    final results = model.search(_search.text, fuzzy: settings.fuzzySearch);
     final style = CellStyle(
       label: t.drawerText,
       shadows: const [],
@@ -433,7 +433,10 @@ class _SearchPill extends StatelessWidget {
               focusNode: focus,
               onChanged: (_) => onChanged(),
               onSubmitted: (q) {
-                final r = context.read<LauncherModel>().search(q);
+                final r = context.read<LauncherModel>().search(
+                  q,
+                  fuzzy: context.read<LauncherSettings>().fuzzySearch,
+                );
                 if (r.isNotEmpty) launchFrom(context, r.first.package);
               },
               textInputAction: TextInputAction.search,
