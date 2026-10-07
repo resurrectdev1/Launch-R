@@ -46,7 +46,7 @@ String normalizeSearch(String s) {
 List<String> _words(String text) =>
     text.split(_wordSplit).where((w) => w.isNotEmpty).toList();
 
-int scoreMatch(String query, String text) {
+int scoreMatch(String query, String text, {bool fuzzy = true}) {
   if (query.isEmpty || text.isEmpty) return 0;
   if (text == query) return 1000;
   if (text.startsWith(query)) {
@@ -61,7 +61,7 @@ int scoreMatch(String query, String text) {
   final idx = text.indexOf(query);
   if (idx >= 0) return 700 - math.min(idx, 60);
 
-  if (query.length < 2) return 0;
+  if (!fuzzy || query.length < 2) return 0;
 
   final sub = _subsequenceScore(query, text, words);
   if (sub > 0) return sub;
@@ -162,11 +162,11 @@ int _osa(String a, String b, int limit) {
   return prev[m];
 }
 
-int _scoreOne(String q, String label, List<String> tags) {
-  var best = scoreMatch(q, label);
+int _scoreOne(String q, String label, List<String> tags, bool fuzzy) {
+  var best = scoreMatch(q, label, fuzzy: fuzzy);
   for (final t in tags) {
     if (t.isEmpty) continue;
-    final s = t == q ? 950 : math.max(0, scoreMatch(q, t) - 80);
+    final s = t == q ? 950 : math.max(0, scoreMatch(q, t, fuzzy: fuzzy) - 80);
     if (s > best) best = s;
   }
   return best;
@@ -176,20 +176,21 @@ int scoreApp(
   String rawQuery,
   String label, [
   Iterable<String> tags = const <String>[],
+  bool fuzzy = true,
 ]) {
   final q = normalizeSearch(rawQuery);
   if (q.isEmpty) return 0;
   final l = normalizeSearch(label);
   final t = tags.map(normalizeSearch).toList();
 
-  final whole = _scoreOne(q, l, t);
+  final whole = _scoreOne(q, l, t, fuzzy);
   if (whole > 0) return whole;
 
   final tokens = q.split(_spaces);
   if (tokens.length < 2) return 0;
   var total = 0;
   for (final tok in tokens) {
-    final s = _scoreOne(tok, l, t);
+    final s = _scoreOne(tok, l, t, fuzzy);
     if (s == 0) return 0;
     total += s;
   }
