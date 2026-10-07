@@ -2,8 +2,6 @@
 
 - Make dragging apps in the app drawer to another drawer smoother, for a better experience
 
-- Fix horizontal view pixel overflows
-
 - Make home page editor sheet nicer
 
 - Make consistent animations for all features within app
@@ -11,8 +9,6 @@
 - Add custom font and text scaling & optional text bolding
 
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
-
-- Option to add new apps to homescreen in settings (all newly installed apps will go to homescreen automaticlly)
 
 - Add private space suppourt
 
@@ -73,3 +69,7 @@
 - ~~Add fuzzy search suppourt~~
 
 - ~~Add material you suppourt~~
+
+- ~~Lock app to portait~~
+
+- ~~Option to add new apps to homescreen in settings (all newly installed apps will go to homescreen automaticlly)~~
