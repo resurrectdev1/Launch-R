@@ -98,13 +98,18 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
 
   String labelForPkg(String pkg) => _apps[pkg]?.label ?? pkg;
 
-  List<LauncherApp> search(String query) {
+  List<LauncherApp> search(String query, {bool fuzzy = true}) {
     final q = query.trim();
     if (q.isEmpty) return const [];
     final scored = <(int, LauncherApp)>[];
     for (final a in _apps.values) {
       if (_hidden.contains(a.package)) continue;
-      final s = scoreApp(q, a.label, _tags[a.package] ?? const <String>{});
+      final s = scoreApp(
+        q,
+        a.label,
+        _tags[a.package] ?? const <String>{},
+        fuzzy,
+      );
       if (s > 0) scored.add((s, a));
     }
     scored.sort((x, y) {
@@ -134,6 +139,41 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
       final c = b.value.compareTo(a.value);
       return c != 0 ? c : a.key.compareTo(b.key);
     });
+  }
+
+  List<LauncherApp> get selectableApps => [
+    for (final a in _apps.values)
+      if (!_hidden.contains(a.package)) a,
+  ]..sort(_byLabel);
+
+  bool hasTag(String pkg, String tag) => _tags[pkg]?.contains(tag) ?? false;
+
+  bool tagIsFull(String pkg) => (_tags[pkg]?.length ?? 0) >= maxTagsPerApp;
+
+  int appCountForTag(String tag) => [
+    for (final e in _tags.entries)
+      if (_apps.containsKey(e.key) && e.value.contains(tag)) e.key,
+  ].length;
+
+  String? renameTag(String from, String to) {
+    final next = normalizeTag(to);
+    if (next.isEmpty || next == from) return null;
+    for (final set in _tags.values) {
+      if (set.remove(from)) set.add(next);
+    }
+    _tags.removeWhere((_, set) => set.isEmpty);
+    _commitTags();
+    return next;
+  }
+
+  void deleteTag(String tag) {
+    var changed = false;
+    for (final set in _tags.values) {
+      if (set.remove(tag)) changed = true;
+    }
+    if (!changed) return;
+    _tags.removeWhere((_, set) => set.isEmpty);
+    _commitTags();
   }
 
   bool addTag(String pkg, String raw) {
