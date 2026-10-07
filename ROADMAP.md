@@ -8,8 +8,6 @@
 
 - Make consistent animations for all features within app
 
-- Tags for apps that when you search for that keyword all the tagged apps you tagged will show up (like the Kvæsitso launcher)
-
 - Add custom font and text scaling & optional text bolding
 
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
@@ -17,8 +15,6 @@
 - Option to add new apps to homescreen
 
 - Add material you suppourt
-
-- Add fuzzy search suppourt
 
 - Add private space suppourt
 
@@ -73,3 +69,7 @@
 - ~~Improve folder opening animation to be more one ui inspired~~
 
 - ~~Improve folder look especially when few apps are in it because it looks odd~~
+
+- ~~Tags for apps that when you search for that keyword all the tagged apps you tagged will show up (like the Kvæsitso launcher)~~
+
+- ~~Add fuzzy search suppourt~~
