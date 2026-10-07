@@ -27,6 +27,8 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   static const _kHidden = 'launch_r_hidden';
   static const _kDrawerFree = 'launch_r_drawer_free';
   static const _kTags = 'launch_r_tags';
+  static const _kKnown = 'launch_r_known_pkgs';
+  static const _kAutoAdd = 'launch_r_auto_add_new';
   static const maxTagLength = 24;
   static const maxTagsPerApp = 12;
 
@@ -46,6 +48,8 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   int _pinnedPages = 1;
   bool _ready = false;
   bool _drawerFree = true;
+  bool _autoAddNew = false;
+  final Set<String> _known = {};
   bool notificationAccess = false;
 
   int iconRevision = 0;
@@ -70,6 +74,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   List<LItem?> get drawerSlots => List.unmodifiable(_drawer);
 
   bool get drawerFree => _drawerFree;
+  bool get autoAddNew => _autoAddNew;
   bool get drawerHasGaps => _drawer.contains(null);
   List<List<LItem?>> get home => _home;
   List<LItem?> get dock => _dock;
@@ -303,6 +308,10 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     _homeCols = p.getInt(_kCols) ?? 4;
     _homeRows = p.getInt(_kRows) ?? 6;
     _drawerFree = p.getBool(_kDrawerFree) ?? true;
+    _autoAddNew = p.getBool(_kAutoAdd) ?? false;
+    _known
+      ..clear()
+      ..addAll(p.getStringList(_kKnown) ?? const <String>[]);
     _hidden
       ..clear()
       ..addAll(p.getStringList(_kHidden) ?? const <String>[]);
@@ -387,6 +396,8 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     await p.setInt(_kPinnedPages, _pinnedPages);
     await p.setStringList(_kHidden, _hidden.toList());
     await p.setBool(_kDrawerFree, _drawerFree);
+    await p.setBool(_kAutoAdd, _autoAddNew);
+    await p.setStringList(_kKnown, _known.toList());
     await p.setString(
       _kTags,
       jsonEncode({for (final e in _tags.entries) e.key: e.value.toList()}),
@@ -415,6 +426,36 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
       ..clear()
       ..addEntries(list.map((a) => MapEntry(a.package, a)));
     _reconcile();
+    _trackNewApps();
+  }
+
+  void _trackNewApps() {
+    final installed = _apps.keys.toSet();
+    final firstRun = !(_prefs?.getBool(_kInit) ?? false);
+    if (_known.isEmpty && firstRun) {
+      _known.addAll(installed);
+      return;
+    }
+    final fresh = installed.difference(_known).toList()
+      ..sort(
+        (a, b) => labelForPkg(
+          a,
+        ).toLowerCase().compareTo(labelForPkg(b).toLowerCase()),
+      );
+    _known.addAll(installed);
+    if (!_autoAddNew) return;
+    for (final pkg in fresh) {
+      if (_isVisible(pkg) && !_homeContains(pkg)) {
+        _placeInFirstEmpty(AppItem(pkg));
+      }
+    }
+  }
+
+  void setAutoAddNew(bool v) {
+    if (v == _autoAddNew) return;
+    _autoAddNew = v;
+    _known.addAll(_apps.keys);
+    _commit();
   }
 
   bool _isVisible(String pkg) =>
