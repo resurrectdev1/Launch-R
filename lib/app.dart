@@ -1,18 +1,41 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/screens/launcher_shell.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 
-class LaunchRApp extends StatelessWidget {
+class LaunchRApp extends StatefulWidget {
   const LaunchRApp({super.key});
 
-  ThemeData _theme(AppearanceMode mode, Color accent) {
-    final lt = LaunchRTheme.forMode(mode, accent);
-    var scheme = ColorScheme.fromSeed(
-      seedColor: accent,
-      brightness: lt.brightness,
-    ).copyWith(primary: accent, onPrimary: lt.onAccent);
+  @override
+  State<LaunchRApp> createState() => _LaunchRAppState();
+}
+
+class _LaunchRAppState extends State<LaunchRApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangePlatformBrightness() => setState(() {});
+
+  ThemeData _theme(AppearanceMode mode, Color accent, ColorScheme? dyn) {
+    final lt = LaunchRTheme.forMode(mode, accent, dynamicScheme: dyn);
+    var scheme = dyn != null && mode == AppearanceMode.materialYou
+        ? dyn.copyWith(primary: lt.accent, onPrimary: lt.onAccent)
+        : ColorScheme.fromSeed(
+            seedColor: lt.accent,
+            brightness: lt.brightness,
+          ).copyWith(primary: lt.accent, onPrimary: lt.onAccent);
     if (lt.amoled) scheme = scheme.copyWith(surface: Colors.black);
     return ThemeData(
       useMaterial3: true,
@@ -32,14 +55,31 @@ class LaunchRApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final settings = context.watch<LauncherSettings>();
-    return MaterialApp(
-      title: 'Launch-R',
-      debugShowCheckedModeBanner: false,
-      color: Colors.transparent,
-      themeMode: ThemeMode.light,
-      theme: _theme(settings.appearance, settings.accent),
-      home: const LauncherShell(),
+    return DynamicColorBuilder(
+      builder: (lightDynamic, darkDynamic) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          context.read<LauncherSettings>().applyDynamicColors(
+            lightDynamic,
+            darkDynamic,
+          );
+        });
+        return Consumer<LauncherSettings>(
+          builder: (_, settings, _) {
+            final systemBrightness =
+                WidgetsBinding.instance.platformDispatcher.platformBrightness;
+            final dyn = settings.dynamicSchemeFor(systemBrightness);
+            return MaterialApp(
+              title: 'Launch-R',
+              debugShowCheckedModeBanner: false,
+              color: Colors.transparent,
+              themeMode: ThemeMode.light,
+              theme: _theme(settings.appearance, settings.accent, dyn),
+              home: const LauncherShell(),
+            );
+          },
+        );
+      },
     );
   }
 }
