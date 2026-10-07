@@ -14,11 +14,18 @@ class LauncherSettings extends ChangeNotifier {
   bool _showBadges = true;
   bool _fuzzySearch = true;
   IconShape _iconShape = IconShape.squircle;
+  ColorScheme? _dynamicLight;
+  ColorScheme? _dynamicDark;
 
   AppearanceMode get appearance => _appearance;
 
   Color? get customAccent => _customAccent;
   Color get accent => _customAccent ?? LaunchRTheme.defaultAccent;
+
+  bool get dynamicAvailable => _dynamicLight != null || _dynamicDark != null;
+  ColorScheme? dynamicSchemeFor(Brightness b) => b == Brightness.dark
+      ? (_dynamicDark ?? _dynamicLight)
+      : (_dynamicLight ?? _dynamicDark);
   bool get darkHomeText => _darkHomeText;
   int get drawerCols => _drawerCols;
   bool get lockLayout => _lockLayout;
@@ -42,6 +49,13 @@ class LauncherSettings extends ChangeNotifier {
     _showBadges = p.getBool('show_badges') ?? true;
     _fuzzySearch = p.getBool('fuzzy_search') ?? true;
     _iconShape = IconShape.fromName(p.getString('icon_shape'));
+  }
+
+  void applyDynamicColors(ColorScheme? light, ColorScheme? dark) {
+    if (light == _dynamicLight && dark == _dynamicDark) return;
+    _dynamicLight = light;
+    _dynamicDark = dark;
+    notifyListeners();
   }
 
   Future<void> setAppearance(AppearanceMode m) async {
