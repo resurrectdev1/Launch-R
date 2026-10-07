@@ -9,6 +9,7 @@ import 'package:launch_r/theme/icon_shapes.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/widgets/accent_picker_sheet.dart';
 import 'package:launch_r/widgets/hidden_apps_sheet.dart';
+import 'package:launch_r/widgets/tag_manager_sheet.dart';
 
 void showLaunchRSettings(BuildContext context) {
   showModalBottomSheet<void>(
@@ -248,6 +249,39 @@ class _SettingsSheet extends StatelessWidget {
                     ch.openNotificationAccessSettings();
                   }
                 },
+              ),
+              header('Search'),
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
+                  'Fuzzy search',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  s.fuzzySearch
+                      ? 'Finds apps despite typos and abbreviations'
+                      : 'Only names that start with or contain your text',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                value: s.fuzzySearch,
+                onChanged: s.setFuzzySearch,
+              ),
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                leading: Icon(Icons.sell_outlined, color: t.drawerText),
+                title: Text('Tags', style: TextStyle(color: t.drawerText)),
+                subtitle: Text(
+                  model.tagCounts.isEmpty
+                      ? 'None yet'
+                      : '${model.tagCounts.length} '
+                            '${model.tagCounts.length == 1 ? 'tag' : 'tags'}',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                trailing: Icon(
+                  Icons.chevron_right_rounded,
+                  color: t.drawerTextMuted,
+                ),
+                onTap: () => showTagManager(context),
               ),
               header('System'),
               ListTile(
