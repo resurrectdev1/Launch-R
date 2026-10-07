@@ -7,6 +7,7 @@ import 'package:launch_r/providers/shell_controller.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/widgets/folder_color_picker.dart';
+import 'package:launch_r/widgets/tag_editor_sheet.dart';
 
 void launchFrom(BuildContext context, String pkg) {
   Rect? from;
@@ -82,6 +83,7 @@ Future<void> showItemMenu(
                 Icons.remove_circle_outline_rounded,
                 'Remove',
               ),
+      _entry(t, 'tags', Icons.sell_outlined, 'Tags'),
       _entry(t, 'hide', Icons.visibility_off_outlined, 'Hide app'),
       _entry(t, 'info', Icons.info_outline_rounded, 'App info'),
       _entry(t, 'uninstall', Icons.delete_outline_rounded, 'Uninstall'),
@@ -131,6 +133,8 @@ Future<void> showItemMenu(
           duration: const Duration(seconds: 3),
         ),
       );
+    case 'tags':
+      if (context.mounted) showTagEditor(context, (item as AppItem).pkg);
     case 'info':
       LauncherChannel.instance.openAppInfo((item as AppItem).pkg);
     case 'uninstall':
