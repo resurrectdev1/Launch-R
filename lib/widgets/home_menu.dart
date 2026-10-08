@@ -277,6 +277,7 @@ class _MenuOverlayState extends State<_MenuOverlay> {
                   _BarAction(
                     icon: Icons.widgets_outlined,
                     label: 'Widgets',
+                    dimmed: locked,
                     onTap: locked ? _widgetsLocked : _widgets,
                   ),
                   _BarAction(
