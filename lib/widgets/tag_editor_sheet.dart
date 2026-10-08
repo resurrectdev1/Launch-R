@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/app_icon.dart';
 
 void showTagEditor(BuildContext context, String pkg) {
@@ -53,7 +54,8 @@ class _TagEditorSheetState extends State<_TagEditorSheet> {
     final full = mine.length >= LauncherModel.maxTagsPerApp;
 
     return AnimatedPadding(
-      duration: const Duration(milliseconds: 150),
+      duration: Motion.fast,
+      curve: Motion.standard,
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Container(
         constraints: BoxConstraints(
