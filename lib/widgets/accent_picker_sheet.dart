@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/theme/motion.dart';
 
 const _presets = <Color>[
   LaunchRTheme.defaultAccent,
@@ -164,7 +165,8 @@ class _AccentSheetState extends State<_AccentSheet> {
                 Row(
                   children: [
                     AnimatedContainer(
-                      duration: const Duration(milliseconds: 160),
+                      duration: Motion.fast,
+                      curve: Motion.standard,
                       width: 46,
                       height: 46,
                       decoration: BoxDecoration(
@@ -282,7 +284,8 @@ class _Swatch extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
+          duration: Motion.fast,
+          curve: Motion.standard,
           width: 46,
           height: 46,
           decoration: BoxDecoration(
