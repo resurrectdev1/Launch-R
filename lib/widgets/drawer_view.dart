@@ -7,6 +7,7 @@ import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/app_icon.dart';
 import 'package:launch_r/widgets/edge_flipper.dart';
 import 'package:launch_r/widgets/item_actions.dart';
@@ -70,10 +71,7 @@ class _DrawerViewState extends State<DrawerView> {
   void _prev() {
     if (_pages.hasClients) {
       unawaited(
-        _pages.previousPage(
-          duration: const Duration(milliseconds: 280),
-          curve: Curves.easeOutCubic,
-        ),
+        _pages.previousPage(duration: Motion.slow, curve: Motion.standard),
       );
     }
   }
@@ -81,12 +79,7 @@ class _DrawerViewState extends State<DrawerView> {
   void _next() {
     if (!_pages.hasClients) return;
     if ((_pages.page?.round() ?? 0) >= _pageCount - 1) return;
-    unawaited(
-      _pages.nextPage(
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-      ),
-    );
+    unawaited(_pages.nextPage(duration: Motion.slow, curve: Motion.standard));
   }
 
   void _drop(DragData d, Hover h, LItem? target, int index) {
@@ -128,7 +121,8 @@ class _DrawerViewState extends State<DrawerView> {
                   ? _results(t)
                   : AnimatedOpacity(
                       opacity: _reloading ? 0.35 : 1,
-                      duration: const Duration(milliseconds: 200),
+                      duration: Motion.base,
+                      curve: Motion.standard,
                       child: _grid(t),
                     ),
             ),
@@ -352,11 +346,12 @@ class _ReloadBanner extends StatelessWidget {
     return IgnorePointer(
       child: AnimatedSlide(
         offset: visible ? Offset.zero : const Offset(0, -0.8),
-        duration: const Duration(milliseconds: 240),
-        curve: Curves.easeOutCubic,
+        duration: Motion.base,
+        curve: Motion.standard,
         child: AnimatedOpacity(
           opacity: visible ? 1 : 0,
-          duration: const Duration(milliseconds: 200),
+          duration: Motion.base,
+          curve: Motion.standard,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
             decoration: BoxDecoration(
@@ -374,15 +369,15 @@ class _ReloadBanner extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
+                  duration: Motion.base,
                   transitionBuilder: (child, anim) =>
                       ScaleTransition(scale: anim, child: child),
                   child: icon,
                 ),
                 const SizedBox(width: 10),
                 AnimatedSize(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOutCubic,
+                  duration: Motion.base,
+                  curve: Motion.standard,
                   child: Text(
                     label,
                     style: TextStyle(
