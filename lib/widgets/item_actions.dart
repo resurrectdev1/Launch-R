@@ -1,275 +1,160 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
-import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/providers/shell_controller.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
-import 'package:launch_r/theme/motion.dart';
-import 'package:launch_r/widgets/drag_bar.dart';
-import 'package:launch_r/widgets/drawer_view.dart';
-import 'package:launch_r/widgets/folder_popup.dart';
-import 'package:launch_r/widgets/home_drop_hint.dart';
-import 'package:launch_r/widgets/home_menu.dart';
-import 'package:launch_r/widgets/home_view.dart';
+import 'package:launch_r/widgets/folder_color_picker.dart';
+import 'package:launch_r/widgets/tag_editor_sheet.dart';
 
-class LauncherShell extends StatefulWidget {
-  const LauncherShell({super.key});
-
-  @override
-  State<LauncherShell> createState() => _LauncherShellState();
+void launchFrom(BuildContext context, String pkg) {
+  Rect? from;
+  final box = context.findRenderObject();
+  if (box is RenderBox && box.attached) {
+    from = box.localToGlobal(Offset.zero) & box.size;
+  }
+  context.read<ShellController>().closeFolder();
+  unawaited(
+    LauncherChannel.instance.launchApp(
+      pkg,
+      from: from,
+      dpr: MediaQuery.devicePixelRatioOf(context),
+    ),
+  );
 }
 
-class _LauncherShellState extends State<LauncherShell>
-    with SingleTickerProviderStateMixin {
-  late final ShellController _shell = ShellController(vsync: this);
-  final _homePages = PageController();
-  late final Listenable _drawerLayer = Listenable.merge([
-    _shell.drawer,
-    _shell,
-  ]);
-
-  bool _opening = false;
-  double _pull = 0;
-  bool _defaultPageApplied = false;
-
-  @override
-  void initState() {
-    super.initState();
-    LauncherChannel.instance.onHome = _onHome;
-  }
-
-  @override
-  void dispose() {
-    LauncherChannel.instance.onHome = null;
-    _homePages.dispose();
-    _shell.dispose();
-    super.dispose();
-  }
-
-  void _onHome() {
-    if (_shell.isResizing) {
-      _shell.endResize();
-    } else if (_shell.menuOpen) {
-      _shell.closeMenu();
-    } else if (_shell.folder != null) {
-      _shell.closeFolder();
-    } else if (_shell.drawer.value > 0) {
-      _shell.closeDrawer();
-    } else {
-      final target = context.read<LauncherModel>().defaultPage;
-      if (_homePages.hasClients && (_homePages.page?.round() ?? 0) != target) {
-        unawaited(
-          _homePages.animateToPage(
-            target,
-            duration: Motion.slow,
-            curve: Motion.standard,
-          ),
-        );
+void openItem(BuildContext context, LItem item, Zone zone) {
+  switch (item) {
+    case AppItem(:final pkg):
+      launchFrom(context, pkg);
+    case FolderItem(:final fid):
+      Rect? from;
+      final box = context.findRenderObject();
+      if (box is RenderBox && box.attached) {
+        from = box.localToGlobal(Offset.zero) & box.size;
       }
-    }
-  }
-
-  void _onHomeLongPress() {
-    if (_shell.drawer.value > 0 ||
-        _shell.folder != null ||
-        _shell.drag != null ||
-        _shell.isResizing ||
-        _shell.menuOpen) {
-      return;
-    }
-    unawaited(HapticFeedback.mediumImpact());
-    _shell.openMenu();
-  }
-
-  void _back() {
-    if (_shell.isResizing) {
-      _shell.endResize();
-    } else if (_shell.menuOpen) {
-      _shell.closeMenu();
-    } else if (_shell.folder != null) {
-      _shell.closeFolder();
-    } else if (_shell.drawer.value > 0) {
-      _shell.closeDrawer();
-    }
-  }
-
-  void _vStart(DragStartDetails d) {
-    _opening = false;
-    _pull = 0;
-  }
-
-  void _vUpdate(DragUpdateDetails d) {
-    final h = MediaQuery.sizeOf(context).height;
-    if (!_opening && _pull <= 0 && d.delta.dy < 0) _opening = true;
-    if (_opening) {
-      _shell.drawer.value = (_shell.drawer.value - d.delta.dy / (h * 0.55))
-          .clamp(0.0, 1.0);
-    } else if (d.delta.dy > 0) {
-      _pull += d.delta.dy;
-    }
-  }
-
-  void _vEnd(DragEndDetails d) {
-    final v = d.velocity.pixelsPerSecond.dy;
-    if (_opening) {
-      final open = v < -300
-          ? true
-          : (v > 300 ? false : _shell.drawer.value > 0.4);
-      open ? _shell.openDrawer() : _shell.closeDrawer();
-    } else if (_pull > 70 || v > 700) {
-      unawaited(LauncherChannel.instance.expandNotifications());
-    }
-    _opening = false;
-    _pull = 0;
-  }
-
-  void _dUpdate(DragUpdateDetails d) {
-    final h = MediaQuery.sizeOf(context).height;
-    _shell.drawer.value = (_shell.drawer.value - d.delta.dy / (h * 0.55)).clamp(
-      0.0,
-      1.0,
-    );
-  }
-
-  void _dEnd(DragEndDetails d) {
-    final v = d.velocity.pixelsPerSecond.dy;
-    final open = v > 300
-        ? false
-        : (v < -300 ? true : _shell.drawer.value > 0.6);
-    open ? _shell.openDrawer() : _shell.closeDrawer();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final t = LaunchRTheme.of(context);
-    final settings = context.watch<LauncherSettings>();
-    _shell.homeBandTop =
-        MediaQuery.sizeOf(context).height -
-        ShellController.bandHeight(MediaQuery.viewPaddingOf(context).bottom);
-
-    final ready = context.select<LauncherModel, bool>((m) => m.ready);
-    if (ready && !_defaultPageApplied) {
-      _defaultPageApplied = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final page = context.read<LauncherModel>().defaultPage;
-        if (page > 0 && _homePages.hasClients) _homePages.jumpToPage(page);
-      });
-    }
-
-    return ChangeNotifierProvider<ShellController>.value(
-      value: _shell,
-      child: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, _) {
-          if (!didPop) _back();
-        },
-        child: AnimatedBuilder(
-          animation: _shell.drawer,
-          builder: (context, child) {
-            final lightIcons = _shell.drawerOpen
-                ? t.dark
-                : !settings.darkHomeText;
-            final b = lightIcons ? Brightness.light : Brightness.dark;
-            return AnnotatedRegion<SystemUiOverlayStyle>(
-              value: SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
-                statusBarIconBrightness: b,
-                systemNavigationBarColor: Colors.transparent,
-                systemNavigationBarIconBrightness: b,
-                systemNavigationBarContrastEnforced: false,
-              ),
-              child: child!,
-            );
-          },
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            resizeToAvoidBottomInset: false,
-            body: Stack(
-              fit: StackFit.expand,
-              children: [
-                const Positioned.fill(child: _WallpaperLayer()),
-
-                Positioned.fill(
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.translucent,
-                    onVerticalDragStart: _vStart,
-                    onVerticalDragUpdate: _vUpdate,
-                    onVerticalDragEnd: _vEnd,
-                    onLongPress: _onHomeLongPress,
-                    child: AnimatedBuilder(
-                      animation: _shell.drawer,
-                      builder: (context, child) {
-                        final v = _shell.drawer.value;
-                        return Opacity(
-                          opacity: 1 - v,
-                          child: Transform.scale(
-                            scale: 1 - 0.06 * v,
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: HomeView(controller: _homePages),
-                    ),
-                  ),
-                ),
-
-                Positioned.fill(
-                  child: AnimatedBuilder(
-                    animation: _drawerLayer,
-                    builder: (context, child) {
-                      final v = _shell.drawer.value;
-                      final carrying = _shell.dragToHome;
-                      if (v == 0 && !carrying) return const SizedBox.shrink();
-                      return IgnorePointer(
-                        ignoring: carrying,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onVerticalDragUpdate: _dUpdate,
-                          onVerticalDragEnd: _dEnd,
-                          child: ColoredBox(
-                            color: t.drawerScrim.withValues(
-                              alpha: t.drawerScrim.a * v,
-                            ),
-                            child: Opacity(
-                              opacity: v,
-                              child: Transform.translate(
-                                offset: Offset(0, (1 - v) * 70),
-                                child: child,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                    child: const DrawerView(),
-                  ),
-                ),
-
-                const FolderPopup(),
-
-                HomeMenu(homePages: _homePages),
-
-                const HomeDropHint(),
-
-                const DragActionBar(),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+      context.read<ShellController>().openFolder(zone, fid, from: from);
+    case WidgetItem() || WidgetCover():
+      break;
   }
 }
 
-class _WallpaperLayer extends StatelessWidget {
-  const _WallpaperLayer();
+PopupMenuItem<String> _entry(
+  LaunchRTheme t,
+  String value,
+  IconData icon,
+  String text,
+) {
+  return PopupMenuItem<String>(
+    value: value,
+    height: 48,
+    child: Row(
+      children: [
+        Icon(icon, size: 21, color: t.drawerText),
+        const SizedBox(width: 14),
+        Text(text, style: TextStyle(color: t.drawerText, fontSize: 15)),
+      ],
+    ),
+  );
+}
 
-  @override
-  Widget build(BuildContext context) {
-    return const ColoredBox(color: Color(0x1F000000));
+Future<void> showItemMenu(
+  BuildContext context,
+  Offset pos,
+  LItem item,
+  Zone zone, {
+  String? fromFolder,
+}) async {
+  final model = context.read<LauncherModel>();
+  final shell = context.read<ShellController>();
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  final t = LaunchRTheme.of(context);
+  final size = MediaQuery.sizeOf(context);
+  final inDrawer = zone == Zone.drawer;
+
+  final entries = <PopupMenuEntry<String>>[
+    if (item is AppItem) ...[
+      if (fromFolder == null)
+        inDrawer
+            ? _entry(t, 'add', Icons.add_to_home_screen_rounded, 'Add to Home')
+            : _entry(
+                t,
+                'remove',
+                Icons.remove_circle_outline_rounded,
+                'Remove',
+              ),
+      _entry(t, 'tags', Icons.sell_outlined, 'Tags'),
+      _entry(t, 'hide', Icons.visibility_off_outlined, 'Hide app'),
+      _entry(t, 'info', Icons.info_outline_rounded, 'App info'),
+      _entry(t, 'uninstall', Icons.delete_outline_rounded, 'Uninstall'),
+    ],
+    if (item is FolderItem) ...[
+      _entry(t, 'rename', Icons.edit_outlined, 'Rename'),
+      _entry(t, 'color', Icons.palette_outlined, 'Color'),
+      inDrawer
+          ? _entry(t, 'dissolve', Icons.folder_off_outlined, 'Ungroup folder')
+          : _entry(t, 'remove', Icons.remove_circle_outline_rounded, 'Remove'),
+    ],
+    if (item is WidgetItem) ...[
+      if (item.resizable)
+        _entry(t, 'resize', Icons.open_in_full_rounded, 'Resize'),
+      _entry(t, 'remove', Icons.remove_circle_outline_rounded, 'Remove'),
+    ],
+  ];
+
+  final choice = await showMenu<String>(
+    context: context,
+    position: RelativeRect.fromLTRB(
+      pos.dx,
+      pos.dy,
+      size.width - pos.dx,
+      size.height - pos.dy,
+    ),
+    color: t.menuBg,
+    elevation: 8,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+    items: entries,
+  );
+  if (choice == null) return;
+
+  switch (choice) {
+    case 'add':
+      final ok = model.addToHome((item as AppItem).pkg);
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(ok ? 'Added to Home' : 'Already on Home'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    case 'remove':
+      model.removeFromHome(item.id);
+    case 'hide':
+      final pkg = (item as AppItem).pkg;
+      final label = model.labelForPkg(pkg);
+      model.hideApp(pkg);
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text('$label hidden. Manage in Launcher settings'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    case 'tags':
+      if (context.mounted) showTagEditor(context, (item as AppItem).pkg);
+    case 'info':
+      unawaited(LauncherChannel.instance.openAppInfo((item as AppItem).pkg));
+    case 'uninstall':
+      unawaited(LauncherChannel.instance.uninstallApp((item as AppItem).pkg));
+    case 'rename':
+      shell.openFolder(zone, (item as FolderItem).fid, rename: true);
+    case 'color':
+      if (context.mounted) {
+        showFolderColorPicker(context, zone, (item as FolderItem).fid);
+      }
+    case 'dissolve':
+      model.dissolveFolder(zone, (item as FolderItem).fid);
+    case 'resize':
+      shell.startResize((item as WidgetItem).wid);
   }
 }
