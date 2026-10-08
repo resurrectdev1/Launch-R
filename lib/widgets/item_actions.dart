@@ -144,9 +144,11 @@ Future<void> showItemMenu(
     case 'tags':
       if (context.mounted) showTagEditor(context, (item as AppItem).pkg);
     case 'info':
-      LauncherChannel.instance.openAppInfo((item as AppItem).pkg);
+      unawaited(LauncherChannel.instance.openAppInfo((item as AppItem).pkg));
     case 'uninstall':
-      LauncherChannel.instance.uninstallApp((item as AppItem).pkg);
+      unawaited(
+        LauncherChannel.instance.uninstallApp((item as AppItem).pkg),
+      );
     case 'rename':
       shell.openFolder(zone, (item as FolderItem).fid, rename: true);
     case 'color':
