@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/services/fuzzy_search.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/app_icon.dart';
 
 void showTagManager(BuildContext context) {
@@ -31,7 +32,8 @@ class _TagManagerSheetState extends State<_TagManagerSheet> {
     final detail = _openTag != null;
 
     return AnimatedPadding(
-      duration: const Duration(milliseconds: 150),
+      duration: Motion.fast,
+      curve: Motion.standard,
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Container(
         constraints: BoxConstraints(
