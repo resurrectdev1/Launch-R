@@ -35,6 +35,22 @@ class ShellController extends ChangeNotifier {
 
   bool menuOpen = false;
 
+  int? resizingWid;
+
+  bool get isResizing => resizingWid != null;
+
+  void startResize(int wid) {
+    if (resizingWid == wid) return;
+    resizingWid = wid;
+    notifyListeners();
+  }
+
+  void endResize() {
+    if (resizingWid == null) return;
+    resizingWid = null;
+    notifyListeners();
+  }
+
   static double bandHeight(double navBottom) => math.max(56, navBottom + 40);
 
   final GlobalKey folderPanelKey = GlobalKey();
@@ -86,6 +102,7 @@ class ShellController extends ChangeNotifier {
 
   void dragStart(DragData d) {
     drag = d;
+    resizingWid = null;
     leftFolder = false;
     dragToHome = false;
     _setInBand(false, notify: false);
