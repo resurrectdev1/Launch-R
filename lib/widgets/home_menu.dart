@@ -9,6 +9,7 @@ import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/providers/shell_controller.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/app_icon.dart';
 import 'package:launch_r/widgets/settings_sheet.dart';
 
@@ -21,7 +22,7 @@ class HomeMenu extends StatelessWidget {
     final open = context.select<ShellController, bool>((s) => s.menuOpen);
     return Positioned.fill(
       child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 180),
+        duration: Motion.base,
         child: open
             ? _MenuOverlay(key: const ValueKey('menu'), homePages: homePages)
             : const SizedBox.shrink(key: ValueKey('none')),
@@ -68,11 +69,7 @@ class _MenuOverlayState extends State<_MenuOverlay> {
     context.read<ShellController>().closeMenu();
     if (home.hasClients) {
       unawaited(
-        home.animateToPage(
-          i,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-        ),
+        home.animateToPage(i, duration: Motion.slow, curve: Motion.standard),
       );
     }
   }
@@ -90,11 +87,7 @@ class _MenuOverlayState extends State<_MenuOverlay> {
       final c = _cardsCtl;
       if (!mounted || c == null || !c.hasClients) return;
       unawaited(
-        c.animateToPage(
-          i,
-          duration: const Duration(milliseconds: 280),
-          curve: Curves.easeOutCubic,
-        ),
+        c.animateToPage(i, duration: Motion.slow, curve: Motion.standard),
       );
     });
   }
@@ -171,8 +164,8 @@ class _MenuOverlayState extends State<_MenuOverlay> {
                   return Center(
                     child: TweenAnimationBuilder<double>(
                       tween: Tween(begin: 0.94, end: 1),
-                      duration: const Duration(milliseconds: 240),
-                      curve: Curves.easeOutCubic,
+                      duration: Motion.base,
+                      curve: Motion.standard,
                       builder: (context, v, child) =>
                           Transform.scale(scale: v, child: child),
                       child: SizedBox(
