@@ -42,6 +42,8 @@ class _MenuOverlay extends StatefulWidget {
 
 class _MenuOverlayState extends State<_MenuOverlay> {
   static const _gap = 20.0;
+  static const _cardFrac = 0.46;
+  static const _btn = 52.0;
 
   PageController? _cardsCtl;
   int _current = 0;
@@ -55,7 +57,7 @@ class _MenuOverlayState extends State<_MenuOverlay> {
     _current = home.hasClients ? (home.page?.round() ?? 0) : 0;
     _cardsCtl = PageController(
       initialPage: _current,
-      viewportFraction: (w * 0.40 + _gap) / w,
+      viewportFraction: (w * _cardFrac + _gap) / w,
     );
   }
 
@@ -149,9 +151,9 @@ class _MenuOverlayState extends State<_MenuOverlay> {
 
     final pages = model.home.length;
     final showAdd = !locked && model.canAddHomePage;
-    final cardW = size.width * 0.40;
+    final cardW = size.width * _cardFrac;
     final idealCardH = cardW * (size.height * 0.8) / size.width;
-    final actionsH = locked ? 0.0 : 14.0 + 42.0;
+    final actionsH = locked ? 0.0 : 16.0 + _btn;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -208,7 +210,7 @@ class _MenuOverlayState extends State<_MenuOverlay> {
                                       onTap: () => _openPage(i),
                                     ),
                                     if (!locked) ...[
-                                      const SizedBox(height: 14),
+                                      const SizedBox(height: 16),
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
@@ -223,7 +225,7 @@ class _MenuOverlayState extends State<_MenuOverlay> {
                                             active: i == model.defaultPage,
                                             onTap: () => _setDefault(i),
                                           ),
-                                          const SizedBox(width: 14),
+                                          const SizedBox(width: 18),
                                           _CircleBtn(
                                             icon: Icons.delete_outline_rounded,
                                             label: 'Remove page',
@@ -424,11 +426,11 @@ class _AddCard extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0x4DFFFFFF), width: 1.5),
+            border: Border.all(color: const Color(0x4DFFFFFF), width: 2),
           ),
           child: const Icon(
             Icons.add_rounded,
-            size: 42,
+            size: 56,
             color: Color(0xB3FFFFFF),
           ),
         ),
@@ -464,15 +466,15 @@ class _CircleBtn extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: enabled ? onTap : null,
         child: Container(
-          width: 42,
-          height: 42,
+          width: _MenuOverlayState._btn,
+          height: _MenuOverlayState._btn,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: active ? t.accent : const Color(0x33FFFFFF),
           ),
           child: Icon(
             icon,
-            size: 22,
+            size: 27,
             color: Colors.white.withValues(alpha: enabled ? 1 : 0.35),
           ),
         ),
