@@ -1,6 +1,10 @@
 package com.resurrect.launch_r
 
 import android.app.ActivityOptions
+import android.appwidget.AppWidgetHost
+import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProviderInfo
+import android.content.ComponentName
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -14,6 +18,7 @@ import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.drawable.AdaptiveIconDrawable
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -38,6 +43,23 @@ class MainActivity : FlutterActivity() {
     private var receiverRegistered = false
     private val io = Executors.newFixedThreadPool(3)
 
+    private val widgetHost by lazy { AppWidgetHost(this, WIDGET_HOST_ID) }
+    private val widgetManager by lazy { AppWidgetManager.getInstance(this) }
+    private var pendingWidget: PendingWidget? = null
+
+    private class PendingWidget(
+        val id: Int,
+        val info: AppWidgetProviderInfo,
+        val result: MethodChannel.Result,
+    )
+
+    companion object {
+        private const val WIDGET_HOST_ID = 1024
+        private const val WIDGET_VIEW_TYPE = "com.resurrect.launch_r/widget"
+        private const val REQ_BIND_WIDGET = 7001
+        private const val REQ_CONFIGURE_WIDGET = 7002
+    }
+
     private val packageReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             channel?.invokeMethod("onPackagesChanged", null)
@@ -51,6 +73,11 @@ class MainActivity : FlutterActivity() {
         val ch = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
         channel = ch
         ch.setMethodCallHandler { call, result -> handle(call, result) }
+
+        flutterEngine.platformViewsController.registry.registerViewFactory(
+            WIDGET_VIEW_TYPE,
+            LaunchRWidgetFactory(this, widgetHost, widgetManager),
+        )
 
         if (!receiverRegistered) {
             val filter = IntentFilter().apply {
@@ -73,6 +100,31 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        try { widgetHost.startListening() } catch (_: Exception) {}
+    }
+
+    override fun onStop() {
+        try { widgetHost.stopListening() } catch (_: Exception) {}
+        super.onStop()
+    }
+
+    @Suppress("DEPRECATION")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        when (requestCode) {
+            REQ_BIND_WIDGET -> {
+                if (resultCode == RESULT_OK) continueWidgetAfterBind() else finishPendingWidget(false)
+                return
+            }
+            REQ_CONFIGURE_WIDGET -> {
+                finishPendingWidget(resultCode == RESULT_OK)
+                return
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data)
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (intent.hasCategory(Intent.CATEGORY_HOME)) {
@@ -86,6 +138,10 @@ class MainActivity : FlutterActivity() {
             receiverRegistered = false
         }
         LaunchRNotificationListener.onChange = null
+        pendingWidget?.let {
+            try { widgetHost.deleteAppWidgetId(it.id) } catch (_: Exception) {}
+            pendingWidget = null
+        }
         super.onDestroy()
     }
 
@@ -222,7 +278,143 @@ class MainActivity : FlutterActivity() {
                 result.success(null)
             }
 
+            "getWidgetProviders" -> io.execute {
+                val out = ArrayList<Map<String, Any?>>()
+                try {
+                    for (info in widgetManager.installedProviders) {
+                        if (info.provider.packageName == packageName) continue
+                        if (info.widgetCategory and AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN == 0) continue
+                        out.add(providerMap(info))
+                    }
+                } catch (_: Throwable) {
+                }
+                runOnUiThread { result.success(out) }
+            }
+
+            "getWidgetPreview" -> {
+                val comp = call.argument<String>("component")
+                val size = call.argument<Int>("size") ?: 256
+                io.execute {
+                    val bytes = try { renderWidgetPreview(comp, size) } catch (_: Throwable) { null }
+                    runOnUiThread { result.success(bytes) }
+                }
+            }
+
+            "addWidget" -> addWidget(call.argument<String>("component"), result)
+
+            "deleteWidget" -> {
+                val id = call.argument<Int>("id")
+                if (id != null) {
+                    try { widgetHost.deleteAppWidgetId(id) } catch (_: Exception) {}
+                }
+                result.success(null)
+            }
+
             else -> result.notImplemented()
+        }
+    }
+
+    private fun providerMap(info: AppWidgetProviderInfo): Map<String, Any?> {
+        val pm = packageManager
+        val density = resources.displayMetrics.density
+        fun dp(px: Int): Int = (px / density).toInt()
+        val pkg = info.provider.packageName
+        val appLabel = try {
+            pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString()
+        } catch (_: Exception) {
+            pkg
+        }
+        val map = hashMapOf<String, Any?>(
+            "component" to info.provider.flattenToString(),
+            "package" to pkg,
+            "label" to (info.loadLabel(pm) ?: pkg),
+            "appLabel" to appLabel,
+            "minW" to dp(info.minWidth),
+            "minH" to dp(info.minHeight),
+            "minResizeW" to dp(info.minResizeWidth),
+            "minResizeH" to dp(info.minResizeHeight),
+            "resizeMode" to info.resizeMode,
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            map["maxResizeW"] = dp(info.maxResizeWidth)
+            map["maxResizeH"] = dp(info.maxResizeHeight)
+            map["targetCellW"] = info.targetCellWidth
+            map["targetCellH"] = info.targetCellHeight
+        }
+        return map
+    }
+
+    private fun renderWidgetPreview(component: String?, maxPx: Int): ByteArray? {
+        val cn = ComponentName.unflattenFromString(component ?: return null) ?: return null
+        val info = widgetManager.installedProviders.firstOrNull { it.provider == cn } ?: return null
+        val dpi = resources.displayMetrics.densityDpi
+        val d: Drawable = info.loadPreviewImage(this, dpi) ?: info.loadIcon(this, dpi) ?: return null
+        val w = d.intrinsicWidth.takeIf { it > 0 } ?: maxPx
+        val h = d.intrinsicHeight.takeIf { it > 0 } ?: maxPx
+        val scale = minOf(1f, maxPx.toFloat() / maxOf(w, h))
+        val bw = maxOf(1, (w * scale).toInt())
+        val bh = maxOf(1, (h * scale).toInt())
+        val bmp = Bitmap.createBitmap(bw, bh, Bitmap.Config.ARGB_8888)
+        d.setBounds(0, 0, bw, bh)
+        d.draw(Canvas(bmp))
+        val stream = ByteArrayOutputStream()
+        bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
+        return stream.toByteArray()
+    }
+
+    @Suppress("DEPRECATION")
+    private fun addWidget(component: String?, result: MethodChannel.Result) {
+        val cn = component?.let { ComponentName.unflattenFromString(it) }
+        val info = cn?.let { c -> widgetManager.installedProviders.firstOrNull { it.provider == c } }
+        if (info == null || pendingWidget != null) {
+            result.success(null)
+            return
+        }
+        val id = try { widgetHost.allocateAppWidgetId() } catch (_: Exception) {
+            result.success(null)
+            return
+        }
+        pendingWidget = PendingWidget(id, info, result)
+
+        if (widgetManager.bindAppWidgetIdIfAllowed(id, info.provider)) {
+            continueWidgetAfterBind()
+        } else {
+            val ask = Intent(AppWidgetManager.ACTION_APPWIDGET_BIND).apply {
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, info.provider)
+            }
+            try {
+                startActivityForResult(ask, REQ_BIND_WIDGET)
+            } catch (_: Exception) {
+                finishPendingWidget(false)
+            }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun continueWidgetAfterBind() {
+        val p = pendingWidget ?: return
+        if (p.info.configure == null) {
+            finishPendingWidget(true)
+            return
+        }
+        try {
+            widgetHost.startAppWidgetConfigureActivityForResult(
+                this, p.id, 0, REQ_CONFIGURE_WIDGET, null
+            )
+        } catch (_: Exception) {
+            finishPendingWidget(false)
+        }
+    }
+
+    private fun finishPendingWidget(ok: Boolean) {
+        val p = pendingWidget ?: return
+        pendingWidget = null
+        if (ok) {
+            p.result.success(p.id)
+        } else {
+            try { widgetHost.deleteAppWidgetId(p.id) } catch (_: Exception) {}
+            p.result.success(null)
         }
     }
 
