@@ -16,6 +16,7 @@ class DraggableItem extends StatefulWidget {
     required this.onMenu,
     this.fromFolder,
     this.locked = false,
+    this.feedbackAnchor,
   });
 
   final LItem item;
@@ -28,8 +29,10 @@ class DraggableItem extends StatefulWidget {
   final Widget feedback;
   final Size feedbackSize;
 
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final void Function(Offset globalPosition) onMenu;
+
+  final Offset? feedbackAnchor;
 
   @override
   State<DraggableItem> createState() => _DraggableItemState();
@@ -59,26 +62,38 @@ class _DraggableItemState extends State<DraggableItem> {
     }
 
     final fs = widget.feedbackSize;
+    final anchor = widget.feedbackAnchor;
     return LongPressDraggable<DragData>(
       data: data,
       maxSimultaneousDrags: 1,
       delay: const Duration(milliseconds: 320),
-      dragAnchorStrategy: pointerDragAnchorStrategy,
+      dragAnchorStrategy: anchor == null
+          ? pointerDragAnchorStrategy
+          : (draggable, context, position) => anchor,
       feedback: IgnorePointer(
-        child: Transform.translate(
-          offset: Offset(-fs.width / 2, -fs.height / 2 - 6),
-          child: Transform.scale(
-            scale: 1.12,
-            child: Material(
-              type: MaterialType.transparency,
-              child: SizedBox(
-                width: fs.width,
-                height: fs.height,
-                child: Center(child: widget.feedback),
+        child: anchor != null
+            ? Material(
+                type: MaterialType.transparency,
+                child: SizedBox(
+                  width: fs.width,
+                  height: fs.height,
+                  child: widget.feedback,
+                ),
+              )
+            : Transform.translate(
+                offset: Offset(-fs.width / 2, -fs.height / 2 - 6),
+                child: Transform.scale(
+                  scale: 1.12,
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: SizedBox(
+                      width: fs.width,
+                      height: fs.height,
+                      child: Center(child: widget.feedback),
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
-        ),
       ),
       childWhenDragging: Opacity(opacity: 0, child: widget.child),
       onDragStarted: () {
