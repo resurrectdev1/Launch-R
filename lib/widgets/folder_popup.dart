@@ -432,11 +432,13 @@ class _FolderPageState extends State<_FolderPage> {
                                             width: cellW,
                                             style: style,
                                             reveal: widget.reveal,
+                                            dot: c < _cols - 1 && r < rows - 1,
                                           )
                                         : _EndSlot(
                                             zone: widget.zone,
                                             fid: widget.folder.fid,
                                             fg: style.label,
+                                            dot: c < _cols - 1 && r < rows - 1,
                                           ),
                                   ),
                               ],
@@ -460,7 +462,11 @@ class _FolderPageState extends State<_FolderPage> {
         if (pageCount > 1)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: PageDots(controller: _pages, count: pageCount, color: fg),
+            child: PageDots(
+              controller: _pages,
+              count: pageCount,
+              color: fg,
+            ),
           ),
       ],
     );
@@ -477,11 +483,13 @@ class _SlotGuide extends StatelessWidget {
     required this.visible,
     required this.active,
     required this.fg,
+    required this.dot,
   });
 
   final bool visible;
   final bool active;
   final Color fg;
+  final bool dot;
 
   @override
   Widget build(BuildContext context) {
@@ -509,11 +517,12 @@ class _SlotGuide extends StatelessWidget {
                   ),
                 ),
               ),
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: CornerDotsPainter(fg.withValues(alpha: 0.22)),
+              if (dot)
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: IntersectionDotPainter(fg.withValues(alpha: 0.22)),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -523,11 +532,17 @@ class _SlotGuide extends StatelessWidget {
 }
 
 class _EndSlot extends StatelessWidget {
-  const _EndSlot({required this.zone, required this.fid, required this.fg});
+  const _EndSlot({
+    required this.zone,
+    required this.fid,
+    required this.fg,
+    required this.dot,
+  });
 
   final Zone zone;
   final String fid;
   final Color fg;
+  final bool dot;
 
   @override
   Widget build(BuildContext context) {
@@ -544,7 +559,12 @@ class _EndSlot extends StatelessWidget {
       builder: (context, candidate, _) => Stack(
         clipBehavior: Clip.none,
         children: [
-          _SlotGuide(visible: gridOn, active: candidate.isNotEmpty, fg: fg),
+          _SlotGuide(
+            visible: gridOn,
+            active: candidate.isNotEmpty,
+            fg: fg,
+            dot: dot,
+          ),
         ],
       ),
     );
@@ -561,8 +581,10 @@ class _PopupCell extends StatefulWidget {
     required this.width,
     required this.style,
     required this.reveal,
+    required this.dot,
   });
 
+  final bool dot;
   final String pkg;
   final int index;
   final Zone zone;
@@ -658,7 +680,12 @@ class _PopupCellState extends State<_PopupCell> {
         return Stack(
           clipBehavior: Clip.none,
           children: [
-            _SlotGuide(visible: gridOn, active: false, fg: widget.style.label),
+            _SlotGuide(
+              visible: gridOn,
+              active: false,
+              fg: widget.style.label,
+              dot: widget.dot,
+            ),
             Positioned.fill(
               child: DraggableItem(
                 item: item,
