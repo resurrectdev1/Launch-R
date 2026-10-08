@@ -5,6 +5,7 @@ import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/shell_controller.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/theme/motion.dart';
 
 class DragActionBar extends StatelessWidget {
   const DragActionBar({super.key});
@@ -20,7 +21,7 @@ class DragActionBar extends StatelessWidget {
       left: 16,
       right: 16,
       child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 160),
+        duration: Motion.fast,
         transitionBuilder: (child, anim) => FadeTransition(
           opacity: anim,
           child: SlideTransition(
@@ -107,7 +108,8 @@ class _Action extends StatelessWidget {
       builder: (context, candidate, rejected) {
         final active = candidate.isNotEmpty;
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
+          duration: Motion.fast,
+          curve: Motion.standard,
           height: 58,
           decoration: BoxDecoration(
             color: active ? Colors.white24 : Colors.transparent,
