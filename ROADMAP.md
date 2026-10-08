@@ -4,8 +4,6 @@
 
 - Make home page editor sheet nicer
 
-- Make consistent animations for all features within app
-
 - Add custom font and text scaling & optional text bolding
 
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
@@ -73,3 +71,5 @@
 - ~~Lock app to portait~~
 
 - ~~Option to add new apps to homescreen in settings (all newly installed apps will go to homescreen automaticlly)~~
+
+- ~~Make consistent animations for all features within app~~
