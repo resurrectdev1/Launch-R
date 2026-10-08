@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/shell_controller.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/theme/motion.dart';
 
 class HomeDropHint extends StatelessWidget {
   const HomeDropHint({super.key});
@@ -31,14 +32,16 @@ class HomeDropHint extends StatelessWidget {
           padding: EdgeInsets.only(bottom: navBottom),
           child: AnimatedOpacity(
             opacity: show ? 1 : 0,
-            duration: const Duration(milliseconds: 160),
+            duration: Motion.fast,
+            curve: Motion.standard,
             child: Center(
               child: AnimatedScale(
                 scale: active ? 1.08 : 1,
-                duration: const Duration(milliseconds: 140),
-                curve: Curves.easeOutCubic,
+                duration: Motion.fast,
+                curve: Motion.standard,
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 140),
+                  duration: Motion.fast,
+                  curve: Motion.standard,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 9,
