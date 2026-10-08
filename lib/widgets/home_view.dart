@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
+import 'package:launch_r/providers/shell_controller.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/edge_flipper.dart';
@@ -139,6 +140,9 @@ class _HomePage extends StatelessWidget {
     final cols = model.homeCols;
     final rows = model.homeRows;
     final items = model.home[page];
+    final resizing = context.select<ShellController, int?>(
+      (s) => s.resizingWid,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -175,23 +179,46 @@ class _HomePage extends StatelessWidget {
                 ),
               ),
               for (var i = 0; i < items.length; i++)
-                if (items[i] case final WidgetItem w)
-                  Positioned(
-                    key: ValueKey('widget-${w.wid}'),
-                    left: (i % cols) * cw,
-                    top: (i ~/ cols) * ch,
-                    width: w.cols * cw,
-                    height: w.rows * ch,
-                    child: HomeWidgetFrame(
-                      item: w,
-                      cellWidth: cw,
-                      cellHeight: ch,
-                      locked: settings.lockLayout,
-                    ),
+                if (items[i] case final WidgetItem w when w.wid != resizing)
+                  _frame(w, i, cols, cw, ch, settings.lockLayout),
+              if (resizing != null)
+                Positioned.fill(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: context.read<ShellController>().endResize,
+                    child: const ColoredBox(color: Color(0x40000000)),
                   ),
+                ),
+              for (var i = 0; i < items.length; i++)
+                if (items[i] case final WidgetItem w when w.wid == resizing)
+                  _frame(w, i, cols, cw, ch, settings.lockLayout),
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _frame(
+    WidgetItem w,
+    int i,
+    int gridCols,
+    double cw,
+    double ch,
+    bool locked,
+  ) {
+    return Positioned(
+      key: ValueKey('widget-${w.wid}'),
+      left: (i % gridCols) * cw,
+      top: (i ~/ gridCols) * ch,
+      width: w.cols * cw,
+      height: w.rows * ch,
+      child: HomeWidgetFrame(
+        item: w,
+        index: i,
+        cellWidth: cw,
+        cellHeight: ch,
+        locked: locked,
       ),
     );
   }
