@@ -8,6 +8,8 @@
 
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
 
+- Make inside of folder match color of outside folder
+
 - Add private space suppourt
 
 - Add widget support
