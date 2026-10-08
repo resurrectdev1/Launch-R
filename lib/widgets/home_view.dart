@@ -6,6 +6,7 @@ import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/edge_flipper.dart';
 import 'package:launch_r/widgets/keep_alive.dart';
 import 'package:launch_r/widgets/launcher_cell.dart';
@@ -18,10 +19,7 @@ class HomeView extends StatelessWidget {
   void _prev() {
     if (!controller.hasClients) return;
     unawaited(
-      controller.previousPage(
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-      ),
+      controller.previousPage(duration: Motion.slow, curve: Motion.standard),
     );
   }
 
@@ -29,10 +27,7 @@ class HomeView extends StatelessWidget {
     if (!controller.hasClients) return;
     final cur = controller.page?.round() ?? 0;
     void go() => unawaited(
-      controller.nextPage(
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-      ),
+      controller.nextPage(duration: Motion.slow, curve: Motion.standard),
     );
     if (cur >= model.home.length - 1) {
       if (model.addHomePage()) {
