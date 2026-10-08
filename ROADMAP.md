@@ -2,6 +2,8 @@
 
 - Add custom font and text scaling & optional text bolding
 
+- Make widget drop preview take up as much space as it actually appears to take up/ placement preview of widgets
+
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
 
 - Add private space suppourt
