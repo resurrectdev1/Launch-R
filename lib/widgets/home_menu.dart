@@ -12,6 +12,7 @@ import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/app_icon.dart';
 import 'package:launch_r/widgets/settings_sheet.dart';
+import 'package:launch_r/widgets/widget_picker_sheet.dart';
 
 class HomeMenu extends StatelessWidget {
   const HomeMenu({super.key, required this.homePages});
@@ -118,9 +119,16 @@ class _MenuOverlayState extends State<_MenuOverlay> {
   }
 
   void _widgets() {
+    final home = widget.homePages;
+    final page = home.hasClients ? (home.page?.round() ?? 0) : _current;
+    context.read<ShellController>().closeMenu();
+    showWidgetPicker(context, page: page, homePages: home);
+  }
+
+  void _widgetsLocked() {
     ScaffoldMessenger.maybeOf(context)?.showSnackBar(
       const SnackBar(
-        content: Text('Widgets are coming soon'),
+        content: Text('Unlock the home layout to add widgets'),
         duration: Duration(seconds: 2),
       ),
     );
@@ -269,8 +277,7 @@ class _MenuOverlayState extends State<_MenuOverlay> {
                   _BarAction(
                     icon: Icons.widgets_outlined,
                     label: 'Widgets',
-                    dimmed: true,
-                    onTap: _widgets,
+                    onTap: locked ? _widgetsLocked : _widgets,
                   ),
                   _BarAction(
                     icon: Icons.settings_outlined,
@@ -351,6 +358,12 @@ class _PagePreview extends StatelessWidget {
       size: s,
       bg: color != null ? Color(color) : const Color(0x59FFFFFF),
     ),
+    WidgetItem() => Icon(
+      Icons.widgets_rounded,
+      size: s,
+      color: const Color(0xCCFFFFFF),
+    ),
+    WidgetCover() => const SizedBox.shrink(),
   };
 
   @override
