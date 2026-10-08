@@ -156,7 +156,8 @@ Future<void> showItemMenu(
     case 'dissolve':
       model.dissolveFolder(zone, (item as FolderItem).fid);
     case 'resize':
-      if (context.mounted)
+      if (context.mounted) {
         showWidgetResizeSheet(context, (item as WidgetItem).wid);
+      }
   }
 }
