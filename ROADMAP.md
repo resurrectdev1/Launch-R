@@ -18,7 +18,7 @@
 
 - Be able to password or bio-metric lock apps
 
-- Add backup later
+- Custom gestures
 
 # Completed features go here.
 
