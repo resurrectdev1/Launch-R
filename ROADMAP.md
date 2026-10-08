@@ -1,14 +1,8 @@
 # Roadmap of Launch-R! Different from a changelog because everything here is planned but not done.
 
-- Make dragging apps in the app drawer to another drawer smoother, for a better experience
-
-- Make home page editor sheet nicer
-
 - Add custom font and text scaling & optional text bolding
 
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
-
-- Make inside of folder match color of outside folder
 
 - Add private space suppourt
 
@@ -79,3 +73,9 @@
 - ~~Fix widgets not being resize-able~~
 
 - ~~Improve feel and function of widgets~~
+
+- ~~Make dragging apps in the app drawer to another drawer smoother, for a better experience~~
+
+- ~~Make home page editor sheet nicer~~
+
+- ~~Make inside of folder match color of outside folder~~
