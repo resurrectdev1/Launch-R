@@ -1027,7 +1027,12 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
         : w.rows;
     final minC = w.canH ? math.min(w.minCols, maxC) : w.cols;
     final minR = w.canV ? math.min(w.minRows, maxR) : w.rows;
-    return (minC: minC, maxC: maxC, minR: minR, maxR: maxR);
+    return (
+      minC: minC,
+      maxC: w.canH ? math.max(maxC, w.cols) : maxC,
+      minR: minR,
+      maxR: w.canV ? math.max(maxR, w.rows) : maxR,
+    );
   }
 
   bool _areaFree(
@@ -1137,6 +1142,69 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
       if (!_areaFree(page, i, c, r, ignoreWid: wid)) return false;
       _unstampWidget(page, wid);
       _stampWidget(page, w.copyWith(cols: c, rows: r), i);
+      _commit();
+      return true;
+    }
+    return false;
+  }
+
+  ({int index, int cols, int rows})? resolveWidgetResize(
+    int wid,
+    WidgetEdge edge,
+    int delta,
+  ) {
+    for (final page in _home) {
+      final i = page.indexWhere((e) => e is WidgetItem && e.wid == wid);
+      if (i < 0) continue;
+      final w = page[i] as WidgetItem;
+      final lim = widgetLimits(w);
+      final c0 = i % _homeCols;
+      final r0 = i ~/ _homeCols;
+      var d = delta;
+      while (d != 0) {
+        var c = w.cols;
+        var r = w.rows;
+        var nc0 = c0;
+        var nr0 = r0;
+        switch (edge) {
+          case WidgetEdge.right:
+            c += d;
+          case WidgetEdge.left:
+            c += d;
+            nc0 -= d;
+          case WidgetEdge.bottom:
+            r += d;
+          case WidgetEdge.top:
+            r += d;
+            nr0 -= d;
+        }
+        final inRange =
+            c >= lim.minC &&
+            c <= lim.maxC &&
+            r >= lim.minR &&
+            r <= lim.maxR &&
+            nc0 >= 0 &&
+            nr0 >= 0;
+        final index = nr0 * _homeCols + nc0;
+        if (inRange && _areaFree(page, index, c, r, ignoreWid: wid)) {
+          return (index: index, cols: c, rows: r);
+        }
+        d += d > 0 ? -1 : 1;
+      }
+      return (index: i, cols: w.cols, rows: w.rows);
+    }
+    return null;
+  }
+
+  bool applyWidgetResize(int wid, int index, int cols, int rows) {
+    for (final page in _home) {
+      final i = page.indexWhere((e) => e is WidgetItem && e.wid == wid);
+      if (i < 0) continue;
+      final w = page[i] as WidgetItem;
+      if (index == i && cols == w.cols && rows == w.rows) return true;
+      if (!_areaFree(page, index, cols, rows, ignoreWid: wid)) return false;
+      _unstampWidget(page, wid);
+      _stampWidget(page, w.copyWith(cols: cols, rows: rows), index);
       _commit();
       return true;
     }
@@ -1273,6 +1341,8 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     return WidgetAddResult(WidgetAddStatus.added, page: spot.page);
   }
 }
+
+enum WidgetEdge { left, right, top, bottom }
 
 enum WidgetAddStatus { added, cancelled, noRoom }
 
