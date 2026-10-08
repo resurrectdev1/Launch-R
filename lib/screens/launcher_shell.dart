@@ -7,6 +7,7 @@ import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/providers/shell_controller.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/drag_bar.dart';
 import 'package:launch_r/widgets/drawer_view.dart';
 import 'package:launch_r/widgets/folder_popup.dart';
@@ -61,8 +62,8 @@ class _LauncherShellState extends State<LauncherShell>
         unawaited(
           _homePages.animateToPage(
             target,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOutCubic,
+            duration: Motion.slow,
+            curve: Motion.standard,
           ),
         );
       }
