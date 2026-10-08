@@ -6,6 +6,7 @@ import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/shell_controller.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/app_icon.dart';
 import 'package:launch_r/widgets/draggable_item.dart';
 import 'package:launch_r/widgets/item_actions.dart';
@@ -174,8 +175,8 @@ class _LauncherCellState extends State<LauncherCell> {
       child: IgnorePointer(
         child: AnimatedOpacity(
           opacity: visible ? 1 : 0,
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
+          duration: Motion.base,
+          curve: Motion.standard,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -183,8 +184,8 @@ class _LauncherCellState extends State<LauncherCell> {
                 child: Padding(
                   padding: const EdgeInsets.all(4),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 120),
-                    curve: Curves.easeOutCubic,
+                    duration: Motion.fast,
+                    curve: Motion.standard,
                     decoration: BoxDecoration(
                       color: active
                           ? fg.withValues(alpha: 0.16)
@@ -230,15 +231,16 @@ class _LauncherCellState extends State<LauncherCell> {
           Positioned.fill(
             child: AnimatedSlide(
               offset: Offset(nudge, 0),
-              duration: const Duration(milliseconds: 140),
-              curve: Curves.easeOutCubic,
+              duration: Motion.fast,
+              curve: Motion.standard,
               child: Center(
                 child: AnimatedScale(
                   scale: merging ? 1.08 : 1,
-                  duration: const Duration(milliseconds: 140),
-                  curve: Curves.easeOutCubic,
+                  duration: Motion.fast,
+                  curve: Motion.standard,
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 140),
+                    duration: Motion.fast,
+                    curve: Motion.standard,
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: merging
@@ -285,7 +287,8 @@ extension on _LauncherCellState {
       child: IgnorePointer(
         child: AnimatedOpacity(
           opacity: on ? 1 : 0,
-          duration: const Duration(milliseconds: 120),
+          duration: Motion.fast,
+          curve: Motion.standard,
           child: Container(
             width: 4,
             decoration: BoxDecoration(
