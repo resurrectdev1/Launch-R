@@ -85,6 +85,8 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   String labelOf(LItem it) => switch (it) {
     AppItem(:final pkg) => _apps[pkg]?.label ?? pkg,
     FolderItem(:final name) => name,
+    WidgetItem(:final label) => label,
+    WidgetCover() => '',
   };
 
   int badgeOf(LItem it) => switch (it) {
@@ -93,6 +95,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
       0,
       (sum, p) => sum + (_badges[p] ?? 0),
     ),
+    WidgetItem() || WidgetCover() => 0,
   };
 
   FolderItem? folderOf(Zone z, String fid) {
@@ -353,6 +356,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
       } catch (_) {}
     }
     if (_home.isEmpty) _home.add(_blankPage());
+    _rebuildWidgets();
 
     _defaultPage = p.getInt(_kDefaultPage) ?? 0;
     _pinnedPages = p.getInt(_kPinnedPages) ?? 1;
@@ -407,7 +411,12 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     await p.setString(
       _kHome,
       jsonEncode(
-        _home.map((pg) => pg.map((e) => e?.toJson()).toList()).toList(),
+        _home
+            .map(
+              (pg) =>
+                  pg.map((e) => e is WidgetCover ? null : e?.toJson()).toList(),
+            )
+            .toList(),
       ),
     );
   }
@@ -495,6 +504,9 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
           }
         case null:
           if (_drawerFree) cleaned.add(null);
+        case WidgetItem():
+        case WidgetCover():
+          if (_drawerFree) cleaned.add(null);
       }
     }
     while (cleaned.isNotEmpty && cleaned.last == null) {
@@ -529,6 +541,9 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
         if (pk.length >= 2) return f.copyWith(pkgs: pk);
         if (pk.length == 1) return AppItem(pk.first);
         return null;
+      case WidgetItem():
+      case WidgetCover():
+        return it;
     }
   }
 
@@ -566,6 +581,10 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     final loc = _findRoot(d.zone, d.item.id);
     if (loc == null) return null;
     final it = loc.item;
+    if (it is WidgetItem) {
+      _unstampWidget(loc.list, it.wid);
+      return it;
+    }
     if (d.zone == Zone.drawer) {
       _vacateDrawerSlot(loc.index);
     } else {
@@ -694,6 +713,9 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
         return !_homeContains(pkg);
       case FolderItem(:final pkgs):
         return target == null && pkgs.any((p) => !_homeContains(p));
+      case WidgetItem():
+      case WidgetCover():
+        return false;
     }
   }
 
@@ -701,6 +723,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     final list = z == Zone.dock ? _dock : _home[page];
     final src = d.item;
     final t = list[index];
+    if (t is WidgetItem || t is WidgetCover) return DropOutcome.rejected;
 
     if (src is FolderItem) {
       if (t != null) return DropOutcome.rejected;
@@ -737,11 +760,13 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   DropOutcome slotDrop(DragData d, Zone z, int page, int index) {
+    if (d.item is WidgetItem) return _widgetDrop(d, z, page, index);
     if (d.zone == Zone.drawer) return _copyDrop(d, z, page, index);
 
     final list = z == Zone.dock ? _dock : _home[page];
     final t = list[index];
     if (t != null && t.id == d.item.id) return DropOutcome.done;
+    if (t is WidgetItem || t is WidgetCover) return DropOutcome.rejected;
 
     if (t == null) {
       final moved = _detach(d);
@@ -811,6 +836,9 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
 
   bool removeHomePage(int index) {
     if (_home.length <= 1 || index < 0 || index >= _home.length) return false;
+    for (final it in _home[index]) {
+      if (it is WidgetItem) _releaseWidget(it);
+    }
     _home.removeAt(index);
     if (index < _pinnedPages) _pinnedPages--;
     if (index == _defaultPage) {
@@ -862,12 +890,21 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   void removeFromHome(String itemId) {
     final loc = _findRoot(Zone.home, itemId);
     if (loc == null) return;
-    loc.list[loc.index] = null;
+    final it = loc.item;
+    if (it is WidgetItem) {
+      _unstampWidget(loc.list, it.wid);
+      _releaseWidget(it);
+    } else {
+      loc.list[loc.index] = null;
+    }
     _commit();
   }
 
   void removeDragged(DragData d) {
-    if (_detach(d) != null) _commit();
+    final it = _detach(d);
+    if (it == null) return;
+    if (it is WidgetItem) _releaseWidget(it);
+    _commit();
   }
 
   void renameFolder(Zone z, String fid, String name) {
@@ -937,7 +974,15 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
 
   void setHomeGrid(int cols, int rows) {
     if (cols == _homeCols && rows == _homeRows) return;
-    final flat = <LItem>[for (final p in _home) ...p.whereType<LItem>()];
+    final widgets = <WidgetItem>[
+      for (final p in _home) ...p.whereType<WidgetItem>(),
+    ];
+    final flat = <LItem>[
+      for (final p in _home)
+        ...p.whereType<LItem>().where(
+          (e) => e is! WidgetItem && e is! WidgetCover,
+        ),
+    ];
     final dockItems = _dock.whereType<LItem>().toList();
 
     _homeCols = cols;
@@ -956,7 +1001,282 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
       _home.add(_normalizePage(flat.skip(i).take(per)));
     }
     if (_home.isEmpty) _home.add(_blankPage());
+    for (final w in widgets) {
+      _placeWidgetAnywhere(w);
+    }
     _clampPages();
     _commit();
   }
+
+  WidgetItem? widgetById(int wid) {
+    for (final page in _home) {
+      for (final it in page) {
+        if (it is WidgetItem && it.wid == wid) return it;
+      }
+    }
+    return null;
+  }
+
+  ({int minC, int maxC, int minR, int maxR}) widgetLimits(WidgetItem w) {
+    final maxC = w.canH
+        ? math.min(w.maxCols > 0 ? w.maxCols : _homeCols, _homeCols)
+        : w.cols;
+    final maxR = w.canV
+        ? math.min(w.maxRows > 0 ? w.maxRows : _homeRows, _homeRows)
+        : w.rows;
+    final minC = w.canH ? math.min(w.minCols, maxC) : w.cols;
+    final minR = w.canV ? math.min(w.minRows, maxR) : w.rows;
+    return (minC: minC, maxC: maxC, minR: minR, maxR: maxR);
+  }
+
+  bool _areaFree(
+    List<LItem?> page,
+    int index,
+    int spanC,
+    int spanR, {
+    int? ignoreWid,
+  }) {
+    final r0 = index ~/ _homeCols;
+    final c0 = index % _homeCols;
+    if (spanC < 1 || spanR < 1) return false;
+    if (c0 + spanC > _homeCols || r0 + spanR > _homeRows) return false;
+    for (var r = r0; r < r0 + spanR; r++) {
+      for (var c = c0; c < c0 + spanC; c++) {
+        final i = r * _homeCols + c;
+        if (i >= page.length) return false;
+        final it = page[i];
+        if (it == null) continue;
+        if (ignoreWid != null &&
+            ((it is WidgetItem && it.wid == ignoreWid) ||
+                (it is WidgetCover && it.owner == ignoreWid))) {
+          continue;
+        }
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void _stampWidget(List<LItem?> page, WidgetItem w, int index) {
+    final r0 = index ~/ _homeCols;
+    final c0 = index % _homeCols;
+    final cover = WidgetCover(w.wid);
+    for (var r = r0; r < r0 + w.rows; r++) {
+      for (var c = c0; c < c0 + w.cols; c++) {
+        page[r * _homeCols + c] = (r == r0 && c == c0) ? w : cover;
+      }
+    }
+  }
+
+  void _unstampWidget(List<LItem?> page, int wid) {
+    for (var i = 0; i < page.length; i++) {
+      final it = page[i];
+      if ((it is WidgetItem && it.wid == wid) ||
+          (it is WidgetCover && it.owner == wid)) {
+        page[i] = null;
+      }
+    }
+  }
+
+  void _releaseWidget(WidgetItem w) {
+    unawaited(LauncherChannel.instance.deleteWidget(w.wid));
+  }
+
+  bool canPlaceWidget(WidgetItem w, int page, int index) {
+    if (page < 0 || page >= _home.length) return false;
+    return _areaFree(_home[page], index, w.cols, w.rows, ignoreWid: w.wid);
+  }
+
+  bool slotIsWidgetPart(int page, int index) {
+    if (page < 0 || page >= _home.length) return false;
+    final it = _home[page][index];
+    return it is WidgetItem || it is WidgetCover;
+  }
+
+  DropOutcome _widgetDrop(DragData d, Zone z, int page, int index) {
+    if (z != Zone.home) return DropOutcome.rejected;
+    final src = _findRoot(Zone.home, d.item.id);
+    final cur = src?.item;
+    if (cur is! WidgetItem) return DropOutcome.done;
+    if (!_areaFree(
+      _home[page],
+      index,
+      cur.cols,
+      cur.rows,
+      ignoreWid: cur.wid,
+    )) {
+      return DropOutcome.noRoom;
+    }
+    for (final p in _home) {
+      _unstampWidget(p, cur.wid);
+    }
+    _stampWidget(_home[page], cur, index);
+    _commit();
+    return DropOutcome.done;
+  }
+
+  bool canResizeWidget(int wid, int cols, int rows) {
+    for (final page in _home) {
+      final i = page.indexWhere((e) => e is WidgetItem && e.wid == wid);
+      if (i < 0) continue;
+      return _areaFree(page, i, cols, rows, ignoreWid: wid);
+    }
+    return false;
+  }
+
+  bool resizeWidget(int wid, int cols, int rows) {
+    for (final page in _home) {
+      final i = page.indexWhere((e) => e is WidgetItem && e.wid == wid);
+      if (i < 0) continue;
+      final w = page[i] as WidgetItem;
+      final lim = widgetLimits(w);
+      final c = cols.clamp(lim.minC, lim.maxC);
+      final r = rows.clamp(lim.minR, lim.maxR);
+      if (c == w.cols && r == w.rows) return true;
+      if (!_areaFree(page, i, c, r, ignoreWid: wid)) return false;
+      _unstampWidget(page, wid);
+      _stampWidget(page, w.copyWith(cols: c, rows: r), i);
+      _commit();
+      return true;
+    }
+    return false;
+  }
+
+  ({int cols, int rows}) defaultWidgetSpan(
+    WidgetProvider p, {
+    required double cellDpW,
+    required double cellDpH,
+  }) {
+    int span(num dp, double cell, int max, int target) {
+      if (target > 0) return math.min(target, max);
+      return math.max(1, math.min(max, (dp / cell).ceil()));
+    }
+
+    return (
+      cols: span(p.minW, cellDpW, _homeCols, p.targetCellW),
+      rows: span(p.minH, cellDpH, _homeRows, p.targetCellH),
+    );
+  }
+
+  ({int page, int index})? _findSpot(int cols, int rows, int startPage) {
+    for (var k = 0; k < _home.length; k++) {
+      final p = (startPage + k) % _home.length;
+      for (var i = 0; i < _home[p].length; i++) {
+        if (_areaFree(_home[p], i, cols, rows)) return (page: p, index: i);
+      }
+    }
+    return null;
+  }
+
+  void _placeWidgetAnywhere(WidgetItem w) {
+    final c = math.min(w.cols, _homeCols);
+    final r = math.min(w.rows, _homeRows);
+    final fit = (c == w.cols && r == w.rows) ? w : w.copyWith(cols: c, rows: r);
+    var spot = _findSpot(c, r, 0);
+    if (spot == null && canAddHomePage) {
+      _home.add(_blankPage());
+      spot = (page: _home.length - 1, index: 0);
+    }
+    if (spot == null) {
+      _releaseWidget(w);
+      return;
+    }
+    _stampWidget(_home[spot.page], fit, spot.index);
+  }
+
+  void _rebuildWidgets() {
+    final orphans = <WidgetItem>[];
+    for (final page in _home) {
+      final anchors = <int, WidgetItem>{};
+      for (var i = 0; i < page.length; i++) {
+        final it = page[i];
+        if (it is WidgetItem) {
+          anchors[i] = it;
+          page[i] = null;
+        } else if (it is WidgetCover) {
+          page[i] = null;
+        }
+      }
+      for (final e in anchors.entries) {
+        final w = e.value;
+        final c = math.min(w.cols, _homeCols);
+        final r = math.min(w.rows, _homeRows);
+        final fit = (c == w.cols && r == w.rows)
+            ? w
+            : w.copyWith(cols: c, rows: r);
+        if (_areaFree(page, e.key, c, r)) {
+          _stampWidget(page, fit, e.key);
+        } else {
+          orphans.add(fit);
+        }
+      }
+    }
+    for (final w in orphans) {
+      _placeWidgetAnywhere(w);
+    }
+  }
+
+  Future<WidgetAddResult> addWidget(
+    WidgetProvider p, {
+    required int page,
+    required double cellDpW,
+    required double cellDpH,
+  }) async {
+    final span = defaultWidgetSpan(p, cellDpW: cellDpW, cellDpH: cellDpH);
+    if (_findSpot(span.cols, span.rows, page) == null && !canAddHomePage) {
+      return const WidgetAddResult(WidgetAddStatus.noRoom);
+    }
+
+    final id = await LauncherChannel.instance.addWidget(p.component);
+    if (id == null) return const WidgetAddResult(WidgetAddStatus.cancelled);
+
+    int minSpan(num dpA, num dpB, double cell, int max) {
+      final dp = dpA > 0 ? dpA : dpB;
+      return math.max(1, math.min(max, (dp / cell).ceil()));
+    }
+
+    int maxSpan(num dp, double cell, int max) =>
+        dp > 0 ? math.max(1, math.min(max, (dp / cell).floor())) : 0;
+
+    final w = WidgetItem(
+      wid: id,
+      component: p.component,
+      label: p.label,
+      cols: span.cols,
+      rows: span.rows,
+      minCols: math.min(
+        span.cols,
+        minSpan(p.minResizeW, p.minW, cellDpW, _homeCols),
+      ),
+      minRows: math.min(
+        span.rows,
+        minSpan(p.minResizeH, p.minH, cellDpH, _homeRows),
+      ),
+      maxCols: maxSpan(p.maxResizeW.toDouble(), cellDpW, _homeCols),
+      maxRows: maxSpan(p.maxResizeH.toDouble(), cellDpH, _homeRows),
+      canH: p.resizeMode & 1 != 0,
+      canV: p.resizeMode & 2 != 0,
+    );
+
+    var spot = _findSpot(w.cols, w.rows, page);
+    if (spot == null && canAddHomePage) {
+      _home.add(_blankPage());
+      spot = (page: _home.length - 1, index: 0);
+    }
+    if (spot == null) {
+      _releaseWidget(w);
+      return const WidgetAddResult(WidgetAddStatus.noRoom);
+    }
+    _stampWidget(_home[spot.page], w, spot.index);
+    _commit();
+    return WidgetAddResult(WidgetAddStatus.added, page: spot.page);
+  }
+}
+
+enum WidgetAddStatus { added, cancelled, noRoom }
+
+class WidgetAddResult {
+  const WidgetAddResult(this.status, {this.page = 0});
+  final WidgetAddStatus status;
+  final int page;
 }
