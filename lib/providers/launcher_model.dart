@@ -349,8 +349,9 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
         final j = jsonDecode(rawHome);
         if (j is List) {
           for (final page in j) {
-            if (page is List)
+            if (page is List) {
               _home.add(_normalizePage(page.map(LItem.fromJson)));
+            }
           }
         }
       } catch (_) {}
@@ -493,7 +494,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
           } else if (_drawerFree) {
             cleaned.add(null);
           }
-        case FolderItem f:
+        case final FolderItem f:
           final pk = f.pkgs.where((p) => _isVisible(p) && seen.add(p)).toList();
           if (pk.length >= 2) {
             cleaned.add(f.copyWith(pkgs: pk));
@@ -536,7 +537,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
         return null;
       case AppItem(:final pkg):
         return _isVisible(pkg) ? it : null;
-      case FolderItem f:
+      case final FolderItem f:
         final pk = f.pkgs.where(_isVisible).toList();
         if (pk.length >= 2) return f.copyWith(pkgs: pk);
         if (pk.length == 1) return AppItem(pk.first);
