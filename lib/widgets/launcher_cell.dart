@@ -26,6 +26,7 @@ class LauncherCell extends StatefulWidget {
     required this.locked,
     required this.onDrop,
     this.showLabel = true,
+    this.canDrop,
   });
 
   final Zone zone;
@@ -39,6 +40,8 @@ class LauncherCell extends StatefulWidget {
   final bool showLabel;
   final void Function(DragData data, Hover hover) onDrop;
 
+  final bool Function(DragData data)? canDrop;
+
   @override
   State<LauncherCell> createState() => _LauncherCellState();
 }
@@ -47,6 +50,9 @@ class _LauncherCellState extends State<LauncherCell> {
   Hover _hover = Hover.none;
 
   bool _accepts(DragData d) {
+    final veto = widget.canDrop;
+    if (veto != null && !veto(d)) return false;
+    if (d.item is WidgetItem) return widget.zone == Zone.home;
     final inDrawer = widget.zone == Zone.drawer;
     final fromDrawer = d.zone == Zone.drawer;
     if (fromDrawer && !inDrawer) return true;
@@ -162,7 +168,8 @@ class _LauncherCellState extends State<LauncherCell> {
           clipBehavior: Clip.none,
           children: [
             _slot(visible: gridOn, active: active),
-            if (item != null) Positioned.fill(child: _tile(context, item)),
+            if (item != null && item is! WidgetItem && item is! WidgetCover)
+              Positioned.fill(child: _tile(context, item)),
           ],
         );
       },
