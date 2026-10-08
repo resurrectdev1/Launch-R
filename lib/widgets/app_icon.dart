@@ -227,6 +227,8 @@ class ItemVisual extends StatelessWidget {
         size: iconSize,
         bg: color != null ? Color(color) : style.folderBg,
       ),
+      WidgetItem() ||
+      WidgetCover() => SizedBox(width: iconSize, height: iconSize),
     };
     return SizedBox(
       width: width,
