@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
-import 'dart:ui' show Rect, VoidCallback;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:launch_r/models/launcher_models.dart';
