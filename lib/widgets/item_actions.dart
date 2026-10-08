@@ -8,7 +8,6 @@ import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/widgets/folder_color_picker.dart';
 import 'package:launch_r/widgets/tag_editor_sheet.dart';
-import 'package:launch_r/widgets/widget_resize_sheet.dart';
 
 void launchFrom(BuildContext context, String pkg) {
   Rect? from;
@@ -146,9 +145,7 @@ Future<void> showItemMenu(
     case 'info':
       unawaited(LauncherChannel.instance.openAppInfo((item as AppItem).pkg));
     case 'uninstall':
-      unawaited(
-        LauncherChannel.instance.uninstallApp((item as AppItem).pkg),
-      );
+      unawaited(LauncherChannel.instance.uninstallApp((item as AppItem).pkg));
     case 'rename':
       shell.openFolder(zone, (item as FolderItem).fid, rename: true);
     case 'color':
@@ -158,8 +155,6 @@ Future<void> showItemMenu(
     case 'dissolve':
       model.dissolveFolder(zone, (item as FolderItem).fid);
     case 'resize':
-      if (context.mounted) {
-        showWidgetResizeSheet(context, (item as WidgetItem).wid);
-      }
+      shell.startResize((item as WidgetItem).wid);
   }
 }
