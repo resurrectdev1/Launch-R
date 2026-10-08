@@ -11,6 +11,7 @@ import 'package:launch_r/widgets/edge_flipper.dart';
 import 'package:launch_r/widgets/keep_alive.dart';
 import 'package:launch_r/widgets/launcher_cell.dart';
 import 'package:launch_r/widgets/page_dots.dart';
+import 'package:launch_r/widgets/home_widget_frame.dart';
 
 class HomeView extends StatelessWidget {
   const HomeView({super.key, required this.controller});
@@ -117,6 +118,7 @@ void _announce(BuildContext context, DropOutcome outcome) {
     DropOutcome.done => null,
     DropOutcome.alreadyOnHome => 'Already on Home',
     DropOutcome.rejected => 'Drop folders on an empty spot',
+    DropOutcome.noRoom => 'Not enough room for this widget',
   };
   if (text == null) return;
   ScaffoldMessenger.maybeOf(context)?.showSnackBar(
@@ -143,28 +145,50 @@ class _HomePage extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, c) {
           final cw = c.maxWidth / cols;
+          final ch = c.maxHeight / rows;
           final iconSize = math.min(cw * 0.6, 58.0);
-          return Column(
+          return Stack(
             children: [
-              for (var r = 0; r < rows; r++)
-                Expanded(
-                  child: Row(
-                    children: [
-                      for (var col = 0; col < cols; col++)
-                        Expanded(
-                          child: _cell(
-                            context,
-                            model,
-                            settings,
-                            items[r * cols + col],
-                            r * cols + col,
-                            cw,
-                            iconSize,
-                          ),
+              Positioned.fill(
+                child: Column(
+                  children: [
+                    for (var r = 0; r < rows; r++)
+                      Expanded(
+                        child: Row(
+                          children: [
+                            for (var col = 0; col < cols; col++)
+                              Expanded(
+                                child: _cell(
+                                  context,
+                                  model,
+                                  settings,
+                                  items[r * cols + col],
+                                  r * cols + col,
+                                  cw,
+                                  iconSize,
+                                ),
+                              ),
+                          ],
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
+              ),
+              for (var i = 0; i < items.length; i++)
+                if (items[i] case final WidgetItem w)
+                  Positioned(
+                    key: ValueKey('widget-${w.wid}'),
+                    left: (i % cols) * cw,
+                    top: (i ~/ cols) * ch,
+                    width: w.cols * cw,
+                    height: w.rows * ch,
+                    child: HomeWidgetFrame(
+                      item: w,
+                      cellWidth: cw,
+                      cellHeight: ch,
+                      locked: settings.lockLayout,
+                    ),
+                  ),
             ],
           );
         },
@@ -191,6 +215,13 @@ class _HomePage extends StatelessWidget {
       width: width,
       style: style,
       locked: settings.lockLayout,
+      canDrop: (d) {
+        final dragged = d.item;
+        if (dragged is WidgetItem) {
+          return model.canPlaceWidget(dragged, page, index);
+        }
+        return !model.slotIsWidgetPart(page, index);
+      },
       onDrop: (d, _) =>
           _announce(context, model.slotDrop(d, Zone.home, page, index)),
     );
@@ -231,6 +262,7 @@ class _Dock extends StatelessWidget {
                       style: style,
                       locked: settings.lockLayout,
                       showLabel: false,
+                      canDrop: (d) => d.item is! WidgetItem,
                       onDrop: (d, _) => _announce(
                         context,
                         model.slotDrop(d, Zone.dock, 0, i),
