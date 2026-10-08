@@ -8,6 +8,7 @@ import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/providers/shell_controller.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/app_icon.dart';
 import 'package:launch_r/widgets/draggable_item.dart';
 import 'package:launch_r/widgets/edge_flipper.dart';
@@ -15,8 +16,6 @@ import 'package:launch_r/widgets/folder_color_picker.dart';
 import 'package:launch_r/widgets/item_actions.dart';
 import 'package:launch_r/widgets/keep_alive.dart';
 import 'package:launch_r/widgets/page_dots.dart';
-
-const _openCurve = Cubic(0.22, 1.12, 0.36, 1.0);
 
 const _panelRadius = 58.0;
 
@@ -31,13 +30,13 @@ class _FolderPopupState extends State<FolderPopup>
     with SingleTickerProviderStateMixin {
   late final AnimationController _anim = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 380),
-    reverseDuration: const Duration(milliseconds: 250),
+    duration: Motion.emphasized,
+    reverseDuration: Motion.emphasizedReverse,
   );
   late final Animation<double> _t = CurvedAnimation(
     parent: _anim,
-    curve: _openCurve,
-    reverseCurve: Curves.easeInOutCubic,
+    curve: Motion.emphasizedCurve,
+    reverseCurve: Motion.exit,
   );
   late final ShellController _shell;
   bool _open = false;
@@ -120,7 +119,8 @@ class _FolderPopupState extends State<FolderPopup>
         ignoring: hidden,
         child: AnimatedOpacity(
           opacity: hidden ? 0 : 1,
-          duration: const Duration(milliseconds: 120),
+          duration: Motion.fast,
+          curve: Motion.standard,
           child: Stack(
             children: [
               Positioned.fill(
@@ -292,11 +292,7 @@ class _FolderPageState extends State<_FolderPage> {
     final next = cur + delta;
     if (next < 0 || next >= _pageCount) return;
     unawaited(
-      _pages.animateToPage(
-        next,
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-      ),
+      _pages.animateToPage(next, duration: Motion.slow, curve: Motion.standard),
     );
   }
 
@@ -484,7 +480,8 @@ class _EndSlot extends StatelessWidget {
         if (dragged is AppItem) model.moveToEndInFolder(zone, fid, dragged.pkg);
       },
       builder: (context, candidate, _) => AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
+        duration: Motion.fast,
+        curve: Motion.standard,
         margin: const EdgeInsets.all(5),
         decoration: BoxDecoration(
           color: candidate.isNotEmpty ? accent.withValues(alpha: 0.25) : null,
@@ -544,7 +541,8 @@ class _PopupCell extends StatelessWidget {
         final resting = SizedBox.expand(
           child: Center(
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
+              duration: Motion.fast,
+              curve: Motion.standard,
               padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
                 color: active ? accent.withValues(alpha: 0.25) : null,
@@ -570,7 +568,7 @@ class _PopupCell extends StatelessWidget {
     );
 
     final start = (0.22 + 0.025 * index).clamp(0.0, 0.7);
-    final stagger = Interval(start, 1, curve: Curves.easeOutCubic);
+    final stagger = Interval(start, 1, curve: Motion.standard);
     return AnimatedBuilder(
       animation: reveal,
       child: cell,
