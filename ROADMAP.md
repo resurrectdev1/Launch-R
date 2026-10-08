@@ -4,10 +4,6 @@
 
 - Make home page editor sheet nicer
 
-- Fix widgets not being resizeable
-
-- Improve feel and function of widgets
-
 - Add custom font and text scaling & optional text bolding
 
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
@@ -79,3 +75,7 @@
 - ~~Make consistent animations for all features within app~~
 
 - ~~Add widget support~~
+
+- ~~Fix widgets not being resize-able~~
+
+- ~~Improve feel and function of widgets~~
