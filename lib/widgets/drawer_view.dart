@@ -16,6 +16,8 @@ import 'package:launch_r/widgets/launcher_cell.dart';
 import 'package:launch_r/widgets/page_dots.dart';
 import 'package:launch_r/widgets/settings_sheet.dart';
 
+const _kRowPitch = 106.0;
+
 class DrawerView extends StatefulWidget {
   const DrawerView({super.key});
 
@@ -162,13 +164,13 @@ class _DrawerViewState extends State<DrawerView> {
         const dotsH = 26.0;
         final gridH = c.maxHeight - dotsH;
         final cols = settings.drawerCols;
-        final rows = math.max(3, (gridH / 122).floor());
+        final rows = math.max(3, (gridH / _kRowPitch).floor());
         final perPage = cols * rows;
         final n = items.length;
         final pages = math.max(1, (n / perPage).ceil());
         _pageCount = pages;
         final cw = (c.maxWidth - 16) / cols;
-        final iconSize = math.min(cw * 0.62, 60.0);
+        final iconSize = gridIconSize(cw, gridH / rows);
 
         Widget cell(int idx) {
           final item = idx < n ? items[idx] : null;
@@ -263,12 +265,12 @@ class _DrawerViewState extends State<DrawerView> {
     return LayoutBuilder(
       builder: (context, c) {
         final cw = (c.maxWidth - 16) / cols;
-        final iconSize = math.min(cw * 0.62, 60.0);
+        final iconSize = gridIconSize(cw, _kRowPitch);
         return GridView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: cols,
-            mainAxisExtent: 112,
+            mainAxisExtent: _kRowPitch,
           ),
           itemCount: results.length,
           itemBuilder: (context, i) {
