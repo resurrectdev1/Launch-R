@@ -12,8 +12,6 @@
 
 - Add private space suppourt
 
-- Add widget support
-
 - Add custom icon pack support
 
 - Be able to password or bio-metric lock apps
@@ -75,3 +73,5 @@
 - ~~Option to add new apps to homescreen in settings (all newly installed apps will go to homescreen automaticlly)~~
 
 - ~~Make consistent animations for all features within app~~
+
+- ~~Add widget support~~
