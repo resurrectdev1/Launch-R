@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/services/launcher_channel.dart';
@@ -26,7 +27,7 @@ class IconCache {
       if (gen != _gen) {
         return load(pkg);
       }
-      _pending.remove(pkg);
+      unawaited(_pending.remove(pkg));
       if (b != null) {
         _bytes[pkg] = b;
       } else {
