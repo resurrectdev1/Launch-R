@@ -8,6 +8,7 @@ import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/widgets/folder_color_picker.dart';
 import 'package:launch_r/widgets/tag_editor_sheet.dart';
+import 'package:launch_r/widgets/widget_resize_sheet.dart';
 
 void launchFrom(BuildContext context, String pkg) {
   Rect? from;
@@ -36,6 +37,8 @@ void openItem(BuildContext context, LItem item, Zone zone) {
         from = box.localToGlobal(Offset.zero) & box.size;
       }
       context.read<ShellController>().openFolder(zone, fid, from: from);
+    case WidgetItem() || WidgetCover():
+      break;
   }
 }
 
@@ -95,6 +98,11 @@ Future<void> showItemMenu(
           ? _entry(t, 'dissolve', Icons.folder_off_outlined, 'Ungroup folder')
           : _entry(t, 'remove', Icons.remove_circle_outline_rounded, 'Remove'),
     ],
+    if (item is WidgetItem) ...[
+      if (item.resizable)
+        _entry(t, 'resize', Icons.open_in_full_rounded, 'Resize'),
+      _entry(t, 'remove', Icons.remove_circle_outline_rounded, 'Remove'),
+    ],
   ];
 
   final choice = await showMenu<String>(
@@ -147,5 +155,8 @@ Future<void> showItemMenu(
       }
     case 'dissolve':
       model.dissolveFolder(zone, (item as FolderItem).fid);
+    case 'resize':
+      if (context.mounted)
+        showWidgetResizeSheet(context, (item as WidgetItem).wid);
   }
 }
