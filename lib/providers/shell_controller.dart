@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:launch_r/models/launcher_models.dart';
+import 'package:launch_r/theme/motion.dart';
 
 class OpenFolder {
   final Zone zone;
@@ -14,10 +15,7 @@ class OpenFolder {
 
 class ShellController extends ChangeNotifier {
   ShellController({required TickerProvider vsync})
-    : drawer = AnimationController(
-        vsync: vsync,
-        duration: const Duration(milliseconds: 320),
-      );
+    : drawer = AnimationController(vsync: vsync, duration: Motion.slow);
 
   final AnimationController drawer;
 
@@ -43,12 +41,11 @@ class ShellController extends ChangeNotifier {
 
   bool get drawerOpen => drawer.value > 0.5;
 
-  void openDrawer() =>
-      unawaited(drawer.animateTo(1, curve: Curves.easeOutCubic));
+  void openDrawer() => unawaited(drawer.animateTo(1, curve: Motion.standard));
 
   void closeDrawer() {
     FocusManager.instance.primaryFocus?.unfocus();
-    unawaited(drawer.animateBack(0, curve: Curves.easeInCubic));
+    unawaited(drawer.animateBack(0, curve: Motion.exit));
   }
 
   void openMenu() {
@@ -135,11 +132,7 @@ class ShellController extends ChangeNotifier {
     unawaited(HapticFeedback.selectionClick());
     FocusManager.instance.primaryFocus?.unfocus();
     unawaited(
-      drawer.animateBack(
-        0,
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-      ),
+      drawer.animateBack(0, duration: Motion.base, curve: Motion.standard),
     );
     notifyListeners();
   }
