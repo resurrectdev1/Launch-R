@@ -485,6 +485,7 @@ class _BarAction extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.dimmed = false,
   });
 
   final IconData icon;
