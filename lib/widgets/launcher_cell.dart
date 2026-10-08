@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +13,9 @@ import 'package:launch_r/widgets/draggable_item.dart';
 import 'package:launch_r/widgets/item_actions.dart';
 
 enum Hover { none, merge, before, after }
+
+double gridIconSize(double cellW, double cellH) =>
+    math.max(32.0, math.min(math.min(cellW * 0.7, 64.0), cellH - 40));
 
 class LauncherCell extends StatefulWidget {
   const LauncherCell({
@@ -204,7 +208,7 @@ class _LauncherCellState extends State<LauncherCell> {
               ),
               Positioned.fill(
                 child: CustomPaint(
-                  painter: _CornerDotsPainter(fg.withValues(alpha: 0.22)),
+                  painter: CornerDotsPainter(fg.withValues(alpha: 0.22)),
                 ),
               ),
             ],
@@ -312,8 +316,8 @@ extension on _LauncherCellState {
   }
 }
 
-class _CornerDotsPainter extends CustomPainter {
-  const _CornerDotsPainter(this.color);
+class CornerDotsPainter extends CustomPainter {
+  const CornerDotsPainter(this.color);
   final Color color;
 
   @override
@@ -328,5 +332,5 @@ class _CornerDotsPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_CornerDotsPainter old) => old.color != color;
+  bool shouldRepaint(CornerDotsPainter old) => old.color != color;
 }
