@@ -170,7 +170,7 @@ class _DrawerViewState extends State<DrawerView> {
         final pages = math.max(1, (n / perPage).ceil());
         _pageCount = pages;
         final cw = (c.maxWidth - 16) / cols;
-        final iconSize = gridIconSize(cw, gridH / rows);
+        final iconSize = math.min(cw * 0.62, 60.0);
 
         Widget cell(int idx) {
           final item = idx < n ? items[idx] : null;
@@ -186,6 +186,7 @@ class _DrawerViewState extends State<DrawerView> {
             width: cw,
             style: style,
             locked: settings.lockLayout,
+            dot: idx % perPage % cols < cols - 1 && idx % perPage ~/ cols < rows - 1,
             onDrop: (d, h) => _drop(d, h, item, idx),
           );
         }
@@ -265,7 +266,7 @@ class _DrawerViewState extends State<DrawerView> {
     return LayoutBuilder(
       builder: (context, c) {
         final cw = (c.maxWidth - 16) / cols;
-        final iconSize = gridIconSize(cw, _kRowPitch);
+        final iconSize = math.min(cw * 0.62, 60.0);
         return GridView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
