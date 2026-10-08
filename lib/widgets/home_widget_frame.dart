@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
+import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/shell_controller.dart';
+import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/widgets/draggable_item.dart';
 import 'package:launch_r/widgets/item_actions.dart';
@@ -11,12 +14,14 @@ class HomeWidgetFrame extends StatelessWidget {
   const HomeWidgetFrame({
     super.key,
     required this.item,
+    required this.index,
     required this.cellWidth,
     required this.cellHeight,
     required this.locked,
   });
 
   final WidgetItem item;
+  final int index;
   final double cellWidth;
   final double cellHeight;
   final bool locked;
@@ -28,6 +33,10 @@ class HomeWidgetFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final dragging = context.select<ShellController, bool>(
       (s) => s.drag?.item.id == item.id,
+    );
+
+    final resizing = context.select<ShellController, bool>(
+      (s) => s.resizingWid == item.wid,
     );
 
     final size = Size(
@@ -47,25 +56,263 @@ class HomeWidgetFrame extends StatelessWidget {
 
     return IgnorePointer(
       ignoring: dragging,
-      child: Padding(
-        padding: const EdgeInsets.all(_inset),
-        child: DraggableItem(
-          item: item,
-          zone: Zone.home,
-          locked: locked,
-          feedbackSize: size,
-          feedbackAnchor: Offset(
-            cellWidth / 2 - _inset,
-            cellHeight / 2 - _inset,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.all(_inset),
+              child: DraggableItem(
+                item: item,
+                zone: Zone.home,
+                locked: locked,
+                feedbackSize: size,
+                feedbackAnchor: Offset(
+                  cellWidth / 2 - _inset,
+                  cellHeight / 2 - _inset,
+                ),
+                feedback: _DragGhost(label: item.label, radius: _radius),
+                onTap: null,
+                onMenu: (pos) => showItemMenu(context, pos, item, Zone.home),
+                child: view,
+              ),
+            ),
           ),
-          feedback: _DragGhost(label: item.label, radius: _radius),
-          onTap: null,
-          onMenu: (pos) => showItemMenu(context, pos, item, Zone.home),
-          child: view,
-        ),
+          if (resizing)
+            Positioned.fill(
+              child: _ResizeOverlay(
+                item: item,
+                index: index,
+                cellWidth: cellWidth,
+                cellHeight: cellHeight,
+                inset: _inset,
+                radius: _radius,
+              ),
+            ),
+        ],
       ),
     );
   }
+}
+
+class _ResizeOverlay extends StatefulWidget {
+  const _ResizeOverlay({
+    required this.item,
+    required this.index,
+    required this.cellWidth,
+    required this.cellHeight,
+    required this.inset,
+    required this.radius,
+  });
+
+  final WidgetItem item;
+  final int index;
+  final double cellWidth;
+  final double cellHeight;
+  final double inset;
+  final double radius;
+
+  @override
+  State<_ResizeOverlay> createState() => _ResizeOverlayState();
+}
+
+class _ResizeOverlayState extends State<_ResizeOverlay> {
+  static const _hit = 44.0;
+  static const _pillLong = 30.0;
+  static const _pillShort = 6.0;
+  static const _pillInset = 16.0;
+
+  WidgetEdge? _edge;
+  ({int index, int cols, int rows})? _target;
+
+  double _cell(WidgetEdge e) => (e == WidgetEdge.left || e == WidgetEdge.right)
+      ? widget.cellWidth
+      : widget.cellHeight;
+
+  void _start(WidgetEdge e) {
+    _dx = 0;
+    _dy = 0;
+    setState(() {
+      _edge = e;
+      _target = (
+        index: widget.index,
+        cols: widget.item.cols,
+        rows: widget.item.rows,
+      );
+    });
+  }
+
+  void _cancel() {
+    _dx = 0;
+    _dy = 0;
+    setState(() {
+      _edge = null;
+      _target = null;
+    });
+  }
+
+  void _update(WidgetEdge e, double px) {
+    final cells = (px / _cell(e)).round();
+    final signed = (e == WidgetEdge.left || e == WidgetEdge.top)
+        ? -cells
+        : cells;
+    final next = context.read<LauncherModel>().resolveWidgetResize(
+      widget.item.wid,
+      e,
+      signed,
+    );
+    if (next == null) return;
+    final prev = _target;
+    if (prev == null ||
+        prev.index != next.index ||
+        prev.cols != next.cols ||
+        prev.rows != next.rows) {
+      unawaited(HapticFeedback.selectionClick());
+      setState(() => _target = next);
+    }
+  }
+
+  void _end() {
+    final t = _target;
+    if (t != null) {
+      context.read<LauncherModel>().applyWidgetResize(
+        widget.item.wid,
+        t.index,
+        t.cols,
+        t.rows,
+      );
+    }
+    _cancel();
+  }
+
+  Rect _previewRect() {
+    final w = widget.item;
+    final t = _target;
+    if (t == null) {
+      return Rect.fromLTWH(
+        widget.inset,
+        widget.inset,
+        w.cols * widget.cellWidth - widget.inset * 2,
+        w.rows * widget.cellHeight - widget.inset * 2,
+      );
+    }
+    final grid = context.read<LauncherModel>().homeCols;
+    final dCol = (t.index % grid) - (widget.index % grid);
+    final dRow = (t.index ~/ grid) - (widget.index ~/ grid);
+    return Rect.fromLTWH(
+      dCol * widget.cellWidth + widget.inset,
+      dRow * widget.cellHeight + widget.inset,
+      t.cols * widget.cellWidth - widget.inset * 2,
+      t.rows * widget.cellHeight - widget.inset * 2,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final th = LaunchRTheme.of(context);
+    final w = widget.item;
+    final active = _edge != null;
+    final rect = _previewRect();
+
+    Widget handle(WidgetEdge e) {
+      final horizontalEdge = e == WidgetEdge.left || e == WidgetEdge.right;
+      final pill = Container(
+        width: horizontalEdge ? _pillShort : _pillLong,
+        height: horizontalEdge ? _pillLong : _pillShort,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: th.accent, width: 1.5),
+          boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 4)],
+        ),
+      );
+      final target = SizedBox(
+        width: horizontalEdge ? _hit : _hit * 1.4,
+        height: horizontalEdge ? _hit * 1.4 : _hit,
+        child: Center(child: pill),
+      );
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onHorizontalDragStart: horizontalEdge ? (_) => _start(e) : null,
+        onHorizontalDragUpdate: horizontalEdge
+            ? (d) => _update(e, _dx += d.delta.dx)
+            : null,
+        onHorizontalDragEnd: horizontalEdge ? (_) => _end() : null,
+        onHorizontalDragCancel: horizontalEdge ? _cancel : null,
+        onVerticalDragStart: horizontalEdge ? null : (_) => _start(e),
+        onVerticalDragUpdate: horizontalEdge
+            ? null
+            : (d) => _update(e, _dy += d.delta.dy),
+        onVerticalDragEnd: horizontalEdge ? null : (_) => _end(),
+        onVerticalDragCancel: horizontalEdge ? null : _cancel,
+        child: target,
+      );
+    }
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fromRect(
+          rect: rect,
+          child: IgnorePointer(
+            child: AnimatedContainer(
+              duration: active
+                  ? Duration.zero
+                  : const Duration(milliseconds: 140),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(widget.radius),
+                color: active ? th.accent.withValues(alpha: 0.18) : null,
+                border: Border.all(color: th.accent, width: 2),
+              ),
+            ),
+          ),
+        ),
+        if (w.canH)
+          Positioned(
+            left: widget.inset + _pillInset - _hit / 2 + _pillShort / 2,
+            top: 0,
+            bottom: 0,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [handle(WidgetEdge.left)],
+            ),
+          ),
+        if (w.canH)
+          Positioned(
+            right: widget.inset + _pillInset - _hit / 2 + _pillShort / 2,
+            top: 0,
+            bottom: 0,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [handle(WidgetEdge.right)],
+            ),
+          ),
+        if (w.canV)
+          Positioned(
+            top: widget.inset + _pillInset - _hit / 2 + _pillShort / 2,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [handle(WidgetEdge.top)],
+            ),
+          ),
+        if (w.canV)
+          Positioned(
+            bottom: widget.inset + _pillInset - _hit / 2 + _pillShort / 2,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [handle(WidgetEdge.bottom)],
+            ),
+          ),
+      ],
+    );
+  }
+
+  double _dx = 0;
+  double _dy = 0;
 }
 
 class _DragGhost extends StatelessWidget {
