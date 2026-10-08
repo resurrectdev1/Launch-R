@@ -108,4 +108,35 @@ class LauncherChannel {
 
   Future<void> expandNotifications() =>
       _safe(() => _ch.invokeMethod<void>('expandNotifications'));
+
+  static const widgetViewType = 'com.resurrect.launch_r/widget';
+
+  Future<List<WidgetProvider>> getWidgetProviders() async {
+    final r = await _safe(
+      () => _ch.invokeListMethod<Map>('getWidgetProviders'),
+    );
+    return r?.map(WidgetProvider.fromMap).toList() ?? [];
+  }
+
+  Future<Uint8List?> getWidgetPreview(String component, {int size = 256}) =>
+      _safe(
+        () => _ch.invokeMethod<Uint8List>('getWidgetPreview', {
+          'component': component,
+          'size': size,
+        }),
+      );
+
+  Future<int?> addWidget(String component) async {
+    try {
+      return await _ch.invokeMethod<int>('addWidget', {'component': component});
+    } on MissingPluginException {
+      return null;
+    } on PlatformException catch (e) {
+      debugPrint('Launch-R addWidget error: ${e.code} ${e.message}');
+      return null;
+    }
+  }
+
+  Future<void> deleteWidget(int id) =>
+      _safe(() => _ch.invokeMethod<void>('deleteWidget', {'id': id}));
 }
