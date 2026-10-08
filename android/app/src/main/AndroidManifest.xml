@@ -75,5 +75,9 @@
         <intent>
             <action android:name="android.media.action.IMAGE_CAPTURE"/>
         </intent>
+        <!-- Widget providers, so the widget picker can show their app names -->
+        <intent>
+            <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+        </intent>
     </queries>
 </manifest>
