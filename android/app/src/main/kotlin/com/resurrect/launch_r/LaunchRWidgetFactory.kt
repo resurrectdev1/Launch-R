@@ -5,7 +5,9 @@ import android.appwidget.AppWidgetHost
 import android.appwidget.AppWidgetHostView
 import android.appwidget.AppWidgetManager
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
+import android.util.SizeF
 import android.view.Gravity
 import android.view.View
 import android.widget.TextView
@@ -39,7 +41,14 @@ class LaunchRWidgetFactory(
                     val d = v.resources.displayMetrics.density
                     val wd = (w / d).toInt()
                     val hd = (h / d).toInt()
-                    (v as? AppWidgetHostView)?.updateAppWidgetSize(Bundle(), wd, hd, wd, hd)
+                    val hostView = v as? AppWidgetHostView ?: return@addOnLayoutChangeListener
+                    hostView.updateAppWidgetSize(Bundle(), wd, hd, wd, hd)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        hostView.updateAppWidgetSize(
+                            Bundle(),
+                            listOf(SizeF(wd.toFloat(), hd.toFloat())),
+                        )
+                    }
                 }
             }
         }
