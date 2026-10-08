@@ -150,7 +150,7 @@ class _HomePage extends StatelessWidget {
         builder: (context, c) {
           final cw = c.maxWidth / cols;
           final ch = c.maxHeight / rows;
-          final iconSize = gridIconSize(cw, ch);
+          final iconSize = math.min(cw * 0.6, 58.0);
           return Stack(
             children: [
               Positioned.fill(
@@ -242,6 +242,9 @@ class _HomePage extends StatelessWidget {
       width: width,
       style: style,
       locked: settings.lockLayout,
+      dot:
+          index % model.homeCols < model.homeCols - 1 &&
+          index ~/ model.homeCols < model.homeRows - 1,
       canDrop: (d) {
         final dragged = d.item;
         if (dragged is WidgetItem) {
@@ -271,7 +274,7 @@ class _Dock extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, c) {
             final cw = c.maxWidth / dock.length;
-            final iconSize = math.min(cw * 0.7, 64.0);
+            final iconSize = math.min(cw * 0.6, 58.0);
             return Row(
               children: [
                 for (var i = 0; i < dock.length; i++)
