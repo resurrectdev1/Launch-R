@@ -1,7 +1,6 @@
 import 'package:flutter/animation.dart';
 
 abstract final class Motion {
-
   static const Duration fast = Duration(milliseconds: 140);
 
   static const Duration base = Duration(milliseconds: 220);
