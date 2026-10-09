@@ -75,6 +75,18 @@ class _LaunchRAppState extends State<LaunchRApp> with WidgetsBindingObserver {
               color: Colors.transparent,
               themeMode: ThemeMode.light,
               theme: _theme(settings.appearance, settings.accent, dyn),
+              builder: (context, child) {
+                final mq = MediaQuery.of(context);
+                return MediaQuery(
+                  data: mq.copyWith(
+                    textScaler: TextScaler.linear(
+                      mq.textScaler.scale(1) * settings.textScale,
+                    ),
+                    boldText: mq.boldText || settings.boldText,
+                  ),
+                  child: child ?? const SizedBox.shrink(),
+                );
+              },
               home: const LauncherShell(),
             );
           },
