@@ -63,6 +63,14 @@ class LauncherChannel {
     }),
   );
 
+  Future<List<IconPackInfo>> getIconPacks() async {
+    final r = await _safe(() => _ch.invokeListMethod<Map>('getIconPacks'));
+    return r?.map(IconPackInfo.fromMap).toList() ?? [];
+  }
+
+  Future<bool?> setIconPack(String? pkg) =>
+      _safe(() => _ch.invokeMethod<bool>('setIconPack', {'package': pkg}));
+
   Future<bool> launchApp(String pkg, {Rect? from, double dpr = 1}) async {
     final args = <String, dynamic>{'package': pkg};
     if (from != null) {
