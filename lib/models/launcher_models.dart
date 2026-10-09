@@ -27,6 +27,17 @@ class LauncherApp {
       LauncherApp(package: m['package'] as String, label: m['label'] as String);
 }
 
+class IconPackInfo {
+  final String package;
+  final String label;
+  const IconPackInfo({required this.package, required this.label});
+
+  factory IconPackInfo.fromMap(Map<dynamic, dynamic> m) => IconPackInfo(
+    package: m['package'] as String,
+    label: m['label'] as String,
+  );
+}
+
 sealed class LItem {
   const LItem();
   String get id;
