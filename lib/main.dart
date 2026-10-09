@@ -37,6 +37,16 @@ Future<void> main() async {
   );
 
   try {
+    final pack = settings.iconPack;
+    if (pack != null) {
+      final ok = await LauncherChannel.instance.setIconPack(pack);
+      if (ok == false) await settings.setIconPack(null, null);
+    }
+  } catch (e, s) {
+    debugPrint('Launch-R: icon pack restore failed: $e\n$s');
+  }
+
+  try {
     await model.init();
     debugPrint('Launch-R: model ready');
   } catch (e, s) {
