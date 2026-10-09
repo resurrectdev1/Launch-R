@@ -2,6 +2,8 @@
 
 - Add custom font
 
+- Add option that when opening app drawer will automatically go to search
+
 - Add adaptive icons & themed icons
 
 - Make icon badges off by default so first toggle will take you to turn them on in settings
