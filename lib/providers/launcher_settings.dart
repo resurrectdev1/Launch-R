@@ -13,6 +13,8 @@ class LauncherSettings extends ChangeNotifier {
   bool _lockLayout = false;
   bool _showBadges = true;
   bool _fuzzySearch = true;
+  double _textScale = 1.0;
+  bool _boldText = false;
   IconShape _iconShape = IconShape.squircle;
   ColorScheme? _dynamicLight;
   ColorScheme? _dynamicDark;
@@ -31,6 +33,11 @@ class LauncherSettings extends ChangeNotifier {
   bool get lockLayout => _lockLayout;
   bool get showBadges => _showBadges;
   bool get fuzzySearch => _fuzzySearch;
+  double get textScale => _textScale;
+  bool get boldText => _boldText;
+
+  static const double minTextScale = 0.85;
+  static const double maxTextScale = 1.3;
   IconShape get iconShape => _iconShape;
 
   Future<void> init() async {
@@ -49,6 +56,10 @@ class LauncherSettings extends ChangeNotifier {
     _showBadges = p.getBool('show_badges') ?? true;
     _fuzzySearch = p.getBool('fuzzy_search') ?? true;
     _iconShape = IconShape.fromName(p.getString('icon_shape'));
+    _textScale = (p.getDouble('text_scale') ?? 1.0)
+        .clamp(minTextScale, maxTextScale)
+        .toDouble();
+    _boldText = p.getBool('bold_text') ?? false;
   }
 
   void applyDynamicColors(ColorScheme? light, ColorScheme? dark) {
@@ -113,5 +124,20 @@ class LauncherSettings extends ChangeNotifier {
     _iconShape = v;
     notifyListeners();
     await _prefs?.setString('icon_shape', v.name);
+  }
+
+  Future<void> setTextScale(double v) async {
+    final next = v.clamp(minTextScale, maxTextScale).toDouble();
+    if (next == _textScale) return;
+    _textScale = next;
+    notifyListeners();
+    await _prefs?.setDouble('text_scale', next);
+  }
+
+  Future<void> setBoldText(bool v) async {
+    if (v == _boldText) return;
+    _boldText = v;
+    notifyListeners();
+    await _prefs?.setBool('bold_text', v);
   }
 }
