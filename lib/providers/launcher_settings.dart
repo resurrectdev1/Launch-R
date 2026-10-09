@@ -14,6 +14,8 @@ class LauncherSettings extends ChangeNotifier {
   bool _showBadges = true;
   bool _fuzzySearch = true;
   double _textScale = 1.0;
+  String? _iconPack;
+  String? _iconPackLabel;
   bool _boldText = false;
   IconShape _iconShape = IconShape.squircle;
   ColorScheme? _dynamicLight;
@@ -34,6 +36,8 @@ class LauncherSettings extends ChangeNotifier {
   bool get showBadges => _showBadges;
   bool get fuzzySearch => _fuzzySearch;
   double get textScale => _textScale;
+  String? get iconPack => _iconPack;
+  String? get iconPackLabel => _iconPackLabel;
   bool get boldText => _boldText;
 
   static const double minTextScale = 0.85;
@@ -60,6 +64,8 @@ class LauncherSettings extends ChangeNotifier {
         .clamp(minTextScale, maxTextScale)
         .toDouble();
     _boldText = p.getBool('bold_text') ?? false;
+    _iconPack = p.getString('icon_pack');
+    _iconPackLabel = p.getString('icon_pack_label');
   }
 
   void applyDynamicColors(ColorScheme? light, ColorScheme? dark) {
@@ -139,5 +145,19 @@ class LauncherSettings extends ChangeNotifier {
     _boldText = v;
     notifyListeners();
     await _prefs?.setBool('bold_text', v);
+  }
+
+  Future<void> setIconPack(String? pkg, String? label) async {
+    if (pkg == _iconPack && label == _iconPackLabel) return;
+    _iconPack = pkg;
+    _iconPackLabel = pkg == null ? null : label;
+    notifyListeners();
+    if (pkg == null) {
+      await _prefs?.remove('icon_pack');
+      await _prefs?.remove('icon_pack_label');
+    } else {
+      await _prefs?.setString('icon_pack', pkg);
+      await _prefs?.setString('icon_pack_label', label ?? pkg);
+    }
   }
 }
