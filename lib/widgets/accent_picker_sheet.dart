@@ -24,13 +24,14 @@ const _presets = <Color>[
 String hexOfColor(Color c) =>
     (c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase();
 
-Future<void> showAccentPicker(BuildContext context) {
-  return showModalBottomSheet<void>(
+Future<bool> showAccentPicker(BuildContext context) async {
+  final changed = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) => const _AccentSheet(),
   );
+  return changed ?? false;
 }
 
 class _AccentSheet extends StatefulWidget {
@@ -58,8 +59,15 @@ class _AccentSheetState extends State<_AccentSheet> {
   }
 
   bool get _complete => _hex.text.length == 6;
+  bool get _showError => !_complete && _hex.text.isNotEmpty;
+
+  static final _fieldBorder = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(16),
+    borderSide: BorderSide.none,
+  );
 
   void _pick(Color c) {
+    unawaited(HapticFeedback.selectionClick());
     setState(() {
       _color = c;
       _hex.text = hexOfColor(c);
@@ -80,14 +88,15 @@ class _AccentSheetState extends State<_AccentSheet> {
     await settings.setCustomAccent(
       _color == LaunchRTheme.defaultAccent ? null : _color,
     );
-    navigator.pop();
+    navigator.pop(true);
   }
 
   Future<void> _reset() async {
     final settings = context.read<LauncherSettings>();
     final navigator = Navigator.of(context);
+    unawaited(HapticFeedback.lightImpact());
     await settings.setCustomAccent(null);
-    navigator.pop();
+    navigator.pop(true);
   }
 
   @override
@@ -138,7 +147,17 @@ class _AccentSheetState extends State<_AccentSheet> {
                   'Used for highlights, drop targets and switches',
                   style: TextStyle(color: t.drawerTextMuted, fontSize: 14),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 22),
+                Text(
+                  'Preset colors',
+                  style: TextStyle(
+                    color: t.drawerTextMuted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                const SizedBox(height: 12),
                 Wrap(
                   spacing: 14,
                   runSpacing: 14,
@@ -154,28 +173,18 @@ class _AccentSheetState extends State<_AccentSheet> {
                 ),
                 const SizedBox(height: 22),
                 Text(
-                  'Custom color',
+                  'Custom hex code',
                   style: TextStyle(
                     color: t.drawerTextMuted,
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
+                    letterSpacing: 1.0,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AnimatedContainer(
-                      duration: Motion.fast,
-                      curve: Motion.standard,
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _color,
-                        border: Border.all(color: t.drawerTextMuted),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
                     Expanded(
                       child: TextField(
                         controller: _hex,
@@ -202,6 +211,14 @@ class _AccentSheetState extends State<_AccentSheet> {
                           isDense: true,
                           filled: true,
                           fillColor: t.searchBg,
+                          labelText: 'Hex code',
+                          labelStyle: TextStyle(color: t.drawerTextMuted),
+                          floatingLabelStyle: TextStyle(color: _color),
+                          prefixIcon: Icon(
+                            Icons.palette_outlined,
+                            size: 18,
+                            color: t.drawerTextMuted,
+                          ),
                           prefixText: '#',
                           prefixStyle: TextStyle(
                             color: t.drawerTextMuted,
@@ -209,19 +226,41 @@ class _AccentSheetState extends State<_AccentSheet> {
                           ),
                           hintText: 'F26A27',
                           hintStyle: TextStyle(color: t.drawerTextMuted),
-                          helperText: _complete ? null : 'Enter 6 digits',
-                          helperStyle: TextStyle(color: t.drawerTextMuted),
+                          errorText: _showError ? 'Invalid hex' : null,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 14,
                           ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
+                          border: _fieldBorder,
+                          enabledBorder: _fieldBorder,
+                          focusedBorder: _fieldBorder,
+                          errorBorder: _fieldBorder,
+                          focusedErrorBorder: _fieldBorder,
                         ),
                         onChanged: _onHex,
                         onSubmitted: _onHex,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    AnimatedContainer(
+                      duration: Motion.fast,
+                      curve: Motion.standard,
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _color,
+                        border: Border.all(
+                          color: t.drawerTextMuted.withValues(alpha: 0.4),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _color.withValues(alpha: 0.4),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -295,6 +334,14 @@ class _Swatch extends StatelessWidget {
               color: selected ? ring : Colors.transparent,
               width: 3,
             ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.6),
+                      blurRadius: 10,
+                    ),
+                  ]
+                : const [],
           ),
           child: selected
               ? Icon(
