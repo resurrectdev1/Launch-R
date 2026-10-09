@@ -293,6 +293,16 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     unawaited(_preloadIcons());
   }
 
+  Future<bool> applyIconPack(String? pkg) async {
+    final ok = await LauncherChannel.instance.setIconPack(pkg);
+    if (ok != true) return false;
+    IconCache.instance.clear();
+    iconRevision++;
+    notifyListeners();
+    unawaited(_preloadIcons());
+    return true;
+  }
+
   Future<int?> reloadApps() async {
     final ch = LauncherChannel.instance;
     final list = await ch.getApps();
