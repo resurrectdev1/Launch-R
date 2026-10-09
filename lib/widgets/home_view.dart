@@ -192,6 +192,15 @@ class _HomePage extends StatelessWidget {
               for (var i = 0; i < items.length; i++)
                 if (items[i] case final WidgetItem w when w.wid == resizing)
                   _frame(w, i, cols, cw, ch, settings.lockLayout),
+              Positioned.fill(
+                child: _WidgetDropPreview(
+                  page: page,
+                  gridCols: cols,
+                  gridRows: rows,
+                  cellWidth: cw,
+                  cellHeight: ch,
+                ),
+              ),
             ],
           );
         },
@@ -254,6 +263,94 @@ class _HomePage extends StatelessWidget {
       },
       onDrop: (d, _) =>
           _announce(context, model.slotDrop(d, Zone.home, page, index)),
+    );
+  }
+}
+
+class _WidgetDropPreview extends StatefulWidget {
+  const _WidgetDropPreview({
+    required this.page,
+    required this.gridCols,
+    required this.gridRows,
+    required this.cellWidth,
+    required this.cellHeight,
+  });
+
+  final int page;
+  final int gridCols;
+  final int gridRows;
+  final double cellWidth;
+  final double cellHeight;
+
+  @override
+  State<_WidgetDropPreview> createState() => _WidgetDropPreviewState();
+}
+
+class _WidgetDropPreviewState extends State<_WidgetDropPreview> {
+  static const _invalid = Color(0xFFE5484D);
+  final _area = GlobalKey();
+
+  int? _indexAt(Offset global) {
+    final box = _area.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.attached || !box.hasSize) return null;
+    final local = box.globalToLocal(global);
+    final col = (local.dx / widget.cellWidth).floor();
+    final row = (local.dy / widget.cellHeight).floor();
+    if (col < 0 || col >= widget.gridCols) return null;
+    if (row < 0 || row >= widget.gridRows) return null;
+    return row * widget.gridCols + col;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dragged = context.select<ShellController, WidgetItem?>(
+      (s) => s.drag?.item is WidgetItem ? s.drag!.item as WidgetItem : null,
+    );
+    if (dragged == null) return const SizedBox.shrink();
+
+    final shell = context.read<ShellController>();
+    final model = context.read<LauncherModel>();
+    final accent = LaunchRTheme.of(context).accent;
+    const inset = HomeWidgetFrame.inset;
+
+    return IgnorePointer(
+      child: ValueListenableBuilder<Offset?>(
+        valueListenable: shell.widgetDragPos,
+        builder: (context, pos, _) {
+          final index = pos == null ? null : _indexAt(pos);
+          final fits =
+              index != null &&
+              model.canPlaceWidget(dragged, widget.page, index);
+          final color = fits ? accent : _invalid;
+
+          return SizedBox.expand(
+            key: _area,
+            child: Stack(
+              clipBehavior: Clip.hardEdge,
+              children: [
+                if (index != null)
+                  AnimatedPositioned(
+                    duration: Motion.fast,
+                    curve: Motion.standard,
+                    left: (index % widget.gridCols) * widget.cellWidth + inset,
+                    top: (index ~/ widget.gridCols) * widget.cellHeight + inset,
+                    width: dragged.cols * widget.cellWidth - inset * 2,
+                    height: dragged.rows * widget.cellHeight - inset * 2,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: fits ? 0.18 : 0.14),
+                        border: Border.all(color: color, width: 2),
+                        borderRadius: BorderRadius.circular(
+                          HomeWidgetFrame.radius,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }
