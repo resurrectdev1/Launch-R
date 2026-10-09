@@ -169,6 +169,59 @@ class _SettingsSheet extends StatelessWidget {
                 value: s.darkHomeText,
                 onChanged: s.setDarkHomeText,
               ),
+              header('Text'),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Text size',
+                        style: TextStyle(color: t.drawerText),
+                      ),
+                    ),
+                    Text(
+                      '${(s.textScale * 100).round()}%',
+                      style: TextStyle(color: t.drawerTextMuted),
+                    ),
+                    if ((s.textScale - 1.0).abs() > 0.001)
+                      IconButton(
+                        tooltip: 'Reset text size',
+                        visualDensity: VisualDensity.compact,
+                        icon: Icon(
+                          Icons.restart_alt_rounded,
+                          color: t.drawerTextMuted,
+                        ),
+                        onPressed: () => s.setTextScale(1.0),
+                      ),
+                  ],
+                ),
+              ),
+              Slider(
+                value: s.textScale,
+                min: LauncherSettings.minTextScale,
+                max: LauncherSettings.maxTextScale,
+                divisions: 9,
+                activeColor: t.accent,
+                label: '${(s.textScale * 100).round()}%',
+                onChanged: (v) {
+                  HapticFeedback.selectionClick();
+                  unawaited(s.setTextScale(v));
+                },
+              ),
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
+                  'Bold text',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  'Makes labels and menus easier to read',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                value: s.boldText,
+                onChanged: s.setBoldText,
+              ),
               header('Layout'),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
