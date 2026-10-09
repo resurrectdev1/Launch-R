@@ -75,6 +75,19 @@
         <intent>
             <action android:name="android.media.action.IMAGE_CAPTURE"/>
         </intent>
+        <!-- Icon packs -->
+        <intent>
+            <action android:name="org.adw.launcher.THEMES"/>
+        </intent>
+        <intent>
+            <action android:name="com.novalauncher.THEME"/>
+        </intent>
+        <intent>
+            <action android:name="com.anddoes.launcher.THEME"/>
+        </intent>
+        <intent>
+            <action android:name="org.adw.launcher.icons.ACTION_PICK_ICON"/>
+        </intent>
         <!-- Widget providers, so the widget picker can show their app names -->
         <intent>
             <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
