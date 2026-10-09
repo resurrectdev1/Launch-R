@@ -8,6 +8,8 @@
 
 - Make icon badges off by default so first toggle will take you to turn them on in settings
 
+- Make closing app drawer slightly faster but keep opening it and other animation speeds the same
+
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
 
 - Add private space suppourt
