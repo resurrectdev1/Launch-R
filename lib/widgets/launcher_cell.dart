@@ -166,7 +166,9 @@ class _LauncherCellState extends State<LauncherCell> {
       onAcceptWithDetails: (d) => _onAccept(d.data, d.offset),
       builder: (context, candidate, rejected) {
         final item = widget.item;
-        final active = candidate.isNotEmpty && _hover == Hover.none;
+        final widgetDrag = candidate.any((c) => c?.item is WidgetItem);
+        final active =
+            candidate.isNotEmpty && _hover == Hover.none && !widgetDrag;
         return Stack(
           clipBehavior: Clip.none,
           children: [
@@ -322,7 +324,11 @@ class IntersectionDotPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawCircle(Offset(size.width, size.height), 1.8, Paint()..color = color);
+    canvas.drawCircle(
+      Offset(size.width, size.height),
+      1.8,
+      Paint()..color = color,
+    );
   }
 
   @override
