@@ -26,8 +26,12 @@ class HomeWidgetFrame extends StatelessWidget {
   final double cellHeight;
   final bool locked;
 
-  static const _inset = 4.0;
-  static const _radius = 22.0;
+  static const inset = 4.0;
+
+  static const radius = 22.0;
+
+  static const _inset = inset;
+  static const _radius = radius;
 
   @override
   Widget build(BuildContext context) {
