@@ -6,8 +6,6 @@
 
 - Add private space suppourt
 
-- Add custom icon pack support
-
 - Be able to password or bio-metric lock apps
 
 - Custom gestures
@@ -83,3 +81,5 @@
 - ~~Make widget drop preview take up as much space as it actually appears to take up/ placement preview of widgets~~
 
 - ~~Add text scaling & optional text bolding~~
+
+- ~~Add custom icon pack support~~
