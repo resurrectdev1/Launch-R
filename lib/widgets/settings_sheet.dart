@@ -10,6 +10,7 @@ import 'package:launch_r/theme/icon_shapes.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/widgets/accent_picker_sheet.dart';
 import 'package:launch_r/widgets/hidden_apps_sheet.dart';
+import 'package:launch_r/widgets/icon_pack_sheet.dart';
 import 'package:launch_r/widgets/tag_manager_sheet.dart';
 
 void showLaunchRSettings(BuildContext context) {
@@ -301,6 +302,25 @@ class _SettingsSheet extends StatelessWidget {
                 onChanged: model.setAutoAddNew,
               ),
               header('Icons'),
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                leading: Icon(Icons.palette_outlined, color: t.drawerText),
+                title: Text(
+                  'Icon pack',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  s.iconPack == null
+                      ? 'System default'
+                      : (s.iconPackLabel ?? s.iconPack!),
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                trailing: Icon(
+                  Icons.chevron_right_rounded,
+                  color: t.drawerTextMuted,
+                ),
+                onTap: () => showIconPackPicker(context),
+              ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 6, 24, 10),
                 child: Wrap(
