@@ -2,6 +2,8 @@
 
 - Add custom font
 
+- Add adaptive icons & themed icons
+
 - Make icon badges off by default so first toggle will take you to turn them on in settings
 
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
