@@ -11,6 +11,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PorterDuff
@@ -47,6 +48,9 @@ class MainActivity : FlutterActivity() {
     private val widgetManager by lazy { AppWidgetManager.getInstance(this) }
     private var pendingWidget: PendingWidget? = null
 
+    @Volatile private var iconPack: IconPack? = null
+    @Volatile private var iconPackPkg: String? = null
+
     private class PendingWidget(
         val id: Int,
         val info: AppWidgetProviderInfo,
@@ -62,6 +66,22 @@ class MainActivity : FlutterActivity() {
 
     private val packageReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
+            val action = intent?.action
+            val changed = intent?.data?.schemeSpecificPart
+            val active = iconPackPkg
+            if (active != null && changed == active) {
+                if (action == Intent.ACTION_PACKAGE_REMOVED) {
+                    if (intent?.getBooleanExtra(Intent.EXTRA_REPLACING, false) == true) return
+                    iconPack = null
+                    channel?.invokeMethod("onPackagesChanged", null)
+                } else {
+                    io.execute {
+                        iconPack = IconPack.load(this@MainActivity, active)
+                        runOnUiThread { channel?.invokeMethod("onPackagesChanged", null) }
+                    }
+                }
+                return
+            }
             channel?.invokeMethod("onPackagesChanged", null)
         }
     }
@@ -170,6 +190,29 @@ class MainActivity : FlutterActivity() {
                 io.execute {
                     val bytes = try { renderIcon(pkg, size, shape) } catch (_: Throwable) { null }
                     runOnUiThread { result.success(bytes) }
+                }
+            }
+
+            "getIconPacks" -> io.execute {
+                val packs = try { IconPack.list(this) } catch (_: Throwable) { emptyList() }
+                runOnUiThread { result.success(packs) }
+            }
+
+            "setIconPack" -> {
+                val pkg = call.argument<String>("package")
+                io.execute {
+                    val ok: Boolean
+                    if (pkg == null) {
+                        iconPack = null
+                        iconPackPkg = null
+                        ok = true
+                    } else {
+                        val loaded = IconPack.load(this, pkg)
+                        iconPack = loaded
+                        iconPackPkg = if (loaded != null) pkg else null
+                        ok = loaded != null
+                    }
+                    runOnUiThread { result.success(ok) }
                 }
             }
 
@@ -420,6 +463,13 @@ class MainActivity : FlutterActivity() {
 
     private fun renderIcon(pkg: String, size: Int, shape: String): ByteArray {
         val drawable = packageManager.getApplicationIcon(pkg)
+
+        val pack = iconPack
+        if (pack != null) {
+            pack.iconFor(launchComponentKey(pkg), pkg)?.let { return renderThemed(it, size) }
+            if (pack.hasBacks) renderOnBack(pack, drawable, pkg, size)?.let { return it }
+        }
+
         val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bmp)
         val s = size.toFloat()
@@ -447,6 +497,76 @@ class MainActivity : FlutterActivity() {
         val stream = ByteArrayOutputStream()
         bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
         return stream.toByteArray()
+    }
+
+    private fun launchComponentKey(pkg: String): String? =
+        packageManager.getLaunchIntentForPackage(pkg)?.component
+            ?.let { "${it.packageName}/${it.className}" }
+
+    private fun toBitmap(d: Drawable, size: Int): Bitmap {
+        val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        d.setBounds(0, 0, size, size)
+        d.draw(Canvas(bmp))
+        return bmp
+    }
+
+    private fun encode(bmp: Bitmap): ByteArray {
+        val stream = ByteArrayOutputStream()
+        bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
+        return stream.toByteArray()
+    }
+
+    private fun renderThemed(d: Drawable, size: Int): ByteArray = encode(toBitmap(d, size))
+
+    private fun renderOnBack(pack: IconPack, app: Drawable, pkg: String, size: Int): ByteArray? {
+        val back = pack.back(pkg) ?: return null
+        val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bmp)
+        val s = size.toFloat()
+        back.setBounds(0, 0, size, size)
+        back.draw(canvas)
+
+        val layer = canvas.saveLayer(0f, 0f, s, s, null)
+        val target = s * pack.scale
+        val t0 = (s - target) / 2f
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && app is AdaptiveIconDrawable) {
+            val box = target / 0.6667f
+            val o = ((s - box) / 2f).toInt()
+            val bounds = Rect(o, o, o + box.toInt(), o + box.toInt())
+            app.background?.let { it.bounds = bounds; it.draw(canvas) }
+            app.foreground?.let { it.bounds = bounds; it.draw(canvas) }
+            val r = target * 0.22f
+            val outside = Path().apply {
+                addRoundRect(RectF(t0, t0, t0 + target, t0 + target), r, r, Path.Direction.CW)
+                fillType = Path.FillType.INVERSE_WINDING
+            }
+            val eraser = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+            }
+            canvas.drawPath(outside, eraser)
+        } else {
+            app.setBounds(t0.toInt(), t0.toInt(), (t0 + target).toInt(), (t0 + target).toInt())
+            app.draw(canvas)
+        }
+
+        pack.mask()?.let { m ->
+            val mb = toBitmap(m, size)
+            val keepsCenter = Color.alpha(mb.getPixel(size / 2, size / 2)) > 127
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                xfermode = PorterDuffXfermode(
+                    if (keepsCenter) PorterDuff.Mode.DST_IN else PorterDuff.Mode.DST_OUT,
+                )
+            }
+            canvas.drawBitmap(mb, 0f, 0f, paint)
+        }
+        canvas.restoreToCount(layer)
+
+        pack.upon()?.let { u ->
+            u.setBounds(0, 0, size, size)
+            u.draw(canvas)
+        }
+        return encode(bmp)
     }
 
     private fun shapePath(shape: String, s: Float): Path = when (shape) {
