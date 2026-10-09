@@ -155,7 +155,13 @@ class _SettingsSheet extends StatelessWidget {
                         Icons.chevron_right_rounded,
                         color: t.drawerTextMuted,
                       ),
-                onTap: materialYou ? null : () => showAccentPicker(context),
+                onTap: materialYou
+                    ? null
+                    : () async {
+                        final navigator = Navigator.of(context);
+                        final changed = await showAccentPicker(context);
+                        if (changed && navigator.mounted) navigator.pop();
+                      },
               ),
               SwitchListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
