@@ -1,6 +1,6 @@
 # Roadmap of Launch-R! Different from a changelog because everything here is planned but not done.
 
-- Add custom font and text scaling & optional text bolding
+- Add custom font
 
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
 
@@ -81,3 +81,5 @@
 - ~~Make inside of folder match color of outside folder~~
 
 - ~~Make widget drop preview take up as much space as it actually appears to take up/ placement preview of widgets~~
+
+- ~~Add text scaling & optional text bolding~~
