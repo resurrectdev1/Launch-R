@@ -8,9 +8,8 @@ Path iconShapePath(IconShape shape, Size size) {
   switch (shape) {
     case IconShape.circle:
       return Path()..addOval(rect);
-    case IconShape.rounded:
-      return Path()
-        ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(w * 0.16)));
+    case IconShape.hexagon:
+      return _hexagonPath(size);
     case IconShape.square:
       return Path()
         ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(w * 0.08)));
@@ -56,4 +55,33 @@ class IconShapeClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(IconShapeClipper old) => old.shape != shape;
+}
+
+Path _hexagonPath(Size size) {
+  const corner = 0.28;
+  final cx = size.width / 2;
+  final cy = size.height / 2;
+  final r = math.min(cx, cy);
+  final pts = [
+    for (var i = 0; i < 6; i++)
+      Offset(
+        cx + r * math.cos(-math.pi / 2 + i * math.pi / 3),
+        cy + r * math.sin(-math.pi / 2 + i * math.pi / 3),
+      ),
+  ];
+  final path = Path();
+  for (var i = 0; i < 6; i++) {
+    final prev = pts[(i + 5) % 6];
+    final cur = pts[i];
+    final next = pts[(i + 1) % 6];
+    final a = Offset.lerp(cur, prev, corner)!;
+    final b = Offset.lerp(cur, next, corner)!;
+    if (i == 0) {
+      path.moveTo(a.dx, a.dy);
+    } else {
+      path.lineTo(a.dx, a.dy);
+    }
+    path.quadraticBezierTo(cur.dx, cur.dy, b.dx, b.dy);
+  }
+  return path..close();
 }
