@@ -11,7 +11,8 @@ class LauncherSettings extends ChangeNotifier {
   bool _darkHomeText = false;
   int _drawerCols = 4;
   bool _lockLayout = false;
-  bool _showBadges = true;
+  bool _showBadges = false;
+  bool _drawerAutoSearch = false;
   bool _fuzzySearch = true;
   double _textScale = 1.0;
   String? _iconPack;
@@ -34,6 +35,7 @@ class LauncherSettings extends ChangeNotifier {
   int get drawerCols => _drawerCols;
   bool get lockLayout => _lockLayout;
   bool get showBadges => _showBadges;
+  bool get drawerAutoSearch => _drawerAutoSearch;
   bool get fuzzySearch => _fuzzySearch;
   double get textScale => _textScale;
   String? get iconPack => _iconPack;
@@ -57,7 +59,8 @@ class LauncherSettings extends ChangeNotifier {
     _darkHomeText = p.getBool('dark_home_text') ?? false;
     _drawerCols = p.getInt('drawer_cols') ?? 4;
     _lockLayout = p.getBool('lock_layout') ?? false;
-    _showBadges = p.getBool('show_badges') ?? true;
+    _showBadges = p.getBool('show_badges') ?? false;
+    _drawerAutoSearch = p.getBool('drawer_auto_search') ?? false;
     _fuzzySearch = p.getBool('fuzzy_search') ?? true;
     _iconShape = IconShape.fromName(p.getString('icon_shape'));
     _textScale = (p.getDouble('text_scale') ?? 1.0)
@@ -116,6 +119,13 @@ class LauncherSettings extends ChangeNotifier {
     _showBadges = v;
     notifyListeners();
     await _prefs?.setBool('show_badges', v);
+  }
+
+  Future<void> setDrawerAutoSearch(bool v) async {
+    if (v == _drawerAutoSearch) return;
+    _drawerAutoSearch = v;
+    notifyListeners();
+    await _prefs?.setBool('drawer_auto_search', v);
   }
 
   Future<void> setFuzzySearch(bool v) async {
