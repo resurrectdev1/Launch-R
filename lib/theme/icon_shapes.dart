@@ -10,7 +10,7 @@ Path iconShapePath(IconShape shape, Size size) {
       return Path()..addOval(rect);
     case IconShape.rounded:
       return Path()
-        ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(w * 0.24)));
+        ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(w * 0.16)));
     case IconShape.square:
       return Path()
         ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(w * 0.08)));
