@@ -17,6 +17,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 * Material you into a toggle so it can be used alongside other themes
+* Rounded icon to hexagon
 
 ### Fixed
 
