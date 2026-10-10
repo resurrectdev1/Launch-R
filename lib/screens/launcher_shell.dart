@@ -50,6 +50,8 @@ class _LauncherShellState extends State<LauncherShell>
   }
 
   void _onHome() {
+    final nav = Navigator.of(context);
+    if (nav.canPop()) nav.popUntil((r) => r.isFirst);
     if (_shell.menuOpen) {
       _shell.closeMenu();
     } else if (_shell.folder != null) {
