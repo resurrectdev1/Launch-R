@@ -9,6 +9,7 @@ import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/icon_shapes.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/widgets/accent_picker_sheet.dart';
+import 'package:launch_r/widgets/font_sheet.dart';
 import 'package:launch_r/widgets/hidden_apps_sheet.dart';
 import 'package:launch_r/widgets/icon_pack_sheet.dart';
 import 'package:launch_r/widgets/tag_manager_sheet.dart';
@@ -177,6 +178,20 @@ class _SettingsSheet extends StatelessWidget {
                 onChanged: s.setDarkHomeText,
               ),
               header('Text'),
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                leading: Icon(Icons.text_fields_rounded, color: t.drawerText),
+                title: Text('Font', style: TextStyle(color: t.drawerText)),
+                subtitle: Text(
+                  s.fontLabel,
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                trailing: Icon(
+                  Icons.chevron_right_rounded,
+                  color: t.drawerTextMuted,
+                ),
+                onTap: () => showFontPicker(context),
+              ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Row(
