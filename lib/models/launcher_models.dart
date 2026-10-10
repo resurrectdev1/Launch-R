@@ -5,7 +5,7 @@ enum DropOutcome { done, alreadyOnHome, rejected, noRoom }
 enum IconShape {
   squircle('Squircle'),
   circle('Circle'),
-  rounded('Rounded'),
+  hexagon('Hexagon'),
   teardrop('Teardrop'),
   square('Square');
 
