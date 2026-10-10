@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:launch_r/models/launcher_models.dart';
 
 enum AppearanceMode {
   orangeFactory('Orange Factory', Brightness.dark),
@@ -95,6 +96,26 @@ class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
 
   Color get dragBarBg =>
       amoled ? const Color(0xEE1A1A1A) : const Color(0xEE1D1D22);
+
+  ThemedIconStyle get themedIconStyle {
+    final d = dynamicScheme;
+    if (d != null) {
+      return ThemedIconStyle(
+        bg: d.primaryContainer.toARGB32(),
+        fg: d.onPrimaryContainer.toARGB32(),
+      );
+    }
+    final hsl = HSLColor.fromColor(accent);
+    final tone = (hsl.saturation * 0.5).clamp(0.0, 0.5).toDouble();
+    final bg = hsl
+        .withSaturation(tone)
+        .withLightness(dark ? (amoled ? 0.14 : 0.2) : 0.88);
+    final fg = hsl.withLightness(dark ? 0.82 : 0.26);
+    return ThemedIconStyle(
+      bg: bg.toColor().toARGB32(),
+      fg: fg.toColor().toARGB32(),
+    );
+  }
 
   static Color onColor(Color background) => background.computeLuminance() > 0.55
       ? const Color(0xFF1B1B1F)
