@@ -35,8 +35,8 @@ class _LaunchRAppState extends State<LaunchRApp> with WidgetsBindingObserver {
     String? fontFamily,
   ) {
     final lt = LaunchRTheme.forMode(mode, accent, dynamicScheme: dyn);
-    var scheme = dyn != null && mode == AppearanceMode.materialYou
-        ? dyn.copyWith(primary: lt.accent, onPrimary: lt.onAccent)
+    var scheme = lt.dynamicScheme != null
+        ? lt.dynamicScheme!.copyWith(primary: lt.accent, onPrimary: lt.onAccent)
         : ColorScheme.fromSeed(
             seedColor: lt.accent,
             brightness: lt.brightness,
@@ -72,9 +72,9 @@ class _LaunchRAppState extends State<LaunchRApp> with WidgetsBindingObserver {
         });
         return Consumer<LauncherSettings>(
           builder: (_, settings, _) {
-            final systemBrightness =
-                WidgetsBinding.instance.platformDispatcher.platformBrightness;
-            final dyn = settings.dynamicSchemeFor(systemBrightness);
+            final dyn = settings.materialYou
+                ? settings.dynamicSchemeFor(settings.appearance.brightness)
+                : null;
             return MaterialApp(
               title: 'Launch-R',
               debugShowCheckedModeBanner: false,
