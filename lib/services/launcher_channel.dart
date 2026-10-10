@@ -55,11 +55,14 @@ class LauncherChannel {
     String pkg, {
     int size = 192,
     IconShape shape = IconShape.squircle,
+    ThemedIconStyle? themed,
   }) => _safe(
     () => _ch.invokeMethod<Uint8List>('getIcon', {
       'package': pkg,
       'size': size,
       'shape': shape.name,
+      if (themed != null) 'themedBg': themed.bg,
+      if (themed != null) 'themedFg': themed.fg,
     }),
   );
 
