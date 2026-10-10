@@ -240,7 +240,7 @@ class _LauncherShellState extends State<LauncherShell>
                         ),
                       );
                     },
-                    child: const DrawerView(),
+                    child: DrawerView(drawer: _shell.drawer),
                   ),
                 ),
 
