@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 enum AppearanceMode {
   orangeFactory('Orange Factory', Brightness.dark),
   amoledBlack('AMOLED Black', Brightness.dark),
-  whiteMinimal('White Minimal', Brightness.light),
-  materialYou('Material You', Brightness.dark);
+  whiteMinimal('White Minimal', Brightness.light);
 
   const AppearanceMode(this.label, this.brightness);
   final String label;
@@ -35,11 +34,13 @@ class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
     Color accent, {
     ColorScheme? dynamicScheme,
   }) {
-    if (mode == AppearanceMode.materialYou && dynamicScheme != null) {
+    if (dynamicScheme != null) {
+      final amoled = mode == AppearanceMode.amoledBlack;
       return LaunchRTheme(
-        dynamicScheme.brightness,
+        amoled ? mode.brightness : dynamicScheme.brightness,
+        amoled: amoled,
         accent: dynamicScheme.primary,
-        dynamicScheme: dynamicScheme,
+        dynamicScheme: amoled ? null : dynamicScheme,
       );
     }
     return LaunchRTheme(
