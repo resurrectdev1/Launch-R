@@ -1,7 +1,5 @@
 # Roadmap of Launch-R! Different from a changelog because everything here is planned but not done.
 
-- Add custom font
-
 - Add adaptive icons & themed icons
 
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
@@ -91,3 +89,5 @@
 - ~~Make closing app drawer slightly faster but keep opening it and other animation speeds the same~~
 
 - ~~Make icon badges off by default so first toggle will take you to turn them on in settings~~
+
+- ~~Add custom font~~
