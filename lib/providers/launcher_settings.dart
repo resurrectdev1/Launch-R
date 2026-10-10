@@ -9,6 +9,7 @@ class LauncherSettings extends ChangeNotifier {
   SharedPreferences? _prefs;
 
   AppearanceMode _appearance = AppearanceMode.orangeFactory;
+  bool _materialYou = false;
   Color? _customAccent;
   bool _darkHomeText = false;
   int _drawerCols = 4;
@@ -29,6 +30,7 @@ class LauncherSettings extends ChangeNotifier {
   ColorScheme? _dynamicDark;
 
   AppearanceMode get appearance => _appearance;
+  bool get materialYou => _materialYou;
 
   Color? get customAccent => _customAccent;
   Color get accent => _customAccent ?? LaunchRTheme.defaultAccent;
@@ -74,10 +76,18 @@ class LauncherSettings extends ChangeNotifier {
   Future<void> init() async {
     final p = _prefs = await SharedPreferences.getInstance();
     final saved = p.getString('appearance');
-    if (saved != null) {
-      _appearance = AppearanceMode.fromName(saved);
-    } else if (p.getInt('theme_mode') == 1) {
-      _appearance = AppearanceMode.whiteMinimal;
+    if (saved == 'materialYou') {
+      _appearance = AppearanceMode.orangeFactory;
+      _materialYou = true;
+      await p.setString('appearance', _appearance.name);
+      await p.setBool('material_you', true);
+    } else {
+      if (saved != null) {
+        _appearance = AppearanceMode.fromName(saved);
+      } else if (p.getInt('theme_mode') == 1) {
+        _appearance = AppearanceMode.whiteMinimal;
+      }
+      _materialYou = p.getBool('material_you') ?? false;
     }
     final accentArgb = p.getInt('custom_accent');
     if (accentArgb != null) _customAccent = Color(accentArgb | 0xFF000000);
@@ -178,6 +188,13 @@ class LauncherSettings extends ChangeNotifier {
     _dynamicLight = light;
     _dynamicDark = dark;
     notifyListeners();
+  }
+
+  Future<void> setMaterialYou(bool value) async {
+    if (value == _materialYou) return;
+    _materialYou = value;
+    notifyListeners();
+    await _prefs?.setBool('material_you', value);
   }
 
   Future<void> setAppearance(AppearanceMode m) async {
