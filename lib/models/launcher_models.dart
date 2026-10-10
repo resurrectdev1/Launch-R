@@ -38,6 +38,12 @@ class IconPackInfo {
   );
 }
 
+class PickedFont {
+  final String path;
+  final String label;
+  const PickedFont({required this.path, required this.label});
+}
+
 sealed class LItem {
   const LItem();
   String get id;
