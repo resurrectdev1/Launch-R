@@ -15,6 +15,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
 import android.graphics.RectF
@@ -196,9 +197,13 @@ class MainActivity : FlutterActivity() {
                 val pkg = call.argument<String>("package")
                 val size = call.argument<Int>("size") ?: 192
                 val shape = call.argument<String>("shape") ?: "squircle"
+                val themedBg = call.argument<Number>("themedBg")?.toInt()
+                val themedFg = call.argument<Number>("themedFg")?.toInt()
                 if (pkg == null) { result.success(null); return }
                 io.execute {
-                    val bytes = try { renderIcon(pkg, size, shape) } catch (_: Throwable) { null }
+                    val bytes = try {
+                        renderIcon(pkg, size, shape, themedBg, themedFg)
+                    } catch (_: Throwable) { null }
                     runOnUiThread { result.success(bytes) }
                 }
             }
@@ -554,7 +559,13 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun renderIcon(pkg: String, size: Int, shape: String): ByteArray {
+    private fun renderIcon(
+        pkg: String,
+        size: Int,
+        shape: String,
+        themedBg: Int? = null,
+        themedFg: Int? = null,
+    ): ByteArray {
         val drawable = packageManager.getApplicationIcon(pkg)
 
         val pack = iconPack
@@ -571,8 +582,12 @@ class MainActivity : FlutterActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && drawable is AdaptiveIconDrawable) {
             val pad = (size * 0.25f).toInt()
             val bounds = Rect(-pad, -pad, size + pad, size + pad)
-            drawable.background?.let { it.bounds = bounds; it.draw(canvas) }
-            drawable.foreground?.let { it.bounds = bounds; it.draw(canvas) }
+            val themed = themedBg != null && themedFg != null &&
+                drawThemedAdaptive(drawable, canvas, bounds, size, themedBg, themedFg)
+            if (!themed) {
+                drawable.background?.let { it.bounds = bounds; it.draw(canvas) }
+                drawable.foreground?.let { it.bounds = bounds; it.draw(canvas) }
+            }
         } else {
             canvas.drawColor(0xFFF2F2F2.toInt())
             val inset = (size * 0.16f).toInt()
@@ -590,6 +605,55 @@ class MainActivity : FlutterActivity() {
         val stream = ByteArrayOutputStream()
         bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
         return stream.toByteArray()
+    }
+
+    /**
+     * Draws an adaptive icon as a single-colour glyph on a flat background.
+     * Uses the app's own monochrome layer (Android 13+) when it ships one, and
+     * otherwise approximates one from the foreground's transparency. Returns
+     * false, drawing nothing, when the icon can't be themed sensibly (for
+     * example a full-bleed photo), so the caller falls back to the normal icon.
+     */
+    private fun drawThemedAdaptive(
+        icon: AdaptiveIconDrawable,
+        canvas: Canvas,
+        bounds: Rect,
+        size: Int,
+        bg: Int,
+        fg: Int,
+    ): Boolean {
+        val mono = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) icon.monochrome else null
+        if (mono != null) {
+            canvas.drawColor(bg)
+            val m = mono.mutate()
+            m.setTint(fg)
+            m.bounds = bounds
+            m.draw(canvas)
+            return true
+        }
+
+        val layer = icon.foreground ?: return false
+        val glyph = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        layer.bounds = bounds
+        layer.draw(Canvas(glyph))
+
+        val px = IntArray(size * size)
+        glyph.getPixels(px, 0, size, 0, 0, size, size)
+        var covered = 0
+        for (p in px) if (Color.alpha(p) > 40) covered++
+        val coverage = covered.toFloat() / px.size
+        if (coverage < 0.02f || coverage > 0.85f) {
+            glyph.recycle()
+            return false
+        }
+
+        canvas.drawColor(bg)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            colorFilter = PorterDuffColorFilter(fg, PorterDuff.Mode.SRC_IN)
+        }
+        canvas.drawBitmap(glyph, 0f, 0f, paint)
+        glyph.recycle()
+        return true
     }
 
     private fun launchComponentKey(pkg: String): String? =
@@ -664,7 +728,7 @@ class MainActivity : FlutterActivity() {
 
     private fun shapePath(shape: String, s: Float): Path = when (shape) {
         "circle" -> Path().apply { addOval(RectF(0f, 0f, s, s), Path.Direction.CW) }
-        "rounded" -> roundRectPath(s, s * 0.24f)
+        "rounded" -> roundRectPath(s, s * 0.16f)
         "square" -> roundRectPath(s, s * 0.08f)
         "teardrop" -> Path().apply {
             val big = s / 2f
