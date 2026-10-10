@@ -19,7 +19,9 @@ import 'package:launch_r/widgets/settings_sheet.dart';
 const _kRowPitch = 106.0;
 
 class DrawerView extends StatefulWidget {
-  const DrawerView({super.key});
+  const DrawerView({super.key, required this.drawer});
+
+  final AnimationController drawer;
 
   @override
   State<DrawerView> createState() => _DrawerViewState();
@@ -32,6 +34,20 @@ class _DrawerViewState extends State<DrawerView> {
   final _search = TextEditingController();
   final _focus = FocusNode();
   int _pageCount = 1;
+  bool _autoFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.drawer.addStatusListener(_onDrawerStatus);
+  }
+
+  void _onDrawerStatus(AnimationStatus status) {
+    if (status != AnimationStatus.completed || _autoFocused || !mounted) return;
+    if (!context.read<LauncherSettings>().drawerAutoSearch) return;
+    _autoFocused = true;
+    _focus.requestFocus();
+  }
 
   _ReloadPhase _phase = _ReloadPhase.loading;
   bool _bannerVisible = false;
@@ -63,6 +79,7 @@ class _DrawerViewState extends State<DrawerView> {
 
   @override
   void dispose() {
+    widget.drawer.removeStatusListener(_onDrawerStatus);
     _hideTimer?.cancel();
     _pages.dispose();
     _search.dispose();
@@ -186,7 +203,9 @@ class _DrawerViewState extends State<DrawerView> {
             width: cw,
             style: style,
             locked: settings.lockLayout,
-            dot: idx % perPage % cols < cols - 1 && idx % perPage ~/ cols < rows - 1,
+            dot:
+                idx % perPage % cols < cols - 1 &&
+                idx % perPage ~/ cols < rows - 1,
             onDrop: (d, h) => _drop(d, h, item, idx),
           );
         }
