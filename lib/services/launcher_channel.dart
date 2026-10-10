@@ -71,6 +71,17 @@ class LauncherChannel {
   Future<bool?> setIconPack(String? pkg) =>
       _safe(() => _ch.invokeMethod<bool>('setIconPack', {'package': pkg}));
 
+  Future<PickedFont?> pickFont() async {
+    try {
+      final r = await _ch.invokeMapMethod<String, String>('pickFont');
+      final path = r?['path'];
+      if (path == null) return null;
+      return PickedFont(path: path, label: r?['label'] ?? 'Custom font');
+    } on MissingPluginException {
+      return null;
+    }
+  }
+
   Future<bool> launchApp(String pkg, {Rect? from, double dpr = 1}) async {
     final args = <String, dynamic>{'package': pkg};
     if (from != null) {
