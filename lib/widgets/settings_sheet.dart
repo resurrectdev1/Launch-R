@@ -33,8 +33,7 @@ class _SettingsSheet extends StatelessWidget {
     final model = context.watch<LauncherModel>();
     final ch = LauncherChannel.instance;
     final grid = '${model.homeCols}x${model.homeRows}';
-    final materialYou =
-        s.appearance == AppearanceMode.materialYou && t.dynamicScheme != null;
+    final materialYou = s.materialYou && s.dynamicAvailable;
 
     Widget header(String text) => Padding(
       padding: const EdgeInsets.fromLTRB(24, 18, 24, 6),
@@ -97,26 +96,42 @@ class _SettingsSheet extends StatelessWidget {
                 child: Column(
                   children: [
                     for (final m in AppearanceMode.values)
-                      if (m != AppearanceMode.materialYou || s.dynamicAvailable)
-                        RadioListTile<AppearanceMode>(
-                          value: m,
-                          activeColor: t.accent,
-                          fillColor: WidgetStateProperty.resolveWith(
-                            (states) => states.contains(WidgetState.selected)
-                                ? t.accent
-                                : t.drawerTextMuted,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                          ),
-                          title: Text(
-                            m.label,
-                            style: TextStyle(color: t.drawerText),
-                          ),
+                      RadioListTile<AppearanceMode>(
+                        value: m,
+                        activeColor: t.accent,
+                        fillColor: WidgetStateProperty.resolveWith(
+                          (states) => states.contains(WidgetState.selected)
+                              ? t.accent
+                              : t.drawerTextMuted,
                         ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                        ),
+                        title: Text(
+                          m.label,
+                          style: TextStyle(color: t.drawerText),
+                        ),
+                      ),
                   ],
                 ),
               ),
+              if (s.dynamicAvailable || s.materialYou)
+                SwitchListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                  title: Text(
+                    'Material You',
+                    style: TextStyle(color: t.drawerText),
+                  ),
+                  subtitle: Text(
+                    'Use your wallpaper colors',
+                    style: TextStyle(color: t.drawerTextMuted),
+                  ),
+                  value: s.materialYou,
+                  onChanged: (v) {
+                    HapticFeedback.selectionClick();
+                    unawaited(s.setMaterialYou(v));
+                  },
+                ),
               const SizedBox(height: 6),
               ListTile(
                 enabled: !materialYou,
