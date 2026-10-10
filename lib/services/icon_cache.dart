@@ -11,6 +11,7 @@ class IconCache {
   final Map<String, Future<Uint8List?>> _pending = {};
 
   IconShape shape = IconShape.squircle;
+  ThemedIconStyle? themed;
 
   int _gen = 0;
 
@@ -23,7 +24,11 @@ class IconCache {
     if (hit != null) return Future.value(hit);
     return _pending.putIfAbsent(pkg, () async {
       final gen = _gen;
-      final b = await LauncherChannel.instance.getIcon(pkg, shape: shape);
+      final b = await LauncherChannel.instance.getIcon(
+        pkg,
+        shape: shape,
+        themed: themed,
+      );
       if (gen != _gen) {
         return load(pkg);
       }
