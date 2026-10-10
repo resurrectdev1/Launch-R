@@ -728,7 +728,7 @@ class MainActivity : FlutterActivity() {
 
     private fun shapePath(shape: String, s: Float): Path = when (shape) {
         "circle" -> Path().apply { addOval(RectF(0f, 0f, s, s), Path.Direction.CW) }
-        "rounded" -> roundRectPath(s, s * 0.16f)
+        "hexagon" -> hexagonPath(s)
         "square" -> roundRectPath(s, s * 0.08f)
         "teardrop" -> Path().apply {
             val big = s / 2f
@@ -740,6 +740,32 @@ class MainActivity : FlutterActivity() {
             )
         }
         else -> squirclePath(s)
+    }
+
+    private fun hexagonPath(size: Float): Path {
+        val corner = 0.28f
+        val c = size / 2f
+        val r = c
+        val xs = FloatArray(6)
+        val ys = FloatArray(6)
+        for (i in 0 until 6) {
+            val a = -Math.PI / 2 + i * Math.PI / 3
+            xs[i] = c + r * cos(a).toFloat()
+            ys[i] = c + r * sin(a).toFloat()
+        }
+        val path = Path()
+        for (i in 0 until 6) {
+            val p = (i + 5) % 6
+            val n = (i + 1) % 6
+            val ax = xs[i] + (xs[p] - xs[i]) * corner
+            val ay = ys[i] + (ys[p] - ys[i]) * corner
+            val bx = xs[i] + (xs[n] - xs[i]) * corner
+            val by = ys[i] + (ys[n] - ys[i]) * corner
+            if (i == 0) path.moveTo(ax, ay) else path.lineTo(ax, ay)
+            path.quadTo(xs[i], ys[i], bx, by)
+        }
+        path.close()
+        return path
     }
 
     private fun roundRectPath(s: Float, r: Float): Path =
