@@ -22,6 +22,7 @@ class LauncherSettings extends ChangeNotifier {
   String? _iconPackLabel;
   bool _boldText = false;
   IconShape _iconShape = IconShape.squircle;
+  bool _themedIcons = false;
   String? _fontId;
   String? _customFontPath;
   String? _customFontLabel;
@@ -72,6 +73,7 @@ class LauncherSettings extends ChangeNotifier {
   static const double minTextScale = 0.85;
   static const double maxTextScale = 1.3;
   IconShape get iconShape => _iconShape;
+  bool get themedIcons => _themedIcons;
 
   Future<void> init() async {
     final p = _prefs = await SharedPreferences.getInstance();
@@ -98,6 +100,7 @@ class LauncherSettings extends ChangeNotifier {
     _drawerAutoSearch = p.getBool('drawer_auto_search') ?? false;
     _fuzzySearch = p.getBool('fuzzy_search') ?? true;
     _iconShape = IconShape.fromName(p.getString('icon_shape'));
+    _themedIcons = p.getBool('themed_icons') ?? false;
     _textScale = (p.getDouble('text_scale') ?? 1.0)
         .clamp(minTextScale, maxTextScale)
         .toDouble();
@@ -259,6 +262,13 @@ class LauncherSettings extends ChangeNotifier {
     _iconShape = v;
     notifyListeners();
     await _prefs?.setString('icon_shape', v.name);
+  }
+
+  Future<void> setThemedIcons(bool v) async {
+    if (v == _themedIcons) return;
+    _themedIcons = v;
+    notifyListeners();
+    await _prefs?.setBool('themed_icons', v);
   }
 
   Future<void> setTextScale(double v) async {
