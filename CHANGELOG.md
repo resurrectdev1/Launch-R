@@ -10,6 +10,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+### Changed
+
+* Material you into a toggle so it can be used alongside other themes
+
 ---
 
 ## [0.2.6] - 2026-10-9
