@@ -14,31 +14,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.2.6] - 2026-10-9
 
+### Added
+
+* Custom fonts in settings
+* Option when opening app drawer to take you to search
+
+### Changed
+
+* Closing animation of app drawer to be faster
+
 ---
 
 ## [0.2.4] - 2026-10-8
 
-### Added
-
-* Home screen: multiple pages you can add and remove, hold the home screen for a quick menu (wallpaper, widgets, settings, pages), and lock your layout so nothing gets dragged by accident
-
-* App drawer: drag apps straight from the drawer onto your home screen, with grid placement previews, a reload-all-apps option and tidy-up for pages, plus a toggle to remember app positions or always fill from the start
-
-* Folders: One UI inspired open animation, move apps between folders, and recolor folders from the menu or the color dot inside the folder
-
-* Widgets: full Android widget support with resizing and a drop preview that matches the space the widget will actually take up
-
-* Search: fuzzy search that finds apps despite typos and abbreviations, plus custom tags (search a keyword and every app you tagged with it shows up)
-
-* Customization: custom accent color with presets and hex input, Material You support, app icon shapes, custom icon pack support, text scaling, optional bold text and dark home text for light wallpapers
-
-* Hide apps you don't want in the drawer
-
-* Icon badges showing notification counts
-
-* Newly installed apps can be added to your home screen automatically
-
-* Locked to portrait
+INITIAL RELEASE
 
 ---
 
