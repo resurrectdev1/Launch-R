@@ -2,13 +2,7 @@
 
 - Add custom font
 
-- Add option that when opening app drawer will automatically go to search
-
 - Add adaptive icons & themed icons
-
-- Make icon badges off by default so first toggle will take you to turn them on in settings
-
-- Make closing app drawer slightly faster but keep opening it and other animation speeds the same
 
 - Fix YouTube picture in pictures crashing
 
@@ -93,3 +87,9 @@
 - ~~Add text scaling & optional text bolding~~
 
 - ~~Add custom icon pack support~~
+
+- ~~Add option that when opening app drawer will automatically go to search~~
+
+- ~~Make closing app drawer slightly faster but keep opening it and other animation speeds the same~~
+
+- ~~Make icon badges off by default so first toggle will take you to turn them on in settings~~
