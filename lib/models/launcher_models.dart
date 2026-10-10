@@ -18,6 +18,19 @@ enum IconShape {
   );
 }
 
+class ThemedIconStyle {
+  const ThemedIconStyle({required this.bg, required this.fg});
+  final int bg;
+  final int fg;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ThemedIconStyle && other.bg == bg && other.fg == fg;
+
+  @override
+  int get hashCode => Object.hash(bg, fg);
+}
+
 class LauncherApp {
   final String package;
   final String label;
