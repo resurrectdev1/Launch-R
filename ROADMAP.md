@@ -1,7 +1,5 @@
 # Roadmap of Launch-R! Different from a changelog because everything here is planned but not done.
 
-- Add adaptive icons & themed icons
-
 - Fix pressing home button when in launcher settings not closing launcher settings
 
 - Change rounded icon since its the same as squircle
@@ -95,3 +93,5 @@
 - ~~Make icon badges off by default so first toggle will take you to turn them on in settings~~
 
 - ~~Add custom font~~
+
+- ~~Add adaptive icons & themed icons~~
