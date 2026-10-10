@@ -7,6 +7,8 @@ abstract final class Motion {
 
   static const Duration slow = Duration(milliseconds: 300);
 
+  static const Duration drawerClose = Duration(milliseconds: 200);
+
   static const Duration emphasized = Duration(milliseconds: 380);
   static const Duration emphasizedReverse = Duration(milliseconds: 250);
 
