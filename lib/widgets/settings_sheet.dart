@@ -372,6 +372,21 @@ class _SettingsSheet extends StatelessWidget {
               SwitchListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
                 title: Text(
+                  'Themed icons',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  s.themedIcons
+                      ? 'Icons are tinted to match your theme'
+                      : 'Use each app\'s own colors',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                value: s.themedIcons,
+                onChanged: s.setThemedIcons,
+              ),
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
                   'Icon badges',
                   style: TextStyle(color: t.drawerText),
                 ),
