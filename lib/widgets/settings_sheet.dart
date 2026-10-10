@@ -218,10 +218,7 @@ class _SettingsSheet extends StatelessWidget {
               ),
               SwitchListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Bold text',
-                  style: TextStyle(color: t.drawerText),
-                ),
+                title: Text('Bold text', style: TextStyle(color: t.drawerText)),
                 subtitle: Text(
                   'Makes labels and menus easier to read',
                   style: TextStyle(color: t.drawerTextMuted),
@@ -311,10 +308,7 @@ class _SettingsSheet extends StatelessWidget {
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
                 leading: Icon(Icons.palette_outlined, color: t.drawerText),
-                title: Text(
-                  'Icon pack',
-                  style: TextStyle(color: t.drawerText),
-                ),
+                title: Text('Icon pack', style: TextStyle(color: t.drawerText)),
                 subtitle: Text(
                   s.iconPack == null
                       ? 'System default'
@@ -380,6 +374,19 @@ class _SettingsSheet extends StatelessWidget {
                 ),
                 value: s.fuzzySearch,
                 onChanged: s.setFuzzySearch,
+              ),
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
+                  'Search on open',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  'Opens the keyboard when the app drawer opens',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                value: s.drawerAutoSearch,
+                onChanged: s.setDrawerAutoSearch,
               ),
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
