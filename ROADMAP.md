@@ -4,8 +4,6 @@
 
 - Add adaptive icons & themed icons
 
-- Fix YouTube picture in pictures crashing
-
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
 
 - Add private space suppourt
