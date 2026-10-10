@@ -2,6 +2,8 @@
 
 - Add adaptive icons & themed icons
 
+- Fix pressing home button when in launcher settings not closing launcher settings
+
 - Change rounded icon since its the same as squircle
 
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
