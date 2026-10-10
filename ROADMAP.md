@@ -2,6 +2,8 @@
 
 - Add adaptive icons & themed icons
 
+- Change rounded icon since its the same as squircle
+
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
 
 - Add private space suppourt
