@@ -10,6 +10,8 @@
 
 - Make closing app drawer slightly faster but keep opening it and other animation speeds the same
 
+- Fix YouTube picture in pictures crashing
+
 - Add more to search functionality (e.g. microphone or when you search some usefull widgets etc)
 
 - Add private space suppourt
