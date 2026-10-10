@@ -15,7 +15,11 @@ class OpenFolder {
 
 class ShellController extends ChangeNotifier {
   ShellController({required TickerProvider vsync})
-    : drawer = AnimationController(vsync: vsync, duration: Motion.slow);
+    : drawer = AnimationController(
+        vsync: vsync,
+        duration: Motion.slow,
+        reverseDuration: Motion.drawerClose,
+      );
 
   final AnimationController drawer;
 
