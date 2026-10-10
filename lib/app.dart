@@ -1,6 +1,7 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/screens/launcher_shell.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
@@ -75,6 +76,17 @@ class _LaunchRAppState extends State<LaunchRApp> with WidgetsBindingObserver {
             final dyn = settings.materialYou
                 ? settings.dynamicSchemeFor(settings.appearance.brightness)
                 : null;
+            final themed = settings.themedIcons
+                ? LaunchRTheme.forMode(
+                    settings.appearance,
+                    settings.accent,
+                    dynamicScheme: dyn,
+                  ).themedIconStyle
+                : null;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              context.read<LauncherModel>().applyThemedIcons(themed);
+            });
             return MaterialApp(
               title: 'Launch-R',
               debugShowCheckedModeBanner: false,
