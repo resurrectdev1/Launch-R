@@ -28,7 +28,12 @@ class _LaunchRAppState extends State<LaunchRApp> with WidgetsBindingObserver {
   @override
   void didChangePlatformBrightness() => setState(() {});
 
-  ThemeData _theme(AppearanceMode mode, Color accent, ColorScheme? dyn) {
+  ThemeData _theme(
+    AppearanceMode mode,
+    Color accent,
+    ColorScheme? dyn,
+    String? fontFamily,
+  ) {
     final lt = LaunchRTheme.forMode(mode, accent, dynamicScheme: dyn);
     var scheme = dyn != null && mode == AppearanceMode.materialYou
         ? dyn.copyWith(primary: lt.accent, onPrimary: lt.onAccent)
@@ -39,6 +44,7 @@ class _LaunchRAppState extends State<LaunchRApp> with WidgetsBindingObserver {
     if (lt.amoled) scheme = scheme.copyWith(surface: Colors.black);
     return ThemeData(
       useMaterial3: true,
+      fontFamily: fontFamily,
       brightness: lt.brightness,
       colorScheme: scheme,
       scaffoldBackgroundColor: Colors.transparent,
@@ -74,7 +80,12 @@ class _LaunchRAppState extends State<LaunchRApp> with WidgetsBindingObserver {
               debugShowCheckedModeBanner: false,
               color: Colors.transparent,
               themeMode: ThemeMode.light,
-              theme: _theme(settings.appearance, settings.accent, dyn),
+              theme: _theme(
+                settings.appearance,
+                settings.accent,
+                dyn,
+                settings.fontFamily,
+              ),
               builder: (context, child) {
                 final mq = MediaQuery.of(context);
                 return MediaQuery(
