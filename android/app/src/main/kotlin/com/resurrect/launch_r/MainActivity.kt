@@ -23,6 +23,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.android.FlutterActivityLaunchConfigs.BackgroundMode
@@ -30,6 +31,8 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.IOException
 import java.util.concurrent.Executors
 import kotlin.math.abs
 import kotlin.math.cos
@@ -47,6 +50,7 @@ class MainActivity : FlutterActivity() {
     private val widgetHost by lazy { AppWidgetHost(this, WIDGET_HOST_ID) }
     private val widgetManager by lazy { AppWidgetManager.getInstance(this) }
     private var pendingWidget: PendingWidget? = null
+    private var pendingFont: MethodChannel.Result? = null
 
     @Volatile private var iconPack: IconPack? = null
     @Volatile private var iconPackPkg: String? = null
@@ -62,6 +66,8 @@ class MainActivity : FlutterActivity() {
         private const val WIDGET_VIEW_TYPE = "com.resurrect.launch_r/widget"
         private const val REQ_BIND_WIDGET = 7001
         private const val REQ_CONFIGURE_WIDGET = 7002
+        private const val REQ_PICK_FONT = 7003
+        private const val MAX_FONT_BYTES = 25L * 1024 * 1024
     }
 
     private val packageReceiver = object : BroadcastReceiver() {
@@ -139,6 +145,10 @@ class MainActivity : FlutterActivity() {
             }
             REQ_CONFIGURE_WIDGET -> {
                 finishPendingWidget(resultCode == RESULT_OK)
+                return
+            }
+            REQ_PICK_FONT -> {
+                finishFontPick(if (resultCode == RESULT_OK) data?.data else null)
                 return
             }
         }
@@ -290,6 +300,8 @@ class MainActivity : FlutterActivity() {
                 result.success(null)
             }
 
+            "pickFont" -> pickFont(result)
+
             "openHomeSettings" -> {
                 try {
                     startActivity(Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -403,6 +415,87 @@ class MainActivity : FlutterActivity() {
         val stream = ByteArrayOutputStream()
         bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
         return stream.toByteArray()
+    }
+
+    @Suppress("DEPRECATION")
+    private fun pickFont(result: MethodChannel.Result) {
+        if (pendingFont != null) {
+            result.success(null)
+            return
+        }
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+            putExtra(
+                Intent.EXTRA_MIME_TYPES,
+                arrayOf(
+                    "font/ttf", "font/otf", "font/sfnt",
+                    "application/x-font-ttf", "application/x-font-otf",
+                    "application/x-font-opentype", "application/font-sfnt",
+                    "application/vnd.ms-opentype", "application/octet-stream",
+                ),
+            )
+        }
+        pendingFont = result
+        try {
+            startActivityForResult(intent, REQ_PICK_FONT)
+        } catch (_: Exception) {
+            pendingFont = null
+            result.success(null)
+        }
+    }
+
+    private fun fontDisplayName(uri: Uri): String {
+        try {
+            contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+                if (c.moveToFirst()) {
+                    val name = c.getString(0)
+                    if (!name.isNullOrBlank()) return name
+                }
+            }
+        } catch (_: Exception) {
+        }
+        return uri.lastPathSegment ?: "font.ttf"
+    }
+
+    private fun finishFontPick(uri: Uri?) {
+        val result = pendingFont ?: return
+        pendingFont = null
+        if (uri == null) {
+            result.success(null)
+            return
+        }
+        io.execute {
+            var out: File? = null
+            try {
+                val name = fontDisplayName(uri)
+                val ext = if (name.endsWith(".otf", ignoreCase = true)) "otf" else "ttf"
+                val dir = File(filesDir, "fonts").apply { mkdirs() }
+                val target = File(dir, "font_${System.currentTimeMillis()}.$ext")
+                out = target
+                var total = 0L
+                val input = contentResolver.openInputStream(uri) ?: throw IOException("Unreadable file")
+                input.use { src ->
+                    target.outputStream().use { dst ->
+                        val buf = ByteArray(64 * 1024)
+                        while (true) {
+                            val n = src.read(buf)
+                            if (n < 0) break
+                            total += n
+                            if (total > MAX_FONT_BYTES) throw IOException("Font file is too large")
+                            dst.write(buf, 0, n)
+                        }
+                    }
+                }
+                val label = name.substringBeforeLast('.').ifBlank { "Custom font" }
+                runOnUiThread {
+                    result.success(mapOf("path" to target.absolutePath, "label" to label))
+                }
+            } catch (e: Exception) {
+                try { out?.delete() } catch (_: Exception) {}
+                runOnUiThread { result.error("font_import_failed", e.message, null) }
+            }
+        }
     }
 
     @Suppress("DEPRECATION")
