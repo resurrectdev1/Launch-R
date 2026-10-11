@@ -14,6 +14,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 * Monochrome icon suppourt
 
+### Fixed
+
+* Brief black flash when re-entering home launcher from other apps
+
 ---
 
 ## [0.2.8] - 2026-10-10
