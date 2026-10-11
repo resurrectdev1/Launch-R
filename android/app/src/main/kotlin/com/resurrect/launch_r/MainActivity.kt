@@ -28,6 +28,7 @@ import android.provider.OpenableColumns
 import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.android.FlutterActivityLaunchConfigs.BackgroundMode
+import io.flutter.embedding.android.RenderMode
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -94,6 +95,8 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun getBackgroundMode(): BackgroundMode = BackgroundMode.transparent
+
+    override fun getRenderMode(): RenderMode = RenderMode.texture
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -607,13 +610,6 @@ class MainActivity : FlutterActivity() {
         return stream.toByteArray()
     }
 
-    /**
-     * Draws an adaptive icon as a single-colour glyph on a flat background.
-     * Uses the app's own monochrome layer (Android 13+) when it ships one, and
-     * otherwise approximates one from the foreground's transparency. Returns
-     * false, drawing nothing, when the icon can't be themed sensibly (for
-     * example a full-bleed photo), so the caller falls back to the normal icon.
-     */
     private fun drawThemedAdaptive(
         icon: AdaptiveIconDrawable,
         canvas: Canvas,
