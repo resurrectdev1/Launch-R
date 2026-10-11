@@ -18,7 +18,25 @@ Simply open or set Launch-R as your default home launcher then swipe up to acces
 
 ### Features
 
-Some features
+🗂️ **App Drawer:** Swipe up for a clean app drawer with a built-in search bar. Choose how many columns you want, and optionally have the drawer open straight into search.
+
+📁 **Folders:** Drag one app onto another to make a folder, recolor it right from inside, and move apps in and out of folders with smooth One UI inspired animations.
+
+🔍 **Fuzzy Search & Tags:** Find apps even with typos, and give apps your own tags so searching a keyword brings up everything you tagged with it.
+
+🏠 **Customizable Home Screen:** Add, remove and reorder pages, pick your default home page, choose your home grid size, and lock the layout so nothing moves by accident. Drag apps and folders straight from the drawer onto your home screen.
+
+🪟 **Widget Support:** Add and resize Android widgets with a live placement preview that shows exactly how much space they'll take up.
+
+🎨 **Theming:** Pick any color with a hex color picker and optionally turn on Material You so it works alongside your other theme choices.
+
+🔷 **Icon Shapes & Icon Packs:** Choose your icon shape (circle, square, squircle, hexagon or teardrop) and apply third-party icon packs, with support for adaptive and themed icons.
+
+🔤 **Fonts & Text:** Pick a built-in font or load your own custom font, scale text size to your liking and turn on bold text.
+
+🙈 **Hide Apps:** Keep apps out of sight and manage them anytime from launcher settings.
+
+🔔 **Icon Badges:** Optional notification badges on your app icons, off by default until you choose to enable them.
 
 ## What's New
 
