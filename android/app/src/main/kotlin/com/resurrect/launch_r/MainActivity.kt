@@ -23,20 +23,12 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.provider.Settings
-import android.view.View
-import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.ImageView
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.android.FlutterActivityLaunchConfigs.BackgroundMode
-import io.flutter.embedding.android.FlutterTextureView
 import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.embedding.engine.renderer.FlutterUiDisplayListener
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.io.ByteArrayOutputStream
@@ -135,89 +127,12 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private val uiHandler = Handler(Looper.getMainLooper())
-    private var snapshot: Bitmap? = null
-    private var snapshotOverlay: ImageView? = null
-    private var wasStopped = false
-
-    private val removeOverlayRunnable = Runnable { hideSnapshotOverlay() }
-
-    private val uiDisplayListener = object : FlutterUiDisplayListener {
-        override fun onFlutterUiDisplayed() {
-            uiHandler.removeCallbacks(removeOverlayRunnable)
-            uiHandler.postDelayed(removeOverlayRunnable, 60)
-        }
-        override fun onFlutterUiNoLongerDisplayed() {}
-    }
-
-    private fun findFlutterTextureView(v: View): FlutterTextureView? {
-        if (v is FlutterTextureView) return v
-        if (v is ViewGroup) {
-            for (i in 0 until v.childCount) {
-                findFlutterTextureView(v.getChildAt(i))?.let { return it }
-            }
-        }
-        return null
-    }
-
-    private fun captureSnapshot() {
-        try {
-            val tv = findFlutterTextureView(window.decorView) ?: return
-            if (!tv.isAvailable || tv.width == 0 || tv.height == 0) return
-            snapshot = tv.getBitmap()
-        } catch (_: Throwable) {
-            snapshot = null
-        }
-    }
-
-    private fun showSnapshotOverlay() {
-        val bmp = snapshot ?: return
-        val root = findViewById<ViewGroup>(android.R.id.content) ?: return
-        hideSnapshotOverlay()
-        snapshot = bmp
-        val iv = ImageView(this).apply {
-            setImageBitmap(bmp)
-            scaleType = ImageView.ScaleType.FIT_XY
-            isClickable = false
-            isFocusable = false
-            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-        }
-        root.addView(
-            iv,
-            FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT,
-            ),
-        )
-        snapshotOverlay = iv
-        flutterEngine?.renderer?.addIsDisplayingFlutterUiListener(uiDisplayListener)
-        uiHandler.postDelayed(removeOverlayRunnable, 500)
-    }
-
-    private fun hideSnapshotOverlay() {
-        uiHandler.removeCallbacks(removeOverlayRunnable)
-        flutterEngine?.renderer?.removeIsDisplayingFlutterUiListener(uiDisplayListener)
-        snapshotOverlay?.let { (it.parent as? ViewGroup)?.removeView(it) }
-        snapshotOverlay = null
-        snapshot = null
-    }
-
-    override fun onPause() {
-        captureSnapshot()
-        super.onPause()
-    }
-
     override fun onStart() {
-        if (wasStopped) {
-            wasStopped = false
-            showSnapshotOverlay()
-        }
         super.onStart()
         try { widgetHost.startListening() } catch (_: Exception) {}
     }
 
     override fun onStop() {
-        wasStopped = true
         try { widgetHost.stopListening() } catch (_: Exception) {}
         super.onStop()
     }
@@ -249,7 +164,6 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
-        hideSnapshotOverlay()
         if (receiverRegistered) {
             try { unregisterReceiver(packageReceiver) } catch (_: Exception) {}
             receiverRegistered = false
