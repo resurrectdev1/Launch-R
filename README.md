@@ -14,7 +14,7 @@ Tired of the same old ctrl c & ctrl v Android home launchers? So am I and thus I
 
 ### How does it work?
 
-Explanation
+Simply open or set Launch-R as your default home launcher then swipe up to access your app drawer and search bar. If you tap and hold on an app you can drag it to move it around or put it on top of another app to maker a folder. Then inside the app drawer in the top right you will find three dots if you click on them it will open up a menu of actions, clicking on launcher settings will bring you into the settings allowing you to customize numerous features in the app like the color, font, even icon shapes & much much more.
 
 ### Features
 
