@@ -85,6 +85,15 @@ class LauncherChannel {
     }
   }
 
+  Future<String?> pickBackground() async {
+    try {
+      final r = await _ch.invokeMapMethod<String, String>('pickBackground');
+      return r?['path'];
+    } on MissingPluginException {
+      return null;
+    }
+  }
+
   Future<bool> launchApp(String pkg, {Rect? from, double dpr = 1}) async {
     final args = <String, dynamic>{'package': pkg};
     if (from != null) {
