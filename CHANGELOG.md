@@ -12,7 +12,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-* Option to edit widgets alongside resizeing & removing
+* Option to edit widgets alongside resizeing & removing (to be done)
+* Uploaded to F-Droid! (to be done)
+
+### Changed
+
+* Made opening menu of options more simple (to be done)
 
 ### Fixed
 
