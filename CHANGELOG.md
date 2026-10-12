@@ -10,6 +10,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+### Added
+
+* Option to edit widgets alongside resizeing & removing
+
 ### Fixed
 
 * Confusing wording for app black flash fix in settings
