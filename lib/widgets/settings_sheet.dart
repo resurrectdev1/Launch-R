@@ -192,6 +192,54 @@ class _SettingsSheet extends StatelessWidget {
                 value: s.darkHomeText,
                 onChanged: s.setDarkHomeText,
               ),
+              header('Background'),
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
+                  'Use own background image',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  s.ownBackground
+                      ? 'Showing your chosen image instead of the system wallpaper'
+                      : 'Show an image you pick instead of the system wallpaper',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                value: s.ownBackground,
+                onChanged: s.setOwnBackground,
+              ),
+              if (s.ownBackground) ...[
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                  leading: Icon(Icons.wallpaper_rounded, color: t.drawerText),
+                  title: Text(
+                    'Choose background image',
+                    style: TextStyle(color: t.drawerText),
+                  ),
+                  subtitle: Text(
+                    s.backgroundPath == null ? 'None selected' : 'Custom image',
+                    style: TextStyle(color: t.drawerTextMuted),
+                  ),
+                  onTap: () async {
+                    final path = await LauncherChannel.instance
+                        .pickBackground();
+                    if (path != null) await s.setBackgroundPath(path);
+                  },
+                ),
+                if (s.backgroundPath != null)
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                    leading: Icon(
+                      Icons.delete_outline_rounded,
+                      color: t.drawerText,
+                    ),
+                    title: Text(
+                      'Remove background image',
+                      style: TextStyle(color: t.drawerText),
+                    ),
+                    onTap: () => s.setBackgroundPath(null),
+                  ),
+              ],
               header('Text'),
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
