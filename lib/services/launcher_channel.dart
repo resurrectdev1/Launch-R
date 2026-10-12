@@ -166,6 +166,24 @@ class LauncherChannel {
     }
   }
 
+  Future<bool> canConfigureWidget(int id) async =>
+      await _safe(
+        () => _ch.invokeMethod<bool>('canConfigureWidget', {'id': id}),
+      ) ??
+      false;
+
+  Future<bool> configureWidget(int id) async {
+    try {
+      return await _ch.invokeMethod<bool>('configureWidget', {'id': id}) ??
+          false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException catch (e) {
+      debugPrint('Launch-R configureWidget error: ${e.code} ${e.message}');
+      return false;
+    }
+  }
+
   Future<void> deleteWidget(int id) =>
       _safe(() => _ch.invokeMethod<void>('deleteWidget', {'id': id}));
 }
