@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -265,8 +266,31 @@ class _LauncherShellState extends State<LauncherShell>
 class _WallpaperLayer extends StatelessWidget {
   const _WallpaperLayer();
 
+  static const _tint = ColoredBox(color: Color(0x1F000000));
+
   @override
   Widget build(BuildContext context) {
-    return const ColoredBox(color: Color(0x1F000000));
+    final own = context.select<LauncherSettings, bool>((s) => s.ownBackground);
+    if (!own) return _tint;
+    final path = context.select<LauncherSettings, String?>(
+      (s) => s.backgroundPath,
+    );
+    final size = MediaQuery.sizeOf(context);
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const ColoredBox(color: Color(0xFF14161A)),
+        if (path != null)
+          Image.file(
+            File(path),
+            fit: BoxFit.cover,
+            gaplessPlayback: true,
+            cacheWidth: (size.width * dpr).round(),
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
+          ),
+        _tint,
+      ],
+    );
   }
 }
