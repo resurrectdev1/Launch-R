@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:launch_r/models/launcher_models.dart';
@@ -27,6 +28,8 @@ class LauncherSettings extends ChangeNotifier {
   String? _customFontPath;
   String? _customFontLabel;
   String? _customFontFamily;
+  bool _ownBackground = false;
+  String? _backgroundPath;
   ColorScheme? _dynamicLight;
   ColorScheme? _dynamicDark;
 
@@ -73,6 +76,8 @@ class LauncherSettings extends ChangeNotifier {
   static const double minTextScale = 0.85;
   static const double maxTextScale = 1.3;
   IconShape get iconShape => _iconShape;
+  bool get ownBackground => _ownBackground;
+  String? get backgroundPath => _backgroundPath;
   bool get themedIcons => _themedIcons;
 
   Future<void> init() async {
@@ -107,7 +112,38 @@ class LauncherSettings extends ChangeNotifier {
     _boldText = p.getBool('bold_text') ?? false;
     _iconPack = p.getString('icon_pack');
     _iconPackLabel = p.getString('icon_pack_label');
+    _ownBackground = p.getBool('own_background') ?? false;
+    _backgroundPath = p.getString('background_path');
+    final bg = _backgroundPath;
+    if (bg != null && !File(bg).existsSync()) {
+      _backgroundPath = null;
+      await p.remove('background_path');
+    }
     await _restoreFont(p);
+  }
+
+  Future<void> setOwnBackground(bool v) async {
+    if (v == _ownBackground) return;
+    _ownBackground = v;
+    notifyListeners();
+    await _prefs?.setBool('own_background', v);
+  }
+
+  Future<void> setBackgroundPath(String? path) async {
+    final old = _backgroundPath;
+    _backgroundPath = path;
+    notifyListeners();
+    if (path == null) {
+      await _prefs?.remove('background_path');
+    } else {
+      await _prefs?.setString('background_path', path);
+    }
+    if (old != null && old != path) {
+      try {
+        final f = File(old);
+        if (await f.exists()) await f.delete();
+      } catch (_) {}
+    }
   }
 
   Future<void> _restoreFont(SharedPreferences p) async {
