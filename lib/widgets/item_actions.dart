@@ -60,6 +60,16 @@ PopupMenuItem<String> _entry(
   );
 }
 
+int _menuToken = 0;
+bool _menuOpen = false;
+NavigatorState? _menuNav;
+
+void dismissItemMenu() {
+  _menuToken++;
+  final nav = _menuNav;
+  if (_menuOpen && nav != null && nav.mounted) nav.pop();
+}
+
 Future<void> showItemMenu(
   BuildContext context,
   Offset pos,
@@ -73,6 +83,14 @@ Future<void> showItemMenu(
   final t = LaunchRTheme.of(context);
   final size = MediaQuery.sizeOf(context);
   final inDrawer = zone == Zone.drawer;
+  final nav = Navigator.of(context);
+  final token = ++_menuToken;
+
+  var canEdit = false;
+  if (item is WidgetItem) {
+    canEdit = await LauncherChannel.instance.canConfigureWidget(item.wid);
+    if (token != _menuToken || !context.mounted) return;
+  }
 
   final entries = <PopupMenuEntry<String>>[
     if (item is AppItem) ...[
@@ -98,12 +116,15 @@ Future<void> showItemMenu(
           : _entry(t, 'remove', Icons.remove_circle_outline_rounded, 'Remove'),
     ],
     if (item is WidgetItem) ...[
+      if (canEdit) _entry(t, 'edit', Icons.tune_rounded, 'Edit'),
       if (item.resizable)
         _entry(t, 'resize', Icons.open_in_full_rounded, 'Resize'),
       _entry(t, 'remove', Icons.remove_circle_outline_rounded, 'Remove'),
     ],
   ];
 
+  _menuNav = nav;
+  _menuOpen = true;
   final choice = await showMenu<String>(
     context: context,
     position: RelativeRect.fromLTRB(
@@ -117,6 +138,8 @@ Future<void> showItemMenu(
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
     items: entries,
   );
+  _menuOpen = false;
+  _menuNav = null;
   if (choice == null) return;
 
   switch (choice) {
@@ -154,6 +177,10 @@ Future<void> showItemMenu(
       }
     case 'dissolve':
       model.dissolveFolder(zone, (item as FolderItem).fid);
+    case 'edit':
+      unawaited(
+        LauncherChannel.instance.configureWidget((item as WidgetItem).wid),
+      );
     case 'resize':
       shell.startResize((item as WidgetItem).wid);
   }
