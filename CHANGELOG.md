@@ -13,6 +13,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 * Option to edit widgets alongside resizeing & removing (to be done)
+* Add more to search functionality (e.g. microphone or when you search some usefull widgets or rececently used apps etc) (to be done
+* Recently used apps for app dock in home menu screen (default off but an option in settings) (to be done
 * Uploaded to F-Droid! (to be done)
 
 ### Changed
