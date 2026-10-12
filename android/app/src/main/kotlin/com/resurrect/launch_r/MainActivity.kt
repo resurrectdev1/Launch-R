@@ -10,6 +10,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.drawable.ColorDrawable
+import android.view.WindowManager
+import android.os.Bundle
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -52,6 +56,7 @@ class MainActivity : FlutterActivity() {
     private val widgetManager by lazy { AppWidgetManager.getInstance(this) }
     private var pendingWidget: PendingWidget? = null
     private var pendingFont: MethodChannel.Result? = null
+    private var pendingBackground: MethodChannel.Result? = null
 
     @Volatile private var iconPack: IconPack? = null
     @Volatile private var iconPackPkg: String? = null
@@ -68,6 +73,7 @@ class MainActivity : FlutterActivity() {
         private const val REQ_BIND_WIDGET = 7001
         private const val REQ_CONFIGURE_WIDGET = 7002
         private const val REQ_PICK_FONT = 7003
+        private const val REQ_PICK_BACKGROUND = 7004
         private const val MAX_FONT_BYTES = 25L * 1024 * 1024
     }
 
@@ -150,6 +156,10 @@ class MainActivity : FlutterActivity() {
             }
             REQ_PICK_FONT -> {
                 finishFontPick(if (resultCode == RESULT_OK) data?.data else null)
+                return
+            }
+            REQ_PICK_BACKGROUND -> {
+                finishBackgroundPick(if (resultCode == RESULT_OK) data?.data else null)
                 return
             }
         }
@@ -306,6 +316,7 @@ class MainActivity : FlutterActivity() {
             }
 
             "pickFont" -> pickFont(result)
+            "pickBackground" -> pickBackground(result)
 
             "openHomeSettings" -> {
                 try {
@@ -447,6 +458,60 @@ class MainActivity : FlutterActivity() {
         } catch (_: Exception) {
             pendingFont = null
             result.success(null)
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun pickBackground(result: MethodChannel.Result) {
+        if (pendingBackground != null) {
+            result.success(null)
+            return
+        }
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "image/*"
+        }
+        pendingBackground = result
+        try {
+            startActivityForResult(intent, REQ_PICK_BACKGROUND)
+        } catch (_: Exception) {
+            pendingBackground = null
+            result.success(null)
+        }
+    }
+
+    private fun finishBackgroundPick(uri: Uri?) {
+        val result = pendingBackground ?: return
+        pendingBackground = null
+        if (uri == null) {
+            result.success(null)
+            return
+        }
+        io.execute {
+            var out: File? = null
+            try {
+                val metrics = resources.displayMetrics
+                val target = maxOf(metrics.widthPixels, metrics.heightPixels)
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+                if (bounds.outWidth <= 0 || bounds.outHeight <= 0) throw IOException("Not a readable image")
+                var sample = 1
+                while (bounds.outWidth / (sample * 2) >= target / 2 &&
+                    bounds.outHeight / (sample * 2) >= target / 2) sample *= 2
+                val opts = BitmapFactory.Options().apply { inSampleSize = sample }
+                val bmp = contentResolver.openInputStream(uri)?.use {
+                    BitmapFactory.decodeStream(it, null, opts)
+                } ?: throw IOException("Could not decode image")
+                val dir = File(filesDir, "backgrounds").apply { mkdirs() }
+                val file = File(dir, "bg_${System.currentTimeMillis()}.jpg")
+                out = file
+                file.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 90, it) }
+                bmp.recycle()
+                runOnUiThread { result.success(mapOf("path" to file.absolutePath)) }
+            } catch (e: Exception) {
+                try { out?.delete() } catch (_: Exception) {}
+                runOnUiThread { result.error("background_import_failed", e.message, null) }
+            }
         }
     }
 
