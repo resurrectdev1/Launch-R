@@ -196,13 +196,13 @@ class _SettingsSheet extends StatelessWidget {
               SwitchListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
                 title: Text(
-                  'Use own background image',
+                  'Fix black flash on app close',
                   style: TextStyle(color: t.drawerText),
                 ),
                 subtitle: Text(
                   s.ownBackground
-                      ? 'Showing your chosen image instead of the system wallpaper'
-                      : 'Show an image you pick instead of the system wallpaper',
+                      ? 'Using your own background instead of the system wallpaper'
+                      : 'Draws its own background from an image you pick instead of the system wallpaper',
                   style: TextStyle(color: t.drawerTextMuted),
                 ),
                 value: s.ownBackground,
@@ -221,8 +221,7 @@ class _SettingsSheet extends StatelessWidget {
                     style: TextStyle(color: t.drawerTextMuted),
                   ),
                   onTap: () async {
-                    final path = await LauncherChannel.instance
-                        .pickBackground();
+                    final path = await LauncherChannel.instance.pickBackground();
                     if (path != null) await s.setBackgroundPath(path);
                   },
                 ),
