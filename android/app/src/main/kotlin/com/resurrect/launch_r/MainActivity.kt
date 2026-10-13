@@ -27,6 +27,7 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
+import android.speech.RecognizerIntent
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.provider.Settings
@@ -58,6 +59,7 @@ class MainActivity : FlutterActivity() {
     private var pendingReconfigure: MethodChannel.Result? = null
     private var pendingFont: MethodChannel.Result? = null
     private var pendingBackground: MethodChannel.Result? = null
+    private var pendingVoice: MethodChannel.Result? = null
 
     @Volatile private var iconPack: IconPack? = null
     @Volatile private var iconPackPkg: String? = null
@@ -76,6 +78,7 @@ class MainActivity : FlutterActivity() {
         private const val REQ_PICK_FONT = 7003
         private const val REQ_PICK_BACKGROUND = 7004
         private const val REQ_RECONFIGURE_WIDGET = 7005
+        private const val REQ_VOICE_SEARCH = 7006
         private const val MAX_FONT_BYTES = 25L * 1024 * 1024
     }
 
@@ -168,6 +171,15 @@ class MainActivity : FlutterActivity() {
             }
             REQ_PICK_BACKGROUND -> {
                 finishBackgroundPick(if (resultCode == RESULT_OK) data?.data else null)
+                return
+            }
+            REQ_VOICE_SEARCH -> {
+                val r = pendingVoice
+                pendingVoice = null
+                val text = if (resultCode == RESULT_OK) {
+                    data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+                } else null
+                r?.success(text)
                 return
             }
         }
@@ -336,6 +348,8 @@ class MainActivity : FlutterActivity() {
                 result.success(null)
             }
 
+            "startVoiceSearch" -> startVoiceSearch(result)
+
             "openWallpaperPicker" -> {
                 try {
                     startActivity(
@@ -479,6 +493,29 @@ class MainActivity : FlutterActivity() {
         } catch (_: Exception) {
             pendingFont = null
             result.success(null)
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun startVoiceSearch(result: MethodChannel.Result) {
+        if (pendingVoice != null) {
+            result.success(null)
+            return
+        }
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
+            )
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Search")
+        }
+        pendingVoice = result
+        try {
+            startActivityForResult(intent, REQ_VOICE_SEARCH)
+        } catch (_: Exception) {
+            pendingVoice = null
+            result.error("no_speech", "No speech recogniser available", null)
         }
     }
 
