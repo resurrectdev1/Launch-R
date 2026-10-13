@@ -186,7 +186,7 @@ class _HomePage extends StatelessWidget {
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: context.read<ShellController>().endResize,
-                    child: const _ResizeScrim(),
+                    child: _ResizeScrim(cols: cols, rows: rows),
                   ),
                 ),
               for (var i = 0; i < items.length; i++)
@@ -268,7 +268,9 @@ class _HomePage extends StatelessWidget {
 }
 
 class _ResizeScrim extends StatelessWidget {
-  const _ResizeScrim();
+  const _ResizeScrim({required this.cols, required this.rows});
+  final int cols;
+  final int rows;
 
   @override
   Widget build(BuildContext context) {
@@ -284,10 +286,36 @@ class _ResizeScrim extends StatelessWidget {
             borderRadius: BorderRadius.circular(28),
             border: Border.all(color: const Color(0x26FFFFFF), width: 1.5),
           ),
+          child: CustomPaint(
+            painter: _GridDotsPainter(cols: cols, rows: rows),
+            child: const SizedBox.expand(),
+          ),
         ),
       ),
     );
   }
+}
+
+class _GridDotsPainter extends CustomPainter {
+  _GridDotsPainter({required this.cols, required this.rows});
+  final int cols;
+  final int rows;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cw = size.width / cols;
+    final ch = size.height / rows;
+    final dot = Paint()..color = const Color(0x59FFFFFF);
+    for (var r = 1; r < rows; r++) {
+      for (var c = 1; c < cols; c++) {
+        canvas.drawCircle(Offset(c * cw, r * ch), 1.8, dot);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GridDotsPainter old) =>
+      old.cols != cols || old.rows != rows;
 }
 
 class _WidgetDropPreview extends StatefulWidget {
