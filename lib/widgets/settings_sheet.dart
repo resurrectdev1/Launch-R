@@ -221,7 +221,8 @@ class _SettingsSheet extends StatelessWidget {
                     style: TextStyle(color: t.drawerTextMuted),
                   ),
                   onTap: () async {
-                    final path = await LauncherChannel.instance.pickBackground();
+                    final path = await LauncherChannel.instance
+                        .pickBackground();
                     if (path != null) await s.setBackgroundPath(path);
                   },
                 ),

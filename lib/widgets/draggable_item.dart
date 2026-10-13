@@ -40,7 +40,6 @@ class DraggableItem extends StatefulWidget {
 }
 
 class _DraggableItemState extends State<DraggableItem> {
-
   static const _holdSlop = 18.0;
 
   Offset _pointer = Offset.zero;

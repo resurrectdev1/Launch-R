@@ -302,9 +302,7 @@ class _ResizeOverlayState extends State<_ResizeOverlay> {
       clipBehavior: Clip.none,
       children: [
         AnimatedPositioned.fromRect(
-          duration: active
-              ? const Duration(milliseconds: 110)
-              : Duration.zero,
+          duration: active ? const Duration(milliseconds: 110) : Duration.zero,
           curve: Curves.easeOutCubic,
           rect: rect,
           child: IgnorePointer(

@@ -462,11 +462,7 @@ class _FolderPageState extends State<_FolderPage> {
         if (pageCount > 1)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: PageDots(
-              controller: _pages,
-              count: pageCount,
-              color: fg,
-            ),
+            child: PageDots(controller: _pages, count: pageCount, color: fg),
           ),
       ],
     );
