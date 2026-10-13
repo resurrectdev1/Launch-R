@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
@@ -41,33 +42,193 @@ void openItem(BuildContext context, LItem item, Zone zone) {
   }
 }
 
-PopupMenuItem<String> _entry(
-  LaunchRTheme t,
-  String value,
-  IconData icon,
-  String text,
-) {
-  return PopupMenuItem<String>(
-    value: value,
-    height: 48,
-    child: Row(
-      children: [
-        Icon(icon, size: 21, color: t.drawerText),
-        const SizedBox(width: 14),
-        Text(text, style: TextStyle(color: t.drawerText, fontSize: 15)),
-      ],
-    ),
-  );
-}
-
 int _menuToken = 0;
-bool _menuOpen = false;
-NavigatorState? _menuNav;
+OverlayEntry? _menuEntry;
+Completer<String?>? _menuDone;
+
+bool get itemMenuOpen => _menuEntry != null;
 
 void dismissItemMenu() {
   _menuToken++;
-  final nav = _menuNav;
-  if (_menuOpen && nav != null && nav.mounted) nav.pop();
+  _closeItemMenu(null);
+}
+
+void _closeItemMenu(String? choice) {
+  final entry = _menuEntry;
+  final done = _menuDone;
+  _menuEntry = null;
+  _menuDone = null;
+  if (entry != null) {
+    entry.remove();
+    entry.dispose();
+  }
+  if (done != null && !done.isCompleted) done.complete(choice);
+}
+
+class _MenuOption {
+  const _MenuOption(this.value, this.icon, this.label);
+  final String value;
+  final IconData icon;
+  final String label;
+}
+
+Future<String?> _showOverlayMenu(
+  BuildContext context,
+  Offset pos,
+  LaunchRTheme t,
+  List<_MenuOption> options,
+) {
+  _closeItemMenu(null);
+  final done = Completer<String?>();
+  final entry = OverlayEntry(
+    builder: (_) => _ItemMenu(
+      anchor: pos,
+      theme: t,
+      options: options,
+      onChoose: _closeItemMenu,
+    ),
+  );
+  _menuEntry = entry;
+  _menuDone = done;
+  Overlay.of(context, rootOverlay: true).insert(entry);
+  return done.future;
+}
+
+class _ItemMenu extends StatelessWidget {
+  const _ItemMenu({
+    required this.anchor,
+    required this.theme,
+    required this.options,
+    required this.onChoose,
+  });
+
+  final Offset anchor;
+  final LaunchRTheme theme;
+  final List<_MenuOption> options;
+  final void Function(String? choice) onChoose;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = theme;
+    final pad = MediaQuery.paddingOf(context) + const EdgeInsets.all(8);
+    return SizedBox.expand(
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Listener(
+              behavior: HitTestBehavior.opaque,
+              onPointerDown: (_) => onChoose(null),
+              child: const SizedBox.expand(),
+            ),
+          ),
+          Positioned.fill(
+            child: CustomSingleChildLayout(
+              delegate: _MenuLayout(anchor, pad),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.9, end: 1.0),
+                duration: const Duration(milliseconds: 140),
+                curve: Curves.easeOutCubic,
+                builder: (context, v, child) => Opacity(
+                  opacity: ((v - 0.9) / 0.1).clamp(0.0, 1.0).toDouble(),
+                  child: Transform.scale(
+                    scale: v,
+                    alignment: Alignment.topLeft,
+                    child: child,
+                  ),
+                ),
+                child: Material(
+                  color: t.menuBg,
+                  elevation: 8,
+                  clipBehavior: Clip.antiAlias,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minWidth: 168,
+                      maxWidth: 280,
+                    ),
+                    child: IntrinsicWidth(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            for (final o in options)
+                              InkWell(
+                                onTap: () => onChoose(o.value),
+                                child: SizedBox(
+                                  height: 48,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          o.icon,
+                                          size: 21,
+                                          color: t.drawerText,
+                                        ),
+                                        const SizedBox(width: 14),
+                                        Text(
+                                          o.label,
+                                          style: TextStyle(
+                                            color: t.drawerText,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MenuLayout extends SingleChildLayoutDelegate {
+  const _MenuLayout(this.anchor, this.padding);
+  final Offset anchor;
+  final EdgeInsets padding;
+
+  @override
+  BoxConstraints getConstraintsForChild(BoxConstraints c) => BoxConstraints(
+    maxWidth: math.max(0.0, c.maxWidth - padding.horizontal),
+    maxHeight: math.max(0.0, c.maxHeight - padding.vertical),
+  );
+
+  @override
+  Offset getPositionForChild(Size size, Size childSize) {
+    final maxX = size.width - padding.right - childSize.width;
+    final x = (anchor.dx - 24)
+        .clamp(padding.left, math.max(padding.left, maxX))
+        .toDouble();
+    const gap = 14.0;
+    var y = anchor.dy + gap;
+    if (y + childSize.height > size.height - padding.bottom) {
+      y = anchor.dy - gap - childSize.height;
+    }
+    final maxY = size.height - padding.bottom - childSize.height;
+    y = y.clamp(padding.top, math.max(padding.top, maxY)).toDouble();
+    return Offset(x, y);
+  }
+
+  @override
+  bool shouldRelayout(_MenuLayout old) =>
+      anchor != old.anchor || padding != old.padding;
 }
 
 Future<void> showItemMenu(
@@ -81,9 +242,7 @@ Future<void> showItemMenu(
   final shell = context.read<ShellController>();
   final messenger = ScaffoldMessenger.maybeOf(context);
   final t = LaunchRTheme.of(context);
-  final size = MediaQuery.sizeOf(context);
   final inDrawer = zone == Zone.drawer;
-  final nav = Navigator.of(context);
   final token = ++_menuToken;
 
   var canEdit = false;
@@ -92,54 +251,53 @@ Future<void> showItemMenu(
     if (token != _menuToken || !context.mounted) return;
   }
 
-  final entries = <PopupMenuEntry<String>>[
+  final entries = <_MenuOption>[
     if (item is AppItem) ...[
       if (fromFolder == null)
         inDrawer
-            ? _entry(t, 'add', Icons.add_to_home_screen_rounded, 'Add to Home')
-            : _entry(
-                t,
+            ? const _MenuOption(
+                'add',
+                Icons.add_to_home_screen_rounded,
+                'Add to Home',
+              )
+            : const _MenuOption(
                 'remove',
                 Icons.remove_circle_outline_rounded,
                 'Remove',
               ),
-      _entry(t, 'tags', Icons.sell_outlined, 'Tags'),
-      _entry(t, 'hide', Icons.visibility_off_outlined, 'Hide app'),
-      _entry(t, 'info', Icons.info_outline_rounded, 'App info'),
-      _entry(t, 'uninstall', Icons.delete_outline_rounded, 'Uninstall'),
+      const _MenuOption('tags', Icons.sell_outlined, 'Tags'),
+      const _MenuOption('hide', Icons.visibility_off_outlined, 'Hide app'),
+      const _MenuOption('info', Icons.info_outline_rounded, 'App info'),
+      const _MenuOption('uninstall', Icons.delete_outline_rounded, 'Uninstall'),
     ],
     if (item is FolderItem) ...[
-      _entry(t, 'rename', Icons.edit_outlined, 'Rename'),
-      _entry(t, 'color', Icons.palette_outlined, 'Color'),
+      const _MenuOption('rename', Icons.edit_outlined, 'Rename'),
+      const _MenuOption('color', Icons.palette_outlined, 'Color'),
       inDrawer
-          ? _entry(t, 'dissolve', Icons.folder_off_outlined, 'Ungroup folder')
-          : _entry(t, 'remove', Icons.remove_circle_outline_rounded, 'Remove'),
+          ? const _MenuOption(
+              'dissolve',
+              Icons.folder_off_outlined,
+              'Ungroup folder',
+            )
+          : const _MenuOption(
+              'remove',
+              Icons.remove_circle_outline_rounded,
+              'Remove',
+            ),
     ],
     if (item is WidgetItem) ...[
-      if (canEdit) _entry(t, 'edit', Icons.tune_rounded, 'Edit'),
+      if (canEdit) const _MenuOption('edit', Icons.tune_rounded, 'Edit'),
       if (item.resizable)
-        _entry(t, 'resize', Icons.open_in_full_rounded, 'Resize'),
-      _entry(t, 'remove', Icons.remove_circle_outline_rounded, 'Remove'),
+        const _MenuOption('resize', Icons.open_in_full_rounded, 'Resize'),
+      const _MenuOption(
+        'remove',
+        Icons.remove_circle_outline_rounded,
+        'Remove',
+      ),
     ],
   ];
 
-  _menuNav = nav;
-  _menuOpen = true;
-  final choice = await showMenu<String>(
-    context: context,
-    position: RelativeRect.fromLTRB(
-      pos.dx,
-      pos.dy,
-      size.width - pos.dx,
-      size.height - pos.dy,
-    ),
-    color: t.menuBg,
-    elevation: 8,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-    items: entries,
-  );
-  _menuOpen = false;
-  _menuNav = null;
+  final choice = await _showOverlayMenu(context, pos, t, entries);
   if (choice == null) return;
 
   switch (choice) {
