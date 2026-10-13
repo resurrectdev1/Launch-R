@@ -55,6 +55,7 @@ class MainActivity : FlutterActivity() {
     private val widgetHost by lazy { AppWidgetHost(this, WIDGET_HOST_ID) }
     private val widgetManager by lazy { AppWidgetManager.getInstance(this) }
     private var pendingWidget: PendingWidget? = null
+    private var pendingReconfigure: MethodChannel.Result? = null
     private var pendingFont: MethodChannel.Result? = null
     private var pendingBackground: MethodChannel.Result? = null
 
@@ -74,6 +75,7 @@ class MainActivity : FlutterActivity() {
         private const val REQ_CONFIGURE_WIDGET = 7002
         private const val REQ_PICK_FONT = 7003
         private const val REQ_PICK_BACKGROUND = 7004
+        private const val REQ_RECONFIGURE_WIDGET = 7005
         private const val MAX_FONT_BYTES = 25L * 1024 * 1024
     }
 
@@ -154,6 +156,12 @@ class MainActivity : FlutterActivity() {
                 finishPendingWidget(resultCode == RESULT_OK)
                 return
             }
+            REQ_RECONFIGURE_WIDGET -> {
+                val r = pendingReconfigure
+                pendingReconfigure = null
+                r?.success(resultCode == RESULT_OK)
+                return
+            }
             REQ_PICK_FONT -> {
                 finishFontPick(if (resultCode == RESULT_OK) data?.data else null)
                 return
@@ -179,6 +187,7 @@ class MainActivity : FlutterActivity() {
             receiverRegistered = false
         }
         LaunchRNotificationListener.onChange = null
+        pendingReconfigure = null
         pendingWidget?.let {
             try { widgetHost.deleteAppWidgetId(it.id) } catch (_: Exception) {}
             pendingWidget = null
@@ -372,6 +381,18 @@ class MainActivity : FlutterActivity() {
             }
 
             "addWidget" -> addWidget(call.argument<String>("component"), result)
+
+            "canConfigureWidget" -> {
+                val id = call.argument<Int>("id")
+                val info = if (id == null) null else try {
+                    widgetManager.getAppWidgetInfo(id)
+                } catch (_: Exception) {
+                    null
+                }
+                result.success(info?.configure != null)
+            }
+
+            "configureWidget" -> configureWidget(call.argument<Int>("id"), result)
 
             "deleteWidget" -> {
                 val id = call.argument<Int>("id")
@@ -610,6 +631,30 @@ class MainActivity : FlutterActivity() {
             )
         } catch (_: Exception) {
             finishPendingWidget(false)
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun configureWidget(id: Int?, result: MethodChannel.Result) {
+        val info = if (id == null) null else try {
+            widgetManager.getAppWidgetInfo(id)
+        } catch (_: Exception) {
+            null
+        }
+        if (id == null || info?.configure == null ||
+            pendingWidget != null || pendingReconfigure != null
+        ) {
+            result.success(false)
+            return
+        }
+        pendingReconfigure = result
+        try {
+            widgetHost.startAppWidgetConfigureActivityForResult(
+                this, id, 0, REQ_RECONFIGURE_WIDGET, null
+            )
+        } catch (_: Exception) {
+            pendingReconfigure = null
+            result.success(false)
         }
     }
 
