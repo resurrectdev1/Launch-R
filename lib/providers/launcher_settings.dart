@@ -13,6 +13,8 @@ class LauncherSettings extends ChangeNotifier {
   bool _materialYou = false;
   Color? _customAccent;
   bool _darkHomeText = false;
+  bool _solidHomeFolders = false;
+  bool _homeLookDrawerFolders = false;
   int _drawerCols = 4;
   bool _lockLayout = false;
   bool _showBadges = false;
@@ -44,6 +46,8 @@ class LauncherSettings extends ChangeNotifier {
       ? (_dynamicDark ?? _dynamicLight)
       : (_dynamicLight ?? _dynamicDark);
   bool get darkHomeText => _darkHomeText;
+  bool get solidHomeFolders => _solidHomeFolders;
+  bool get homeLookDrawerFolders => _homeLookDrawerFolders;
   int get drawerCols => _drawerCols;
   bool get lockLayout => _lockLayout;
   bool get showBadges => _showBadges;
@@ -99,6 +103,8 @@ class LauncherSettings extends ChangeNotifier {
     final accentArgb = p.getInt('custom_accent');
     if (accentArgb != null) _customAccent = Color(accentArgb | 0xFF000000);
     _darkHomeText = p.getBool('dark_home_text') ?? false;
+    _solidHomeFolders = p.getBool('solid_home_folders') ?? false;
+    _homeLookDrawerFolders = p.getBool('home_look_drawer_folders') ?? false;
     _drawerCols = p.getInt('drawer_cols') ?? 4;
     _lockLayout = p.getBool('lock_layout') ?? false;
     _showBadges = p.getBool('show_badges') ?? false;
@@ -259,6 +265,20 @@ class LauncherSettings extends ChangeNotifier {
     _darkHomeText = v;
     notifyListeners();
     await _prefs?.setBool('dark_home_text', v);
+  }
+
+  Future<void> setSolidHomeFolders(bool v) async {
+    if (v == _solidHomeFolders) return;
+    _solidHomeFolders = v;
+    notifyListeners();
+    await _prefs?.setBool('solid_home_folders', v);
+  }
+
+  Future<void> setHomeLookDrawerFolders(bool v) async {
+    if (v == _homeLookDrawerFolders) return;
+    _homeLookDrawerFolders = v;
+    notifyListeners();
+    await _prefs?.setBool('home_look_drawer_folders', v);
   }
 
   Future<void> setDrawerCols(int v) async {
