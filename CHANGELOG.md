@@ -12,13 +12,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-* Option to edit widgets alongside resizeing & removing
-* Add microphone text to speech button in app drawer search bar
 * Recently used apps for app dock in home menu screen (default off but an option in settings) (to be done)
 * Custom integrated widgets (Clock, Weather, Music gets data from other apps) (to be done)
-* Make resizing widgets screen more pretty
 * Backup/Restore feature (to be done)
 * Uploaded to F-Droid! (to be done)
+
+
+
+---
+
+## [0.3.2] - 2026-10-12
+
+### Added
+
+* Option to edit widgets alongside resizeing & removing
+* Add microphone text to speech button in app drawer search bar
+* Make resizing widgets screen more pretty
 
 ### Changed
 
@@ -27,55 +36,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 * Confusing wording for app black flash fix in settings
-
----
-
-## [0.3.0] - 2026-10-12
-
-### Added
-
-* Monochrome icon suppourt
-
-### Fixed
-
-* Brief black flash when re-entering home launcher from other apps
-
----
-
-## [0.2.8] - 2026-10-10
-
-### Added
-
-* Themed Icons option in settings
-
-### Changed
-
-* Material you into a toggle so it can be used alongside other themes
-* Rounded icon to hexagon
-
-### Fixed
-
-* Pressing home button when in launcher settings not closing launcher settings
-
----
-
-## [0.2.6] - 2026-10-9
-
-### Added
-
-* Custom fonts in settings
-* Option when opening app drawer to take you to search
-
-### Changed
-
-* Closing animation of app drawer to be faster
-* Turned off icon badge option default to let use be prompted to give permission upon first toggle
-
----
-
-## [0.2.4] - 2026-10-8
-
-INITIAL RELEASE
 
 ---
 
