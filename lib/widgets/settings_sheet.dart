@@ -192,6 +192,40 @@ class _SettingsSheet extends StatelessWidget {
                 value: s.darkHomeText,
                 onChanged: s.setDarkHomeText,
               ),
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
+                  'Match folder popup color',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  s.solidHomeFolders
+                      ? 'Home screen and app drawer folders use the open folder color'
+                      : 'Home folders are see-through over your wallpaper',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                value: s.solidHomeFolders,
+                onChanged: s.setSolidHomeFolders,
+              ),
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
+                  'See-through drawer folders',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  s.solidHomeFolders
+                      ? 'Turn off "Match folder popup color" to use this'
+                      : (s.homeLookDrawerFolders
+                            ? 'App drawer folders look like home screen folders'
+                            : 'App drawer folders use the folder popup color'),
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                value: s.homeLookDrawerFolders && !s.solidHomeFolders,
+                onChanged: s.solidHomeFolders
+                    ? null
+                    : s.setHomeLookDrawerFolders,
+              ),
               header('Background'),
               SwitchListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
