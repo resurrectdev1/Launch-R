@@ -431,6 +431,25 @@ class _SearchPill extends StatelessWidget {
   final VoidCallback onChanged;
   final VoidCallback onReload;
 
+  Future<void> _voiceSearch(BuildContext context) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    try {
+      final text = await LauncherChannel.instance.startVoiceSearch();
+      if (text == null || text.trim().isEmpty) return;
+      controller.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+      onChanged();
+    } on VoiceUnavailable {
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text('Voice search isn\'t available on this device'),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = LaunchRTheme.of(context);
@@ -474,6 +493,11 @@ class _SearchPill extends StatelessWidget {
                 ),
               ),
             ),
+          ),
+          IconButton(
+            tooltip: 'Voice search',
+            icon: Icon(Icons.mic_rounded, color: t.drawerText),
+            onPressed: () => unawaited(_voiceSearch(context)),
           ),
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert_rounded, color: t.drawerText),
