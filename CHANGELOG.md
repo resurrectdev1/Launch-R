@@ -12,14 +12,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-* Recently used apps for app dock in home menu screen (default off but an option in settings) (to be done)
-* Custom integrated widgets (Clock, Weather, Music gets data from other apps) (to be done)
-* Backup/Restore feature (to be done)
-* Uploaded to F-Droid! (to be done)
+* See-through drawer folders (Settings). Gives app drawer folders the same translucent look as home screen folders. It’s off by default, and it’s greyed out while “Match folder popup color” is on, because that setting takes priority.
+* Match folder popup color (Settings, under “Dark home text”). When on, folders on the home screen, dock and app drawer use the same color as the open folder popup. It’s off by default.
 
 ### Changed
 
-* Amoled & White theme forcing folders a certain color
+* App drawer folders, including drawer search results, now use the open folder’s panel color by default instead of a separate drawer color. Custom folder colors are blended over the popup surface the same way the open panel does it.
+* The open folder popup follows the closed folder’s style. In see-through mode the panel is translucent, and custom colors are used as-is. Its title and labels follow “Dark home text”.
+
+### Fixed
+
+* Folders looked like a different color when opened, in every theme. The closed icon and the open panel were colored by two separate calculations, and they now share one.
 
 ---
 
