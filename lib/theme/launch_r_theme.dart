@@ -22,7 +22,6 @@ class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
     this.brightness, {
     this.amoled = false,
     this.accent = defaultAccent,
-    this.dynamicScheme,
   });
 
   factory LaunchRTheme.of(BuildContext context) {
@@ -30,31 +29,16 @@ class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
     return theme.extension<LaunchRTheme>() ?? LaunchRTheme(theme.brightness);
   }
 
-  factory LaunchRTheme.forMode(
-    AppearanceMode mode,
-    Color accent, {
-    ColorScheme? dynamicScheme,
-  }) {
-    if (dynamicScheme != null) {
-      final amoled = mode == AppearanceMode.amoledBlack;
-      return LaunchRTheme(
-        amoled ? mode.brightness : dynamicScheme.brightness,
-        amoled: amoled,
-        accent: dynamicScheme.primary,
-        dynamicScheme: amoled ? null : dynamicScheme,
+  factory LaunchRTheme.forMode(AppearanceMode mode, Color accent) =>
+      LaunchRTheme(
+        mode.brightness,
+        amoled: mode == AppearanceMode.amoledBlack,
+        accent: accent,
       );
-    }
-    return LaunchRTheme(
-      mode.brightness,
-      amoled: mode == AppearanceMode.amoledBlack,
-      accent: accent,
-    );
-  }
 
   final Brightness brightness;
   final bool amoled;
   final Color accent;
-  final ColorScheme? dynamicScheme;
 
   static const defaultAccent = Color(0xFFF26A27);
   static const badge = Color(0xFFFF5B22);
@@ -75,12 +59,12 @@ class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
       dark ? const Color(0xB3FFFFFF) : const Color(0x991B1B1F);
   Color get searchBg =>
       dark ? const Color(0x26FFFFFF) : const Color(0x14000000);
-  bool get _neutralSurface => dynamicScheme == null && (amoled || !dark);
+  bool get _neutralSurface => amoled || !dark;
 
   Color get folderBgDrawer {
     if (amoled) return accent.withValues(alpha: 0.35);
-    if (!dark && dynamicScheme == null) return accent.withValues(alpha: 0.22);
-    return dark ? const Color(0x59FFFFFF) : const Color(0x1F000000);
+    if (!dark) return accent.withValues(alpha: 0.22);
+    return const Color(0x59FFFFFF);
   }
 
   Color get folderPanelBg => _neutralSurface
@@ -88,15 +72,11 @@ class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
       : popupBg;
 
   Color get menuBg {
-    final d = dynamicScheme;
-    if (d != null) return d.surfaceContainerHigh;
     if (amoled) return const Color(0xFF000000);
     return dark ? const Color(0xFF2B2B31) : const Color(0xFFF7F7FB);
   }
 
   Color get popupBg {
-    final d = dynamicScheme;
-    if (d != null) return d.surfaceContainerHighest.withValues(alpha: 0.95);
     if (amoled) return const Color(0xFF0D0D0D);
     return dark ? const Color(0xF2303036) : const Color(0xF2F5F5F9);
   }
@@ -105,13 +85,6 @@ class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
       amoled ? const Color(0xEE1A1A1A) : const Color(0xEE1D1D22);
 
   ThemedIconStyle get themedIconStyle {
-    final d = dynamicScheme;
-    if (d != null) {
-      return ThemedIconStyle(
-        bg: d.primaryContainer.toARGB32(),
-        fg: d.onPrimaryContainer.toARGB32(),
-      );
-    }
     final hsl = HSLColor.fromColor(accent);
     final tone = (hsl.saturation * 0.5).clamp(0.0, 0.5).toDouble();
     final bg = hsl
@@ -151,12 +124,10 @@ class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
     Brightness? brightness,
     bool? amoled,
     Color? accent,
-    ColorScheme? dynamicScheme,
   }) => LaunchRTheme(
     brightness ?? this.brightness,
     amoled: amoled ?? this.amoled,
     accent: accent ?? this.accent,
-    dynamicScheme: dynamicScheme ?? this.dynamicScheme,
   );
 
   @override
@@ -167,7 +138,6 @@ class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
       to.brightness,
       amoled: to.amoled,
       accent: Color.lerp(accent, other.accent, t) ?? other.accent,
-      dynamicScheme: to.dynamicScheme,
     );
   }
 }
