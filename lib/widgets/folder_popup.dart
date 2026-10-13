@@ -110,9 +110,19 @@ class _FolderPopupState extends State<FolderPopup>
             from.center.dy + (from.height > iconSize * 1.35 ? -9 : 0),
           );
     final tint = folder.color;
-    final panelBg = tint == null
-        ? t.folderPanelBg
-        : Color.alphaBlend(Color(tint), t.popupBg);
+    final settings = context.watch<LauncherSettings>();
+    final seeThrough = open.zone == Zone.drawer
+        ? settings.homeLookDrawerFolders && !settings.solidHomeFolders
+        : !settings.solidHomeFolders;
+    final panelBg = seeThrough
+        ? (tint == null
+              ? (settings.darkHomeText
+                    ? const Color(0x33000000)
+                    : const Color(0x59FFFFFF))
+              : Color(tint))
+        : (tint == null
+              ? t.folderPanelBg
+              : Color.alphaBlend(Color(tint), t.popupBg));
 
     final hidden = shell.leftFolder;
     return Positioned.fill(
@@ -179,6 +189,7 @@ class _FolderPopupState extends State<FolderPopup>
                       zone: open.zone,
                       folder: folder,
                       panelColor: panelBg,
+                      seeThrough: seeThrough,
                       autofocusTitle: shell.renameRequested,
                       panelW: panelW,
                       reveal: _t,
@@ -255,11 +266,13 @@ class _FolderPage extends StatefulWidget {
     required this.panelW,
     required this.reveal,
     required this.panelColor,
+    this.seeThrough = false,
   });
 
   final Zone zone;
   final FolderItem folder;
   final Color panelColor;
+  final bool seeThrough;
   final bool autofocusTitle;
   final double panelW;
   final Animation<double> reveal;
@@ -324,10 +337,13 @@ class _FolderPageState extends State<_FolderPage> {
       math.max(1, (math.min(pkgs.length, _perPage) / _cols).ceil()),
     );
     final tint = widget.folder.color;
-    final fg = tint == null
-        ? t.drawerText
-        : LaunchRTheme.onColor(widget.panelColor);
-    final fgMuted = tint == null
+    final darkText = context.read<LauncherSettings>().darkHomeText;
+    final fg = tint != null
+        ? LaunchRTheme.onColor(widget.panelColor)
+        : (widget.seeThrough
+              ? (darkText ? const Color(0xFF111111) : Colors.white)
+              : t.drawerText);
+    final fgMuted = tint == null && !widget.seeThrough
         ? t.drawerTextMuted
         : fg.withValues(alpha: 0.7);
     final style = CellStyle(
