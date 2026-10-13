@@ -170,10 +170,17 @@ class _DrawerViewState extends State<DrawerView> {
     final model = context.watch<LauncherModel>();
     final settings = context.watch<LauncherSettings>();
     final items = model.drawerSlots;
+    final homeLook =
+        settings.homeLookDrawerFolders && !settings.solidHomeFolders;
     final style = CellStyle(
       label: t.drawerText,
       shadows: const [],
-      folderBg: t.folderBgDrawer,
+      folderBg: homeLook
+          ? (settings.darkHomeText
+                ? const Color(0x33000000)
+                : const Color(0x59FFFFFF))
+          : t.folderPanelBg,
+      folderBase: homeLook ? null : t.popupBg,
     );
 
     return LayoutBuilder(
@@ -268,10 +275,17 @@ class _DrawerViewState extends State<DrawerView> {
     final model = context.watch<LauncherModel>();
     final settings = context.watch<LauncherSettings>();
     final results = model.search(_search.text, fuzzy: settings.fuzzySearch);
+    final homeLook =
+        settings.homeLookDrawerFolders && !settings.solidHomeFolders;
     final style = CellStyle(
       label: t.drawerText,
       shadows: const [],
-      folderBg: t.folderBgDrawer,
+      folderBg: homeLook
+          ? (settings.darkHomeText
+                ? const Color(0x33000000)
+                : const Color(0x59FFFFFF))
+          : t.folderPanelBg,
+      folderBase: homeLook ? null : t.popupBg,
     );
     if (results.isEmpty) {
       return Center(
