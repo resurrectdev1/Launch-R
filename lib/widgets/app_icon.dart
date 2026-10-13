@@ -225,7 +225,11 @@ class ItemVisual extends StatelessWidget {
       FolderItem(:final pkgs, :final color) => FolderGlyph(
         pkgs: pkgs,
         size: iconSize,
-        bg: color != null ? Color(color) : style.folderBg,
+        bg: color == null
+            ? style.folderBg
+            : (style.folderBase != null
+                  ? Color.alphaBlend(Color(color), style.folderBase!)
+                  : Color(color)),
       ),
       WidgetItem() ||
       WidgetCover() => SizedBox(width: iconSize, height: iconSize),
