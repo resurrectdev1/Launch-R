@@ -123,7 +123,7 @@ class _SettingsSheet extends StatelessWidget {
                     style: TextStyle(color: t.drawerText),
                   ),
                   subtitle: Text(
-                    'Use your wallpaper colors',
+                    'Use your wallpaper accent color',
                     style: TextStyle(color: t.drawerTextMuted),
                   ),
                   value: s.materialYou,
