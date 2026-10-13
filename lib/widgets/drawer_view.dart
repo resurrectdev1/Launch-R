@@ -496,6 +496,8 @@ class _SearchPill extends StatelessWidget {
           ),
           IconButton(
             tooltip: 'Voice search',
+            padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
+            constraints: const BoxConstraints(minWidth: 42, minHeight: 48),
             icon: Icon(Icons.mic_rounded, color: t.drawerText),
             onPressed: () => unawaited(_voiceSearch(context)),
           ),
