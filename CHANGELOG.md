@@ -17,25 +17,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * Backup/Restore feature (to be done)
 * Uploaded to F-Droid! (to be done)
 
-
-
----
-
-## [0.3.2] - 2026-10-12
-
-### Added
-
-* Option to edit widgets alongside resizeing & removing
-* Add microphone text to speech button in app drawer search bar
-* Make resizing widgets screen more pretty
-
 ### Changed
 
-* Made opening menu of options for widgets more simple
-
-### Fixed
-
-* Confusing wording for app black flash fix in settings
+* Amoled & White theme forcing folders a certain color (to be done)
 
 ---
 
