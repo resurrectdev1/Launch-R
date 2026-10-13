@@ -135,6 +135,18 @@ class LauncherChannel {
   Future<void> openWallpaperPicker() =>
       _safe(() => _ch.invokeMethod<void>('openWallpaperPicker'));
 
+  Future<String?> startVoiceSearch() async {
+    try {
+      return await _ch.invokeMethod<String>('startVoiceSearch');
+    } on PlatformException catch (e) {
+      if (e.code == 'no_speech') throw VoiceUnavailable();
+      debugPrint('Launch-R voice error: ${e.code} ${e.message}');
+      return null;
+    } on MissingPluginException {
+      return null;
+    }
+  }
+
   Future<void> expandNotifications() =>
       _safe(() => _ch.invokeMethod<void>('expandNotifications'));
 
@@ -187,3 +199,5 @@ class LauncherChannel {
   Future<void> deleteWidget(int id) =>
       _safe(() => _ch.invokeMethod<void>('deleteWidget', {'id': id}));
 }
+
+class VoiceUnavailable implements Exception {}
