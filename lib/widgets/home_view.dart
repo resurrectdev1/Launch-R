@@ -186,7 +186,7 @@ class _HomePage extends StatelessWidget {
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: context.read<ShellController>().endResize,
-                    child: const ColoredBox(color: Color(0x40000000)),
+                    child: _ResizeScrim(cols: cols, rows: rows),
                   ),
                 ),
               for (var i = 0; i < items.length; i++)
@@ -265,6 +265,52 @@ class _HomePage extends StatelessWidget {
           _announce(context, model.slotDrop(d, Zone.home, page, index)),
     );
   }
+}
+
+class _ResizeScrim extends StatelessWidget {
+  const _ResizeScrim({required this.cols, required this.rows});
+  final int cols;
+  final int rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: Motion.base,
+      curve: Motion.standard,
+      builder: (context, t, _) => CustomPaint(
+        painter: _GridDotsPainter(cols: cols, rows: rows, t: t),
+        child: const SizedBox.expand(),
+      ),
+    );
+  }
+}
+
+class _GridDotsPainter extends CustomPainter {
+  _GridDotsPainter({required this.cols, required this.rows, required this.t});
+  final int cols;
+  final int rows;
+  final double t;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..color = Color.fromRGBO(0, 0, 0, 0.5 * t),
+    );
+    final cw = size.width / cols;
+    final ch = size.height / rows;
+    final dot = Paint()..color = Color.fromRGBO(255, 255, 255, 0.35 * t);
+    for (var r = 0; r <= rows; r++) {
+      for (var c = 0; c <= cols; c++) {
+        canvas.drawCircle(Offset(c * cw, r * ch), 1.6, dot);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GridDotsPainter old) =>
+      old.cols != cols || old.rows != rows || old.t != t;
 }
 
 class _WidgetDropPreview extends StatefulWidget {
