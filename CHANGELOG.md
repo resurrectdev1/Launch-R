@@ -13,11 +13,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 * See-through drawer folders (Settings). Gives app drawer folders the same translucent look as home screen folders. It’s off by default, and it’s greyed out while “Match folder popup color” is on, because that setting takes priority.
+  
 * Match folder popup color (Settings, under “Dark home text”). When on, folders on the home screen, dock and app drawer use the same color as the open folder popup. It’s off by default.
 
 ### Changed
 
+* AMOLED Black and White Minimal no longer force folders to be black or white; folders now use the theme’s default color options instead
+
+* Material You now only changes the accent color (taken from your wallpaper) instead of replacing the whole theme, so Orange Factory, AMOLED Black and White Minimal keep their own surfaces and folder colors
+  
 * App drawer folders, including drawer search results, now use the open folder’s panel color by default instead of a separate drawer color. Custom folder colors are blended over the popup surface the same way the open panel does it.
+  
 * The open folder popup follows the closed folder’s style. In see-through mode the panel is translucent, and custom colors are used as-is. Its title and labels follow “Dark home text”.
 
 ### Fixed
