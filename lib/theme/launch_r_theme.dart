@@ -75,10 +75,17 @@ class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
       dark ? const Color(0xB3FFFFFF) : const Color(0x991B1B1F);
   Color get searchBg =>
       dark ? const Color(0x26FFFFFF) : const Color(0x14000000);
+  bool get _neutralSurface => dynamicScheme == null && (amoled || !dark);
+
   Color get folderBgDrawer {
-    if (amoled) return const Color(0x40FFFFFF);
+    if (amoled) return accent.withValues(alpha: 0.35);
+    if (!dark && dynamicScheme == null) return accent.withValues(alpha: 0.22);
     return dark ? const Color(0x59FFFFFF) : const Color(0x1F000000);
   }
+
+  Color get folderPanelBg => _neutralSurface
+      ? Color.alphaBlend(accent.withValues(alpha: 0.16), popupBg)
+      : popupBg;
 
   Color get menuBg {
     final d = dynamicScheme;
