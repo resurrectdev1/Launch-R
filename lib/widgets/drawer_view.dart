@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
@@ -442,9 +443,11 @@ class _SearchPill extends StatelessWidget {
       );
       onChanged();
     } on VoiceUnavailable {
+      focus.requestFocus();
+      unawaited(SystemChannels.textInput.invokeMethod<void>('TextInput.show'));
       messenger?.showSnackBar(
         const SnackBar(
-          content: Text('Voice search isn\'t available on this device'),
+          content: Text('No voice recognizer found. Use your keyboard\'s mic'),
         ),
       );
     }
@@ -456,7 +459,7 @@ class _SearchPill extends StatelessWidget {
     return Container(
       height: 52,
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.only(left: 22, right: 4),
+      padding: const EdgeInsets.only(left: 22, right: 0),
       decoration: BoxDecoration(
         color: t.searchBg,
         borderRadius: BorderRadius.circular(26),
@@ -493,11 +496,6 @@ class _SearchPill extends StatelessWidget {
                 ),
               ),
             ),
-          ),
-          IconButton(
-            tooltip: 'Voice search',
-            icon: Icon(Icons.mic_rounded, color: t.drawerText),
-            onPressed: () => unawaited(_voiceSearch(context)),
           ),
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert_rounded, color: t.drawerText),
@@ -544,6 +542,13 @@ class _SearchPill extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          IconButton(
+            tooltip: 'Voice search',
+            padding: const EdgeInsets.only(left: 12, right: 8),
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 48),
+            icon: Icon(Icons.mic_rounded, color: t.drawerText),
+            onPressed: () => unawaited(_voiceSearch(context)),
           ),
         ],
       ),
