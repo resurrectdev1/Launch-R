@@ -146,9 +146,12 @@ class CellStyle {
   final Color label;
   final List<Shadow> shadows;
   final Color folderBg;
+
+  final Color? folderBase;
   const CellStyle({
     required this.label,
     required this.shadows,
     required this.folderBg,
+    this.folderBase,
   });
 }
