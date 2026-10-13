@@ -15,6 +15,7 @@ import 'package:launch_r/widgets/folder_popup.dart';
 import 'package:launch_r/widgets/home_drop_hint.dart';
 import 'package:launch_r/widgets/home_menu.dart';
 import 'package:launch_r/widgets/home_view.dart';
+import 'package:launch_r/widgets/item_actions.dart';
 
 class LauncherShell extends StatefulWidget {
   const LauncherShell({super.key});
@@ -51,6 +52,7 @@ class _LauncherShellState extends State<LauncherShell>
   }
 
   void _onHome() {
+    dismissItemMenu();
     final nav = Navigator.of(context);
     if (nav.canPop()) nav.popUntil((r) => r.isFirst);
     if (_shell.menuOpen) {
@@ -85,7 +87,9 @@ class _LauncherShellState extends State<LauncherShell>
   }
 
   void _back() {
-    if (_shell.menuOpen) {
+    if (itemMenuOpen) {
+      dismissItemMenu();
+    } else if (_shell.menuOpen) {
       _shell.closeMenu();
     } else if (_shell.folder != null) {
       _shell.closeFolder();
