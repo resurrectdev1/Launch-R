@@ -19,7 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-* Amoled & White theme forcing folders a certain color (to be done)
+* Amoled & White theme forcing folders a certain color
 
 ---
 
