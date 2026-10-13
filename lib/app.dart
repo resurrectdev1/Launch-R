@@ -29,19 +29,12 @@ class _LaunchRAppState extends State<LaunchRApp> with WidgetsBindingObserver {
   @override
   void didChangePlatformBrightness() => setState(() {});
 
-  ThemeData _theme(
-    AppearanceMode mode,
-    Color accent,
-    ColorScheme? dyn,
-    String? fontFamily,
-  ) {
-    final lt = LaunchRTheme.forMode(mode, accent, dynamicScheme: dyn);
-    var scheme = lt.dynamicScheme != null
-        ? lt.dynamicScheme!.copyWith(primary: lt.accent, onPrimary: lt.onAccent)
-        : ColorScheme.fromSeed(
-            seedColor: lt.accent,
-            brightness: lt.brightness,
-          ).copyWith(primary: lt.accent, onPrimary: lt.onAccent);
+  ThemeData _theme(AppearanceMode mode, Color accent, String? fontFamily) {
+    final lt = LaunchRTheme.forMode(mode, accent);
+    var scheme = ColorScheme.fromSeed(
+      seedColor: lt.accent,
+      brightness: lt.brightness,
+    ).copyWith(primary: lt.accent, onPrimary: lt.onAccent);
     if (lt.amoled) scheme = scheme.copyWith(surface: Colors.black);
     return ThemeData(
       useMaterial3: true,
@@ -73,14 +66,16 @@ class _LaunchRAppState extends State<LaunchRApp> with WidgetsBindingObserver {
         });
         return Consumer<LauncherSettings>(
           builder: (_, settings, _) {
-            final dyn = settings.materialYou
-                ? settings.dynamicSchemeFor(settings.appearance.brightness)
-                : null;
+            final accent = settings.materialYou
+                ? settings
+                          .dynamicSchemeFor(settings.appearance.brightness)
+                          ?.primary ??
+                      settings.accent
+                : settings.accent;
             final themed = settings.themedIcons
                 ? LaunchRTheme.forMode(
                     settings.appearance,
-                    settings.accent,
-                    dynamicScheme: dyn,
+                    accent,
                   ).themedIconStyle
                 : null;
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -92,12 +87,7 @@ class _LaunchRAppState extends State<LaunchRApp> with WidgetsBindingObserver {
               debugShowCheckedModeBanner: false,
               color: Colors.transparent,
               themeMode: ThemeMode.light,
-              theme: _theme(
-                settings.appearance,
-                settings.accent,
-                dyn,
-                settings.fontFamily,
-              ),
+              theme: _theme(settings.appearance, accent, settings.fontFamily),
               builder: (context, child) {
                 final mq = MediaQuery.of(context);
                 return MediaQuery(
