@@ -47,13 +47,17 @@ class HomeView extends StatelessWidget {
     final pad = MediaQuery.paddingOf(context);
     final navBottom = MediaQuery.viewPaddingOf(context).bottom;
     final dark = settings.darkHomeText;
+    final t = LaunchRTheme.of(context);
 
     final style = CellStyle(
       label: dark ? const Color(0xFF111111) : Colors.white,
       shadows: dark
           ? const []
           : const [Shadow(color: Color(0x99000000), blurRadius: 6)],
-      folderBg: dark ? const Color(0x33000000) : const Color(0x59FFFFFF),
+      folderBg: settings.solidHomeFolders
+          ? t.folderPanelBg
+          : (dark ? const Color(0x33000000) : const Color(0x59FFFFFF)),
+      folderBase: settings.solidHomeFolders ? t.popupBg : null,
     );
     final dotColor = dark ? const Color(0xFF111111) : Colors.white;
 
