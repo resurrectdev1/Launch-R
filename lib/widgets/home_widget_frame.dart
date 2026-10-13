@@ -84,17 +84,38 @@ class HomeWidgetFrame extends StatelessWidget {
           ),
           if (resizing)
             Positioned.fill(
-              child: _ResizeOverlay(
-                item: item,
-                index: index,
-                cellWidth: cellWidth,
-                cellHeight: cellHeight,
-                inset: _inset,
-                radius: _radius,
+              child: _FadeIn(
+                child: _ResizeOverlay(
+                  item: item,
+                  index: index,
+                  cellWidth: cellWidth,
+                  cellHeight: cellHeight,
+                  inset: _inset,
+                  radius: _radius,
+                ),
               ),
             ),
         ],
       ),
+    );
+  }
+}
+
+class _FadeIn extends StatelessWidget {
+  const _FadeIn({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      builder: (context, t, child) => Opacity(
+        opacity: t,
+        child: Transform.scale(scale: 0.97 + 0.03 * t, child: child),
+      ),
+      child: child,
     );
   }
 }
@@ -220,20 +241,41 @@ class _ResizeOverlayState extends State<_ResizeOverlay> {
 
     Widget handle(WidgetEdge e) {
       final horizontalEdge = e == WidgetEdge.left || e == WidgetEdge.right;
-      final pill = Container(
-        width: horizontalEdge ? _pillShort : _pillLong,
-        height: horizontalEdge ? _pillLong : _pillShort,
+      final mine = _edge == e;
+      final dimmed = active && !mine;
+      final long = mine ? _pillLong + 8 : _pillLong;
+      final pill = AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOutCubic,
+        width: horizontalEdge ? _pillShort : long,
+        height: horizontalEdge ? long : _pillShort,
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: th.accent, width: 1.5),
-          boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 4)],
+          color: mine ? th.accent : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: mine ? Colors.white : th.accent,
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: mine
+                  ? th.accent.withValues(alpha: 0.6)
+                  : const Color(0x66000000),
+              blurRadius: mine ? 12 : 4,
+            ),
+          ],
         ),
       );
       final target = SizedBox(
         width: horizontalEdge ? _hit : _hit * 1.4,
         height: horizontalEdge ? _hit * 1.4 : _hit,
-        child: Center(child: pill),
+        child: Center(
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 140),
+            opacity: dimmed ? 0.35 : 1,
+            child: pill,
+          ),
+        ),
       );
       return GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -253,20 +295,65 @@ class _ResizeOverlayState extends State<_ResizeOverlay> {
       );
     }
 
+    final cols = _target?.cols ?? w.cols;
+    final rows = _target?.rows ?? w.rows;
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Positioned.fromRect(
+        AnimatedPositioned.fromRect(
+          duration: active
+              ? const Duration(milliseconds: 110)
+              : Duration.zero,
+          curve: Curves.easeOutCubic,
           rect: rect,
           child: IgnorePointer(
             child: AnimatedContainer(
-              duration: active
-                  ? Duration.zero
-                  : const Duration(milliseconds: 140),
+              duration: const Duration(milliseconds: 160),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(widget.radius),
-                color: active ? th.accent.withValues(alpha: 0.18) : null,
-                border: Border.all(color: th.accent, width: 2),
+                color: active ? th.accent.withValues(alpha: 0.2) : null,
+                border: Border.all(color: th.accent, width: active ? 2.5 : 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: th.accent.withValues(alpha: active ? 0.45 : 0.25),
+                    blurRadius: active ? 22 : 14,
+                    spreadRadius: active ? 1 : 0,
+                  ),
+                ],
+              ),
+              child: Center(
+                child: AnimatedScale(
+                  duration: const Duration(milliseconds: 140),
+                  curve: Curves.easeOutBack,
+                  scale: active ? 1 : 0.8,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 140),
+                    opacity: active ? 1 : 0,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: th.accent,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0x55000000), blurRadius: 8),
+                        ],
+                      ),
+                      child: Text(
+                        '$cols × $rows',
+                        style: TextStyle(
+                          color: th.onAccent,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
