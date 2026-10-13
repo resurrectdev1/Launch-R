@@ -111,7 +111,7 @@ class _FolderPopupState extends State<FolderPopup>
           );
     final tint = folder.color;
     final panelBg = tint == null
-        ? t.popupBg
+        ? t.folderPanelBg
         : Color.alphaBlend(Color(tint), t.popupBg);
 
     final hidden = shell.leftFolder;
