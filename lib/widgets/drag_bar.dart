@@ -6,6 +6,7 @@ import 'package:launch_r/providers/shell_controller.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
+import 'package:launch_r/widgets/tag_editor_sheet.dart';
 
 class DragActionBar extends StatelessWidget {
   const DragActionBar({super.key});
@@ -50,6 +51,7 @@ class _Bar extends StatelessWidget {
     final ch = LauncherChannel.instance;
     final item = data.item;
     final fromHome = data.zone != Zone.drawer;
+    final messenger = ScaffoldMessenger.maybeOf(context);
 
     final actions = <Widget>[
       if (fromHome)
@@ -59,6 +61,25 @@ class _Bar extends StatelessWidget {
           onDrop: (d) => model.removeDragged(d),
         ),
       if (item is AppItem) ...[
+        _Action(
+          icon: Icons.sell_outlined,
+          label: 'Tags',
+          onDrop: (_) => showTagEditor(context, item.pkg),
+        ),
+        _Action(
+          icon: Icons.visibility_off_outlined,
+          label: 'Hide app',
+          onDrop: (_) {
+            final label = model.labelForPkg(item.pkg);
+            model.hideApp(item.pkg);
+            messenger?.showSnackBar(
+              SnackBar(
+                content: Text('$label hidden. Manage in Launcher settings'),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          },
+        ),
         _Action(
           icon: Icons.info_outline_rounded,
           label: 'App info',
