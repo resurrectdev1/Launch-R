@@ -11,7 +11,6 @@ import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/app_icon.dart';
-import 'package:launch_r/widgets/page_dots.dart';
 import 'package:launch_r/widgets/settings_sheet.dart';
 import 'package:launch_r/widgets/widget_picker_sheet.dart';
 
@@ -253,16 +252,6 @@ class _MenuOverlayState extends State<_MenuOverlay> {
                 },
               ),
             ),
-            if (pages > 1)
-              Padding(
-                padding: const EdgeInsets.only(top: 4, bottom: 8),
-                child: PageDots(
-                  controller: _cardsCtl!,
-                  count: pages,
-                  color: Colors.white,
-                  defaultIndex: model.defaultPage,
-                ),
-              ),
             if (locked)
               const Padding(
                 padding: EdgeInsets.only(bottom: 8),
