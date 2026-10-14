@@ -347,12 +347,7 @@ class _PageCard extends StatelessWidget {
               width: current ? 2.5 : 1,
             ),
           ),
-          child: _PagePreview(
-            items: items,
-            dock: dock,
-            cols: cols,
-            rows: rows,
-          ),
+          child: _PagePreview(items: items, dock: dock, cols: cols, rows: rows),
         ),
       ),
     );
@@ -481,7 +476,10 @@ class _WidgetMini extends StatelessWidget {
                       if (showIcon || !showLabel)
                         Icon(
                           Icons.widgets_rounded,
-                          size: math.min(18.0, math.min(c.maxWidth, c.maxHeight) * 0.6),
+                          size: math.min(
+                            18.0,
+                            math.min(c.maxWidth, c.maxHeight) * 0.6,
+                          ),
                           color: const Color(0xB3FFFFFF),
                         ),
                       if (showLabel) ...[
