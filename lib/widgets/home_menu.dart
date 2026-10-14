@@ -11,6 +11,7 @@ import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/app_icon.dart';
+import 'package:launch_r/widgets/page_dots.dart';
 import 'package:launch_r/widgets/settings_sheet.dart';
 import 'package:launch_r/widgets/widget_picker_sheet.dart';
 
@@ -204,8 +205,12 @@ class _MenuOverlayState extends State<_MenuOverlay> {
                                     _PageCard(
                                       height: cardH,
                                       items: model.home[i],
+                                      dock: model.dock,
                                       cols: model.homeCols,
                                       rows: model.homeRows,
+                                      index: i,
+                                      total: pages,
+                                      isDefault: i == model.defaultPage,
                                       current: i == _current,
                                       onTap: () => _openPage(i),
                                     ),
@@ -248,6 +253,16 @@ class _MenuOverlayState extends State<_MenuOverlay> {
                 },
               ),
             ),
+            if (pages > 1)
+              Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 8),
+                child: PageDots(
+                  controller: _cardsCtl!,
+                  count: pages,
+                  color: Colors.white,
+                  defaultIndex: model.defaultPage,
+                ),
+              ),
             if (locked)
               const Padding(
                 padding: EdgeInsets.only(bottom: 8),
@@ -301,16 +316,24 @@ class _PageCard extends StatelessWidget {
   const _PageCard({
     required this.height,
     required this.items,
+    required this.dock,
     required this.cols,
     required this.rows,
+    required this.index,
+    required this.total,
+    required this.isDefault,
     required this.current,
     required this.onTap,
   });
 
   final double height;
   final List<LItem?> items;
+  final List<LItem?> dock;
   final int cols;
   final int rows;
+  final int index;
+  final int total;
+  final bool isDefault;
   final bool current;
   final VoidCallback onTap;
 
@@ -320,7 +343,7 @@ class _PageCard extends StatelessWidget {
     return Semantics(
       button: true,
       selected: current,
-      label: 'Home page',
+      label: 'Home page ${index + 1} of $total${isDefault ? ', default' : ''}',
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
@@ -335,7 +358,12 @@ class _PageCard extends StatelessWidget {
               width: current ? 2.5 : 1,
             ),
           ),
-          child: _PagePreview(items: items, cols: cols, rows: rows),
+          child: _PagePreview(
+            items: items,
+            dock: dock,
+            cols: cols,
+            rows: rows,
+          ),
         ),
       ),
     );
@@ -345,15 +373,19 @@ class _PageCard extends StatelessWidget {
 class _PagePreview extends StatelessWidget {
   const _PagePreview({
     required this.items,
+    required this.dock,
     required this.cols,
     required this.rows,
   });
 
   final List<LItem?> items;
+  final List<LItem?> dock;
   final int cols;
   final int rows;
 
-  Widget _mini(LItem? it, double s) => switch (it) {
+  static const _dockGap = 6.0;
+
+  static Widget _mini(LItem? it, double s) => switch (it) {
     null => const SizedBox.shrink(),
     AppItem(:final pkg) => AppIconImage(pkg: pkg, size: s),
     FolderItem(:final pkgs, :final color) => FolderGlyph(
@@ -373,30 +405,156 @@ class _PagePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, c) {
-        final s = math.min(c.maxWidth / cols, c.maxHeight / rows) * 0.64;
+        final cw = c.maxWidth / cols;
+        final dockH = math.min(cw * 0.95, c.maxHeight * 0.2);
+        final gridH = math.max(0.0, c.maxHeight - dockH - _dockGap);
+        final ch = gridH / rows;
+        final s = math.min(cw, ch) * 0.64;
+
+        final cells = <Widget>[];
+        final n = math.min(items.length, cols * rows);
+        for (var i = 0; i < n; i++) {
+          final it = items[i];
+          if (it == null || it is WidgetCover) continue;
+          final col = i % cols;
+          final row = i ~/ cols;
+          if (it is WidgetItem) {
+            final spanC = math.max(1, math.min(it.cols, cols - col));
+            final spanR = math.max(1, math.min(it.rows, rows - row));
+            cells.add(
+              Positioned(
+                left: col * cw,
+                top: row * ch,
+                width: spanC * cw,
+                height: spanR * ch,
+                child: _WidgetMini(label: it.label),
+              ),
+            );
+          } else {
+            cells.add(
+              Positioned(
+                left: col * cw,
+                top: row * ch,
+                width: cw,
+                height: ch,
+                child: Center(child: _mini(it, s)),
+              ),
+            );
+          }
+        }
+
         return Column(
           children: [
-            for (var r = 0; r < rows; r++)
-              Expanded(
-                child: Row(
-                  children: [
-                    for (var col = 0; col < cols; col++)
-                      Expanded(
-                        child: Center(
-                          child: _mini(
-                            r * cols + col < items.length
-                                ? items[r * cols + col]
-                                : null,
-                            s,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+            SizedBox(
+              width: c.maxWidth,
+              height: gridH,
+              child: Stack(children: cells),
+            ),
+            const SizedBox(height: _dockGap),
+            _DockStrip(
+              items: dock,
+              cols: cols,
+              height: dockH,
+              iconSize: math.min(s, dockH * 0.8),
+            ),
           ],
         );
       },
+    );
+  }
+}
+
+class _WidgetMini extends StatelessWidget {
+  const _WidgetMini({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(2),
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final showLabel = c.maxHeight >= 30 && c.maxWidth >= 40;
+          final showIcon = c.maxHeight >= 44 && c.maxWidth >= 28;
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              color: const Color(0x33FFFFFF),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0x40FFFFFF)),
+            ),
+            child: ClipRect(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (showIcon || !showLabel)
+                        Icon(
+                          Icons.widgets_rounded,
+                          size: math.min(18.0, math.min(c.maxWidth, c.maxHeight) * 0.6),
+                          color: const Color(0xB3FFFFFF),
+                        ),
+                      if (showLabel) ...[
+                        if (showIcon) const SizedBox(height: 2),
+                        Text(
+                          label,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xCCFFFFFF),
+                            fontSize: 9,
+                            height: 1.1,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _DockStrip extends StatelessWidget {
+  const _DockStrip({
+    required this.items,
+    required this.cols,
+    required this.height,
+    required this.iconSize,
+  });
+
+  final List<LItem?> items;
+  final int cols;
+  final double height;
+  final double iconSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: const Color(0x1AFFFFFF),
+        borderRadius: BorderRadius.circular(math.min(14.0, height / 2)),
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < cols; i++)
+            Expanded(
+              child: Center(
+                child: _PagePreview._mini(
+                  i < items.length ? items[i] : null,
+                  iconSize,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
