@@ -28,7 +28,7 @@ class FolderPopup extends StatefulWidget {
 }
 
 class _FolderPopupState extends State<FolderPopup>
-with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late final AnimationController _anim = AnimationController(
     vsync: this,
     duration: Motion.emphasized,
@@ -92,7 +92,7 @@ with SingleTickerProviderStateMixin {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) shell.finishCloseFolder();
       });
-        return const SizedBox.shrink();
+      return const SizedBox.shrink();
     }
 
     final t = LaunchRTheme.of(context);
@@ -100,29 +100,29 @@ with SingleTickerProviderStateMixin {
     final panelW = screen.width - 36;
     final from = open.from;
     final iconSize = from == null
-    ? panelW * 0.4
-    : math.min(from.width * 0.6, 60.0);
+        ? panelW * 0.4
+        : math.min(from.width * 0.6, 60.0);
     final s0 = (iconSize / panelW).clamp(0.08, 0.9);
     final origin = from == null
-    ? screen.center(Offset.zero)
-    : Offset(
-      from.center.dx,
-      from.center.dy + (from.height > iconSize * 1.35 ? -9 : 0),
-    );
+        ? screen.center(Offset.zero)
+        : Offset(
+            from.center.dx,
+            from.center.dy + (from.height > iconSize * 1.35 ? -9 : 0),
+          );
     final tint = folder.color;
     final settings = context.watch<LauncherSettings>();
     final seeThrough = open.zone == Zone.drawer
-    ? settings.homeLookDrawerFolders && !settings.solidHomeFolders
-    : !settings.solidHomeFolders;
+        ? settings.homeLookDrawerFolders && !settings.solidHomeFolders
+        : !settings.solidHomeFolders;
     final panelBg = seeThrough
-    ? (tint == null
-    ? (settings.darkHomeText
-    ? const Color(0x33000000)
-    : const Color(0x59FFFFFF))
-    : Color(tint))
-    : (tint == null
-    ? t.folderPanelBg
-    : Color.alphaBlend(Color(tint), t.popupBg));
+        ? (tint == null
+              ? (settings.darkHomeText
+                    ? const Color(0x33000000)
+                    : const Color(0x59FFFFFF))
+              : Color(tint))
+        : (tint == null
+              ? t.folderPanelBg
+              : Color.alphaBlend(Color(tint), t.popupBg));
 
     final hidden = shell.leftFolder;
     return Positioned.fill(
@@ -167,7 +167,7 @@ with SingleTickerProviderStateMixin {
                     final v = _t.value;
                     final scale = s0 + (1 - s0) * v;
                     final shift =
-                    (origin - screen.center(Offset.zero)) * (1 - v);
+                        (origin - screen.center(Offset.zero)) * (1 - v);
                     return Opacity(
                       opacity: (v / 0.3).clamp(0.0, 1.0),
                       child: Transform.translate(
@@ -299,7 +299,7 @@ class _FolderPageState extends State<_FolderPage> {
   }
 
   String get _name =>
-  _title.text.trim().isEmpty ? 'Folder' : _title.text.trim();
+      _title.text.trim().isEmpty ? 'Folder' : _title.text.trim();
 
   void _commit() => _model.renameFolder(widget.zone, widget.folder.fid, _name);
 
@@ -339,13 +339,13 @@ class _FolderPageState extends State<_FolderPage> {
     final tint = widget.folder.color;
     final darkText = context.read<LauncherSettings>().darkHomeText;
     final fg = tint != null
-    ? LaunchRTheme.onColor(widget.panelColor)
-    : (widget.seeThrough
-    ? (darkText ? const Color(0xFF111111) : Colors.white)
-    : t.drawerText);
+        ? LaunchRTheme.onColor(widget.panelColor)
+        : (widget.seeThrough
+              ? (darkText ? const Color(0xFF111111) : Colors.white)
+              : t.drawerText);
     final fgMuted = tint == null && !widget.seeThrough
-    ? t.drawerTextMuted
-    : fg.withValues(alpha: 0.7);
+        ? t.drawerTextMuted
+        : fg.withValues(alpha: 0.7);
     final style = CellStyle(
       label: fg,
       shadows: const [],
@@ -439,23 +439,23 @@ class _FolderPageState extends State<_FolderPage> {
                                   SizedBox(
                                     width: cellW,
                                     child: r * _cols + c < slice.length
-                                    ? _PopupCell(
-                                      key: ValueKey(slice[r * _cols + c]),
-                                      pkg: slice[r * _cols + c],
-                                      index: r * _cols + c,
-                                      zone: widget.zone,
-                                      fid: widget.folder.fid,
-                                      width: cellW,
-                                      style: style,
-                                      reveal: widget.reveal,
-                                      dot: c < _cols - 1 && r < rows - 1,
-                                    )
-                                    : _EndSlot(
-                                      zone: widget.zone,
-                                      fid: widget.folder.fid,
-                                      fg: style.label,
-                                      dot: c < _cols - 1 && r < rows - 1,
-                                    ),
+                                        ? _PopupCell(
+                                            key: ValueKey(slice[r * _cols + c]),
+                                            pkg: slice[r * _cols + c],
+                                            index: r * _cols + c,
+                                            zone: widget.zone,
+                                            fid: widget.folder.fid,
+                                            width: cellW,
+                                            style: style,
+                                            reveal: widget.reveal,
+                                            dot: c < _cols - 1 && r < rows - 1,
+                                          )
+                                        : _EndSlot(
+                                            zone: widget.zone,
+                                            fid: widget.folder.fid,
+                                            fg: style.label,
+                                            dot: c < _cols - 1 && r < rows - 1,
+                                          ),
                                   ),
                               ],
                             ),
@@ -522,8 +522,8 @@ class _SlotGuide extends StatelessWidget {
                     curve: Motion.standard,
                     decoration: BoxDecoration(
                       color: active
-                      ? fg.withValues(alpha: 0.16)
-                      : Colors.transparent,
+                          ? fg.withValues(alpha: 0.16)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
@@ -644,7 +644,7 @@ class _PopupCellState extends State<_PopupCell> {
 
     final cell = DragTarget<DragData>(
       onWillAcceptWithDetails: (d) =>
-      d.data.fromFolder == widget.fid && d.data.item.id != item.id,
+          d.data.fromFolder == widget.fid && d.data.item.id != item.id,
       onMove: (d) => _setHover(_side(d.offset)),
       onLeave: (_) => _setHover(Hover.none),
       onAcceptWithDetails: (d) {
@@ -663,10 +663,10 @@ class _PopupCellState extends State<_PopupCell> {
       },
       builder: (context, candidate, rejected) {
         final nudge = _hover == Hover.before
-        ? 0.07
-        : _hover == Hover.after
-        ? -0.07
-        : 0.0;
+            ? 0.07
+            : _hover == Hover.after
+            ? -0.07
+            : 0.0;
         final resting = SizedBox.expand(
           child: Stack(
             clipBehavior: Clip.none,
