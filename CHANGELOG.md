@@ -14,6 +14,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 * See-through drawer folders (Settings). Gives app drawer folders the same translucent look as home screen folders. It’s off by default, and it’s greyed out while “Match folder popup color” is on, because that setting takes priority.
 * Match folder popup color (Settings, under “Dark home text”). When on, folders on the home screen, dock and app drawer use the same color as the open folder popup. It’s off by default.
+* Page dots in the home menu. Dots under the page cards show how many home pages you have and which one you're on, and your default page shows as a small house icon.
+* The dock now shows on each page card in the home menu, so the preview looks like your real home screen.
 
 ### Changed
 
@@ -22,6 +24,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * App drawer folders, including drawer search results, now use the open folder’s panel color by default instead of a separate drawer color. Custom folder colors are blended over the popup surface the same way the open panel does it.
 * The open folder popup follows the closed folder’s style. In see-through mode the panel is translucent, and custom colors are used as-is. Its title and labels follow “Dark home text”.
 * Refreshed app icon and uploaded app_icon_background
+* Widgets on home menu page cards are now drawn at their real size, with their name, instead of a single small icon. Pages with a big widget no longer look empty.
+* Home menu page cards are now announced with their position and default status (for example, "Home page 2 of 5, default") for screen readers.
 
 ### Fixed
 
