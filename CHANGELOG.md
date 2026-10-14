@@ -10,6 +10,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+---
+
+## [0.3.6] - 2026-10-14
+
 ### Added
 
 * See-through drawer folders (Settings). Gives app drawer folders the same translucent look as home screen folders. It’s off by default, and it’s greyed out while “Match folder popup color” is on, because that setting takes priority.
@@ -32,6 +36,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 * Folders looked like a different color when opened, in every theme. The closed icon and the open panel were colored by two separate calculations, and they now share one.
+* Blur for folder popup giving out too much glare from apps.
 
 ---
 
