@@ -106,6 +106,9 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
 
   String labelForPkg(String pkg) => _apps[pkg]?.label ?? pkg;
 
+  LauncherApp? visibleApp(String pkg) =>
+      _hidden.contains(pkg) ? null : _apps[pkg];
+
   static const hiddenSearchPrefix = '/';
 
   List<LauncherApp> search(String query, {bool fuzzy = true}) {
