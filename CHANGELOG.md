@@ -19,6 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+* See-through drawer folders is now on by default. If you've already changed this setting, your choice is kept.
 * Tightened the spacing of the mic and three-dot menu buttons in the search bar so they sit closer together.
 
 ---
