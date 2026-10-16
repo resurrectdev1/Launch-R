@@ -12,6 +12,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+* “Swipe up again to go home” setting (Settings, under “Search”). When the app drawer is fully open, swiping up on it closes the drawer and returns you to the home screen. Off by default.
+* “Swipe up again to search” setting (Settings, under “Search”). When the app drawer is fully open, swiping up on it opens the keyboard so you can search. Off by default. Only one of the two swipe-up options can be on at a time.
 * Voice search button in the app drawer search bar. Tap the mic to speak a search, and the results update right away. If your device has no speech recognizer, you'll see a short message instead.
 * Clear button in the app drawer search bar. Once you've typed something, the mic turns into an ✕ that empties the search, brings back the full app grid and keeps the keyboard open.
 * Settings to turn the search bar's mic and ✕ buttons on or off (Settings, under “Search”). Both are on by default.
