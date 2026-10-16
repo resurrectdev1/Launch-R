@@ -23,6 +23,10 @@ class ShellController extends ChangeNotifier {
 
   final AnimationController drawer;
 
+  final ValueNotifier<int> searchRequest = ValueNotifier<int>(0);
+
+  void requestSearch() => searchRequest.value++;
+
   OpenFolder? folder;
   bool renameRequested = false;
   DragData? drag;
@@ -183,6 +187,7 @@ class ShellController extends ChangeNotifier {
   void dispose() {
     _dwell?.cancel();
     widgetDragPos.dispose();
+    searchRequest.dispose();
     drawer.dispose();
     super.dispose();
   }
