@@ -22,6 +22,7 @@ class LauncherSettings extends ChangeNotifier {
   bool _fuzzySearch = true;
   bool _showVoiceButton = true;
   bool _showClearButton = true;
+  bool _drawerSuggestions = true;
   double _textScale = 1.0;
   String? _iconPack;
   String? _iconPackLabel;
@@ -57,6 +58,7 @@ class LauncherSettings extends ChangeNotifier {
   bool get fuzzySearch => _fuzzySearch;
   bool get showVoiceButton => _showVoiceButton;
   bool get showClearButton => _showClearButton;
+  bool get drawerSuggestions => _drawerSuggestions;
   double get textScale => _textScale;
   String? get iconPack => _iconPack;
   String? get iconPackLabel => _iconPackLabel;
@@ -116,6 +118,7 @@ class LauncherSettings extends ChangeNotifier {
     _fuzzySearch = p.getBool('fuzzy_search') ?? true;
     _showVoiceButton = p.getBool('show_voice_button') ?? true;
     _showClearButton = p.getBool('show_clear_button') ?? true;
+    _drawerSuggestions = p.getBool('drawer_suggestions') ?? true;
     _iconShape = IconShape.fromName(p.getString('icon_shape'));
     _themedIcons = p.getBool('themed_icons') ?? false;
     _textScale = (p.getDouble('text_scale') ?? 1.0)
@@ -331,6 +334,13 @@ class LauncherSettings extends ChangeNotifier {
     _showClearButton = v;
     notifyListeners();
     await _prefs?.setBool('show_clear_button', v);
+  }
+
+  Future<void> setDrawerSuggestions(bool v) async {
+    if (v == _drawerSuggestions) return;
+    _drawerSuggestions = v;
+    notifyListeners();
+    await _prefs?.setBool('drawer_suggestions', v);
   }
 
   Future<void> setIconShape(IconShape v) async {
