@@ -6,6 +6,7 @@ import 'package:launch_r/app.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/services/icon_cache.dart';
+import 'package:launch_r/services/launch_history.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 
 Future<void> main() async {
@@ -18,6 +19,7 @@ Future<void> main() async {
 
   final settings = LauncherSettings();
   final model = LauncherModel();
+  final history = LaunchHistory();
 
   try {
     await settings.init();
@@ -26,11 +28,18 @@ Future<void> main() async {
     debugPrint('Launch-R: settings init failed: $e\n$s');
   }
 
+  try {
+    await history.init();
+  } catch (e, s) {
+    debugPrint('Launch-R: launch history init failed: $e\n$s');
+  }
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: settings),
         ChangeNotifierProvider.value(value: model),
+        ChangeNotifierProvider.value(value: history),
       ],
       child: const LaunchRApp(),
     ),
