@@ -25,6 +25,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * See-through drawer folders is now on by default. If you've already changed this setting, your choice is kept.
 * Tightened the spacing of the mic and three-dot menu buttons in the search bar so they sit closer together.
 
+### Fixed
+
+* Voice search mic no longer stops responding after a speech app fails to return a result. A stale request is now cleared, so the next tap starts fresh instead of doing nothing until Launch-R restarts.
+* Voice search now checks for a speech recognizer before opening, and shows the "isn't available" message right away when none is found. This also works on Android 11 and newer, where Launch-R previously couldn't see speech apps such as FUTO Voice Input.
+
 ---
 
 ## [0.3.6] - 2026-10-14
