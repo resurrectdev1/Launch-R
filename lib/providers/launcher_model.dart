@@ -106,12 +106,22 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
 
   String labelForPkg(String pkg) => _apps[pkg]?.label ?? pkg;
 
+  static const hiddenSearchPrefix = '.';
+
   List<LauncherApp> search(String query, {bool fuzzy = true}) {
-    final q = query.trim();
-    if (q.isEmpty) return const [];
+    var q = query.trim();
+    final includeHidden = q.startsWith(hiddenSearchPrefix);
+    if (includeHidden) q = q.substring(hiddenSearchPrefix.length).trim();
+    if (q.isEmpty) {
+      if (!includeHidden) return const [];
+      return [
+        for (final a in _apps.values)
+          if (_hidden.contains(a.package)) a,
+      ]..sort(_byLabel);
+    }
     final scored = <(int, LauncherApp)>[];
     for (final a in _apps.values) {
-      if (_hidden.contains(a.package)) continue;
+      if (!includeHidden && _hidden.contains(a.package)) continue;
       final s = scoreApp(
         q,
         a.label,
