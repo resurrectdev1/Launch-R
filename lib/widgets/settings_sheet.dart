@@ -533,6 +533,32 @@ class _SettingsSheet extends StatelessWidget {
               SwitchListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
                 title: Text(
+                  'Swipe up again to go home',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  'Swiping up on the open app drawer closes it and returns to the home screen',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                value: s.swipeUpHome,
+                onChanged: s.setSwipeUpHome,
+              ),
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
+                  'Swipe up again to search',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  'Swiping up on the open app drawer opens the keyboard so you can search',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                value: s.swipeUpSearch,
+                onChanged: s.setSwipeUpSearch,
+              ),
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
                   'Voice search button',
                   style: TextStyle(color: t.drawerText),
                 ),
