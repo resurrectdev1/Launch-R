@@ -14,7 +14,7 @@ class LauncherSettings extends ChangeNotifier {
   Color? _customAccent;
   bool _darkHomeText = false;
   bool _solidHomeFolders = false;
-  bool _homeLookDrawerFolders = false;
+  bool _homeLookDrawerFolders = true;
   int _drawerCols = 4;
   bool _lockLayout = false;
   bool _showBadges = false;
@@ -108,7 +108,7 @@ class LauncherSettings extends ChangeNotifier {
     if (accentArgb != null) _customAccent = Color(accentArgb | 0xFF000000);
     _darkHomeText = p.getBool('dark_home_text') ?? false;
     _solidHomeFolders = p.getBool('solid_home_folders') ?? false;
-    _homeLookDrawerFolders = p.getBool('home_look_drawer_folders') ?? false;
+    _homeLookDrawerFolders = p.getBool('home_look_drawer_folders') ?? true;
     _drawerCols = p.getInt('drawer_cols') ?? 4;
     _lockLayout = p.getBool('lock_layout') ?? false;
     _showBadges = p.getBool('show_badges') ?? false;
