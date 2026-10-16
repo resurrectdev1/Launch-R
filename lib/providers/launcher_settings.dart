@@ -19,6 +19,8 @@ class LauncherSettings extends ChangeNotifier {
   bool _lockLayout = false;
   bool _showBadges = false;
   bool _drawerAutoSearch = false;
+  bool _swipeUpHome = false;
+  bool _swipeUpSearch = false;
   bool _fuzzySearch = true;
   bool _showVoiceButton = true;
   bool _showClearButton = true;
@@ -55,6 +57,8 @@ class LauncherSettings extends ChangeNotifier {
   bool get lockLayout => _lockLayout;
   bool get showBadges => _showBadges;
   bool get drawerAutoSearch => _drawerAutoSearch;
+  bool get swipeUpHome => _swipeUpHome;
+  bool get swipeUpSearch => _swipeUpSearch;
   bool get fuzzySearch => _fuzzySearch;
   bool get showVoiceButton => _showVoiceButton;
   bool get showClearButton => _showClearButton;
@@ -115,6 +119,12 @@ class LauncherSettings extends ChangeNotifier {
     _lockLayout = p.getBool('lock_layout') ?? false;
     _showBadges = p.getBool('show_badges') ?? false;
     _drawerAutoSearch = p.getBool('drawer_auto_search') ?? false;
+    _swipeUpHome = p.getBool('swipe_up_home') ?? false;
+    _swipeUpSearch = p.getBool('swipe_up_search') ?? false;
+    if (_swipeUpHome && _swipeUpSearch) {
+      _swipeUpSearch = false;
+      await p.setBool('swipe_up_search', false);
+    }
     _fuzzySearch = p.getBool('fuzzy_search') ?? true;
     _showVoiceButton = p.getBool('show_voice_button') ?? true;
     _showClearButton = p.getBool('show_clear_button') ?? true;
@@ -313,6 +323,26 @@ class LauncherSettings extends ChangeNotifier {
     _drawerAutoSearch = v;
     notifyListeners();
     await _prefs?.setBool('drawer_auto_search', v);
+  }
+
+  Future<void> setSwipeUpHome(bool v) async {
+    if (v == _swipeUpHome) return;
+    _swipeUpHome = v;
+    final turnedOffOther = v && _swipeUpSearch;
+    if (turnedOffOther) _swipeUpSearch = false;
+    notifyListeners();
+    await _prefs?.setBool('swipe_up_home', v);
+    if (turnedOffOther) await _prefs?.setBool('swipe_up_search', false);
+  }
+
+  Future<void> setSwipeUpSearch(bool v) async {
+    if (v == _swipeUpSearch) return;
+    _swipeUpSearch = v;
+    final turnedOffOther = v && _swipeUpHome;
+    if (turnedOffOther) _swipeUpHome = false;
+    notifyListeners();
+    await _prefs?.setBool('swipe_up_search', v);
+    if (turnedOffOther) await _prefs?.setBool('swipe_up_home', false);
   }
 
   Future<void> setFuzzySearch(bool v) async {
