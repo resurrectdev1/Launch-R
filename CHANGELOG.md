@@ -13,7 +13,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 * Voice search button in the app drawer search bar. Tap the mic to speak a search, and the results update right away. If your device has no speech recognizer, you'll see a short message instead.
-*Clear button in the app drawer search bar. Once you've typed something, the mic turns into an ✕ that empties the search, brings back the full app grid and keeps the keyboard open.
+* Clear button in the app drawer search bar. Once you've typed something, the mic turns into an ✕ that empties the search, brings back the full app grid and keeps the keyboard open.
+* Search hidden apps by starting your search with a "/" For example, "/bank" searches all apps including hidden ones, and a lone "/" lists every hidden app. Hidden apps still stay out of normal search results.
 
 ### Changed
 
