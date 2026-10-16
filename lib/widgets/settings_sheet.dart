@@ -515,6 +515,32 @@ class _SettingsSheet extends StatelessWidget {
                 value: s.drawerAutoSearch,
                 onChanged: s.setDrawerAutoSearch,
               ),
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
+                  'Voice search button',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  'Shows a mic in the search bar',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                value: s.showVoiceButton,
+                onChanged: s.setShowVoiceButton,
+              ),
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
+                  'Clear button',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  'Shows an ✕ in the search bar once you type',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                value: s.showClearButton,
+                onChanged: s.setShowClearButton,
+              ),
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
                 leading: Icon(Icons.sell_outlined, color: t.drawerText),
