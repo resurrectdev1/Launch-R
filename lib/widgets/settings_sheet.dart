@@ -505,6 +505,21 @@ class _SettingsSheet extends StatelessWidget {
               SwitchListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
                 title: Text(
+                  'Suggestions & recent searches',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  s.drawerSuggestions
+                      ? 'Shows your usual apps and past searches when you tap the search bar'
+                      : 'Search bar stays empty until you type',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                value: s.drawerSuggestions,
+                onChanged: s.setDrawerSuggestions,
+              ),
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
                   'Search on open',
                   style: TextStyle(color: t.drawerText),
                 ),
