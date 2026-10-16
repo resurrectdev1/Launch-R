@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
+import 'package:launch_r/providers/shell_controller.dart';
 import 'package:launch_r/services/launch_history.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
@@ -42,6 +44,19 @@ class _DrawerViewState extends State<DrawerView> {
     super.initState();
     widget.drawer.addStatusListener(_onDrawerStatus);
     _focus.addListener(_onFocusChanged);
+    _shell = context.read<ShellController>();
+    _shell.searchRequest.addListener(_onSearchRequest);
+  }
+
+  late final ShellController _shell;
+
+  void _onSearchRequest() {
+    if (!mounted) return;
+    if (_focus.hasFocus) {
+      unawaited(SystemChannels.textInput.invokeMethod<void>('TextInput.show'));
+    } else {
+      _focus.requestFocus();
+    }
   }
 
   void _onFocusChanged() {
@@ -86,6 +101,7 @@ class _DrawerViewState extends State<DrawerView> {
   @override
   void dispose() {
     widget.drawer.removeStatusListener(_onDrawerStatus);
+    _shell.searchRequest.removeListener(_onSearchRequest);
     _focus.removeListener(_onFocusChanged);
     _hideTimer?.cancel();
     _pages.dispose();
