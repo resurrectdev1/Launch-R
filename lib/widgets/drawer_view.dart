@@ -467,6 +467,7 @@ class _SearchPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = LaunchRTheme.of(context);
+    final settings = context.watch<LauncherSettings>();
     return Container(
       height: 52,
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -512,6 +513,11 @@ class _SearchPill extends StatelessWidget {
             valueListenable: controller,
             builder: (context, value, _) {
               final typed = value.text.isNotEmpty;
+              if (typed
+                  ? !settings.showClearButton
+                  : !settings.showVoiceButton) {
+                return const SizedBox.shrink();
+              }
               return IconButton(
                 tooltip: typed ? 'Clear' : 'Voice search',
                 style: IconButton.styleFrom(
