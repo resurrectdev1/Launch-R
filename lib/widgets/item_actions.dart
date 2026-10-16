@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/shell_controller.dart';
+import 'package:launch_r/services/launch_history.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/widgets/folder_color_picker.dart';
@@ -17,6 +18,7 @@ void launchFrom(BuildContext context, String pkg) {
     from = box.localToGlobal(Offset.zero) & box.size;
   }
   context.read<ShellController>().closeFolder();
+  context.read<LaunchHistory>().recordLaunch(pkg);
   unawaited(
     LauncherChannel.instance.launchApp(
       pkg,
