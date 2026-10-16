@@ -137,13 +137,13 @@ class _DrawerViewState extends State<DrawerView> {
             const SizedBox(height: 14),
             Expanded(
               child: searching
-              ? _results(t)
-              : AnimatedOpacity(
-                opacity: _reloading ? 0.35 : 1,
-                duration: Motion.base,
-                curve: Motion.standard,
-                child: _grid(t),
-              ),
+                  ? _results(t)
+                  : AnimatedOpacity(
+                      opacity: _reloading ? 0.35 : 1,
+                      duration: Motion.base,
+                      curve: Motion.standard,
+                      child: _grid(t),
+                    ),
             ),
             SizedBox(
               height: searching ? math.max(insets, navBottom) : navBottom,
@@ -171,15 +171,15 @@ class _DrawerViewState extends State<DrawerView> {
     final settings = context.watch<LauncherSettings>();
     final items = model.drawerSlots;
     final homeLook =
-    settings.homeLookDrawerFolders && !settings.solidHomeFolders;
+        settings.homeLookDrawerFolders && !settings.solidHomeFolders;
     final style = CellStyle(
       label: t.drawerText,
       shadows: const [],
       folderBg: homeLook
-      ? (settings.darkHomeText
-      ? const Color(0x33000000)
-      : const Color(0x59FFFFFF))
-      : t.folderPanelBg,
+          ? (settings.darkHomeText
+                ? const Color(0x33000000)
+                : const Color(0x59FFFFFF))
+          : t.folderPanelBg,
       folderBase: homeLook ? null : t.popupBg,
     );
 
@@ -204,15 +204,15 @@ class _DrawerViewState extends State<DrawerView> {
             item: item,
             label: item == null ? '' : model.labelOf(item),
             badge: item == null || !settings.showBadges
-            ? 0
-            : model.badgeOf(item),
+                ? 0
+                : model.badgeOf(item),
             iconSize: iconSize,
             width: cw,
             style: style,
             locked: settings.lockLayout,
             dot:
-            idx % perPage % cols < cols - 1 &&
-            idx % perPage ~/ cols < rows - 1,
+                idx % perPage % cols < cols - 1 &&
+                idx % perPage ~/ cols < rows - 1,
             onDrop: (d, h) => _drop(d, h, item, idx),
           );
         }
@@ -276,15 +276,15 @@ class _DrawerViewState extends State<DrawerView> {
     final settings = context.watch<LauncherSettings>();
     final results = model.search(_search.text, fuzzy: settings.fuzzySearch);
     final homeLook =
-    settings.homeLookDrawerFolders && !settings.solidHomeFolders;
+        settings.homeLookDrawerFolders && !settings.solidHomeFolders;
     final style = CellStyle(
       label: t.drawerText,
       shadows: const [],
       folderBg: homeLook
-      ? (settings.darkHomeText
-      ? const Color(0x33000000)
-      : const Color(0x59FFFFFF))
-      : t.folderPanelBg,
+          ? (settings.darkHomeText
+                ? const Color(0x33000000)
+                : const Color(0x59FFFFFF))
+          : t.folderPanelBg,
       folderBase: homeLook ? null : t.popupBg,
     );
     if (results.isEmpty) {
@@ -407,7 +407,7 @@ class _ReloadBanner extends StatelessWidget {
                 AnimatedSwitcher(
                   duration: Motion.base,
                   transitionBuilder: (child, anim) =>
-                  ScaleTransition(scale: anim, child: child),
+                      ScaleTransition(scale: anim, child: child),
                   child: icon,
                 ),
                 const SizedBox(width: 10),
@@ -457,7 +457,9 @@ class _SearchPill extends StatelessWidget {
       onChanged();
     } on VoiceUnavailable {
       messenger?.showSnackBar(
-        const SnackBar(content: Text('Voice search isn\'t available on this device')),
+        const SnackBar(
+          content: Text('Voice search isn\'t available on this device'),
+        ),
       );
     }
   }
@@ -517,21 +519,18 @@ class _SearchPill extends StatelessWidget {
                 ),
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: 30,
-                  minHeight: 40,
-                ),
+                constraints: const BoxConstraints(minWidth: 30, minHeight: 40),
                 icon: Icon(
                   typed ? Icons.close_rounded : Icons.mic_rounded,
                   color: t.drawerText,
                 ),
                 onPressed: typed
-                ? () {
-                  controller.clear();
-                  onChanged();
-                  focus.requestFocus();
-                }
-                : () => unawaited(_voice(context)),
+                    ? () {
+                        controller.clear();
+                        onChanged();
+                        focus.requestFocus();
+                      }
+                    : () => unawaited(_voice(context)),
               );
             },
           ),
@@ -577,13 +576,13 @@ class _SearchPill extends StatelessWidget {
                     style: TextStyle(color: t.drawerText),
                   ),
                 ),
-                PopupMenuItem(
-                  value: 'reload',
-                  child: Text(
-                    'Reload apps',
-                    style: TextStyle(color: t.drawerText),
-                  ),
+              PopupMenuItem(
+                value: 'reload',
+                child: Text(
+                  'Reload apps',
+                  style: TextStyle(color: t.drawerText),
                 ),
+              ),
             ],
           ),
         ],
