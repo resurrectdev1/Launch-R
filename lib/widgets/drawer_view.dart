@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
+import 'package:launch_r/services/launch_history.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
@@ -40,6 +41,11 @@ class _DrawerViewState extends State<DrawerView> {
   void initState() {
     super.initState();
     widget.drawer.addStatusListener(_onDrawerStatus);
+    _focus.addListener(_onFocusChanged);
+  }
+
+  void _onFocusChanged() {
+    if (mounted) setState(() {});
   }
 
   void _onDrawerStatus(AnimationStatus status) {
@@ -80,6 +86,7 @@ class _DrawerViewState extends State<DrawerView> {
   @override
   void dispose() {
     widget.drawer.removeStatusListener(_onDrawerStatus);
+    _focus.removeListener(_onFocusChanged);
     _hideTimer?.cancel();
     _pages.dispose();
     _search.dispose();
@@ -121,6 +128,24 @@ class _DrawerViewState extends State<DrawerView> {
     final navBottom = MediaQuery.viewPaddingOf(context).bottom;
     final insets = MediaQuery.viewInsetsOf(context).bottom;
     final searching = _search.text.trim().isNotEmpty;
+    final settings = context.watch<LauncherSettings>();
+    final history = context.watch<LaunchHistory>();
+    final wantPanel =
+        !searching &&
+        _focus.hasFocus &&
+        insets > 0 &&
+        settings.drawerSuggestions;
+    final suggested = wantPanel
+        ? _suggested(
+            context.read<LauncherModel>(),
+            history,
+            settings.drawerCols,
+          )
+        : const <LauncherApp>[];
+    final recents = wantPanel
+        ? history.recentSearches.take(5).toList()
+        : const <String>[];
+    final showPanel = suggested.isNotEmpty || recents.isNotEmpty;
 
     return Stack(
       fit: StackFit.expand,
@@ -138,6 +163,8 @@ class _DrawerViewState extends State<DrawerView> {
             Expanded(
               child: searching
                   ? _results(t)
+                  : showPanel
+                  ? _panel(t, suggested, recents)
                   : AnimatedOpacity(
                       opacity: _reloading ? 0.35 : 1,
                       duration: Motion.base,
@@ -146,7 +173,9 @@ class _DrawerViewState extends State<DrawerView> {
                     ),
             ),
             SizedBox(
-              height: searching ? math.max(insets, navBottom) : navBottom,
+              height: (searching || showPanel)
+                  ? math.max(insets, navBottom)
+                  : navBottom,
             ),
           ],
         ),
@@ -271,6 +300,230 @@ class _DrawerViewState extends State<DrawerView> {
     );
   }
 
+  List<LauncherApp> _suggested(
+    LauncherModel model,
+    LaunchHistory history,
+    int limit,
+  ) {
+    final out = <LauncherApp>[];
+    for (final pkg in history.topPackages(limit * 3)) {
+      final app = model.visibleApp(pkg);
+      if (app != null) out.add(app);
+      if (out.length == limit) break;
+    }
+    return out;
+  }
+
+  void _useSearch(String q) {
+    _search.value = TextEditingValue(
+      text: q,
+      selection: TextSelection.collapsed(offset: q.length),
+    );
+    setState(() {});
+    _focus.requestFocus();
+  }
+
+  Widget _sectionHeader(LaunchRTheme t, String text, {Widget? trailing}) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 6, 16, 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: t.drawerTextMuted,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ?trailing,
+        ],
+      ),
+    );
+  }
+
+  Widget _searchChip(
+    LaunchRTheme t,
+    LaunchHistory history,
+    String q,
+    double maxWidth,
+  ) {
+    return Material(
+      color: t.searchBg,
+      shape: const StadiumBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _useSearch(q),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 6, 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    q,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: t.drawerText,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                InkResponse(
+                  onTap: () => history.removeSearch(q),
+                  radius: 16,
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 16,
+                      color: t.drawerTextMuted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _panel(
+    LaunchRTheme t,
+    List<LauncherApp> suggested,
+    List<String> recents,
+  ) {
+    final model = context.watch<LauncherModel>();
+    final settings = context.watch<LauncherSettings>();
+    final history = context.read<LaunchHistory>();
+    final homeLook =
+        settings.homeLookDrawerFolders && !settings.solidHomeFolders;
+    final style = CellStyle(
+      label: t.drawerText,
+      shadows: const [],
+      folderBg: homeLook
+          ? (settings.darkHomeText
+                ? const Color(0x33000000)
+                : const Color(0x59FFFFFF))
+          : t.folderPanelBg,
+      folderBase: homeLook ? null : t.popupBg,
+    );
+    final cols = settings.drawerCols;
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Motion.base,
+      curve: Motion.standard,
+      builder: (context, v, child) => Opacity(opacity: v, child: child),
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final cw = (c.maxWidth - 16) / cols;
+          final iconSize = math.min(cw * 0.62, 60.0);
+          return SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (suggested.isNotEmpty) ...[
+                  _sectionHeader(t, 'Suggested'),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      children: [
+                        for (var i = 0; i < cols; i++)
+                          SizedBox(
+                            width: cw,
+                            height: _kRowPitch,
+                            child: i < suggested.length
+                                ? Builder(
+                                    builder: (cellContext) {
+                                      final app = suggested[i];
+                                      final item = AppItem(app.package);
+                                      return GestureDetector(
+                                        behavior: HitTestBehavior.opaque,
+                                        onTap: () => launchFrom(
+                                          cellContext,
+                                          app.package,
+                                        ),
+                                        onLongPressStart: (d) => showItemMenu(
+                                          cellContext,
+                                          d.globalPosition,
+                                          item,
+                                          Zone.drawer,
+                                        ),
+                                        child: Center(
+                                          child: ItemVisual(
+                                            item: item,
+                                            label: app.label,
+                                            badge: settings.showBadges
+                                                ? model.badgeOf(item)
+                                                : 0,
+                                            iconSize: iconSize,
+                                            width: cw,
+                                            style: style,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : null,
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (recents.isNotEmpty) ...[
+                  _sectionHeader(
+                    t,
+                    'Recent searches',
+                    trailing: TextButton(
+                      onPressed: history.clearSearches,
+                      style: TextButton.styleFrom(
+                        minimumSize: Size.zero,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        'Clear',
+                        style: TextStyle(
+                          color: t.accent,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final q in recents)
+                          _searchChip(t, history, q, c.maxWidth - 40),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _results(LaunchRTheme t) {
     final model = context.watch<LauncherModel>();
     final settings = context.watch<LauncherSettings>();
@@ -313,7 +566,10 @@ class _DrawerViewState extends State<DrawerView> {
             return Builder(
               builder: (cellContext) => GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: () => launchFrom(cellContext, app.package),
+                onTap: () {
+                  cellContext.read<LaunchHistory>().recordSearch(_search.text);
+                  launchFrom(cellContext, app.package);
+                },
                 onLongPressStart: (d) => showItemMenu(
                   cellContext,
                   d.globalPosition,
@@ -488,7 +744,10 @@ class _SearchPill extends StatelessWidget {
                   q,
                   fuzzy: context.read<LauncherSettings>().fuzzySearch,
                 );
-                if (r.isNotEmpty) launchFrom(context, r.first.package);
+                if (r.isNotEmpty) {
+                  context.read<LaunchHistory>().recordSearch(q);
+                  launchFrom(context, r.first.package);
+                }
               },
               textInputAction: TextInputAction.search,
               cursorColor: t.accent,
