@@ -498,9 +498,9 @@ class MainActivity : FlutterActivity() {
 
     @Suppress("DEPRECATION")
     private fun startVoiceSearch(result: MethodChannel.Result) {
-        if (pendingVoice != null) {
-            result.success(null)
-            return
+        pendingVoice?.let {
+            pendingVoice = null
+            try { it.success(null) } catch (_: Exception) {}
         }
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(
@@ -509,6 +509,11 @@ class MainActivity : FlutterActivity() {
             )
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
             putExtra(RecognizerIntent.EXTRA_PROMPT, "Search")
+            putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, packageName)
+        }
+        if (intent.resolveActivity(packageManager) == null) {
+            result.error("no_speech", "No speech recogniser available", null)
+            return
         }
         pendingVoice = result
         try {
