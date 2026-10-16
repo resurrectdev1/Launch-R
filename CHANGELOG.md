@@ -10,6 +10,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+---
+
+## [0.3.8] - 2026-10-16
+
 ### Added
 
 * “Swipe up again to go home” setting (Settings, under “Search”). When the app drawer is fully open, swiping up on it closes the drawer and returns you to the home screen. Off by default.
