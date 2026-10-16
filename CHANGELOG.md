@@ -16,6 +16,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * Clear button in the app drawer search bar. Once you've typed something, the mic turns into an ✕ that empties the search, brings back the full app grid and keeps the keyboard open.
 * Settings to turn the search bar's mic and ✕ buttons on or off (Settings, under “Search”). Both are on by default.
 * Search hidden apps by starting your search with a "/" For example, "/bank" searches all apps including hidden ones, and a lone "/" lists every hidden app. Hidden apps still stay out of normal search results.
+* Suggestions and recent searches in the app drawer. Tap the search bar and, before you type anything, you'll see your most-used apps and your recent searches. Start typing and they disappear, Tap a recent search to run it again, tap its ✕ to remove it, or tap Clear to remove them all. (NOTE: If you have no history yet, you'll see the normal app grid.)
+* Launch-R now remembers which apps you open. A search is only saved when you open an app from its results. Everything stays on your device, hidden apps are never suggested, and searches starting with "/" are never saved.
+* Setting to turn suggestions and recent searches on or off (Settings, under “Search”). It's on by default.
 
 ### Changed
 
