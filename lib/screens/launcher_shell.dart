@@ -36,6 +36,8 @@ class _LauncherShellState extends State<LauncherShell>
   bool _opening = false;
   double _pull = 0;
   bool _defaultPageApplied = false;
+  bool _drawerWasFull = false;
+  double _drawerUp = 0;
 
   @override
   void initState() {
@@ -128,7 +130,17 @@ class _LauncherShellState extends State<LauncherShell>
     _pull = 0;
   }
 
+  void _dStart(DragStartDetails d) {
+    _drawerWasFull = _shell.drawer.value >= 0.99;
+    _drawerUp = 0;
+  }
+
   void _dUpdate(DragUpdateDetails d) {
+    if (d.delta.dy < 0) {
+      _drawerUp -= d.delta.dy;
+    } else {
+      _drawerUp = 0;
+    }
     final h = MediaQuery.sizeOf(context).height;
     _shell.drawer.value = (_shell.drawer.value - d.delta.dy / (h * 0.55)).clamp(
       0.0,
@@ -138,6 +150,20 @@ class _LauncherShellState extends State<LauncherShell>
 
   void _dEnd(DragEndDetails d) {
     final v = d.velocity.pixelsPerSecond.dy;
+    final swipedUp = _drawerWasFull && (v < -300 || _drawerUp > 60);
+    _drawerWasFull = false;
+    _drawerUp = 0;
+    if (swipedUp) {
+      final s = context.read<LauncherSettings>();
+      if (s.swipeUpHome) {
+        _shell.closeDrawer();
+        return;
+      }
+      if (s.swipeUpSearch) {
+        _shell.requestSearch();
+        return;
+      }
+    }
     final open = v > 300
         ? false
         : (v < -300 ? true : _shell.drawer.value > 0.6);
@@ -230,6 +256,7 @@ class _LauncherShellState extends State<LauncherShell>
                         ignoring: carrying,
                         child: GestureDetector(
                           behavior: HitTestBehavior.opaque,
+                          onVerticalDragStart: _dStart,
                           onVerticalDragUpdate: _dUpdate,
                           onVerticalDragEnd: _dEnd,
                           child: ColoredBox(
