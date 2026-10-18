@@ -17,6 +17,7 @@ import 'package:launch_r/widgets/item_actions.dart';
 import 'package:launch_r/widgets/keep_alive.dart';
 import 'package:launch_r/widgets/launcher_cell.dart';
 import 'package:launch_r/widgets/page_dots.dart';
+import 'package:launch_r/widgets/press_scale.dart';
 import 'package:launch_r/widgets/settings_sheet.dart';
 
 const _kRowPitch = 106.0;
@@ -793,34 +794,46 @@ class _SearchPill extends StatelessWidget {
                   : !settings.showVoiceButton) {
                 return const SizedBox.shrink();
               }
-              return IconButton(
-                tooltip: typed ? 'Clear' : 'Voice search',
-                style: IconButton.styleFrom(
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              return PressScale(
+                child: IconButton(
+                  tooltip: typed ? 'Clear' : 'Voice search',
+                  style: IconButton.styleFrom(
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 30,
+                    minHeight: 40,
+                  ),
+                  icon: Icon(
+                    typed ? Icons.close_rounded : Icons.mic_rounded,
+                    color: t.drawerText,
+                  ),
+                  onPressed: typed
+                      ? () {
+                          unawaited(HapticFeedback.selectionClick());
+                          controller.clear();
+                          onChanged();
+                          focus.requestFocus();
+                        }
+                      : () {
+                          unawaited(HapticFeedback.selectionClick());
+                          unawaited(_voice(context));
+                        },
                 ),
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 30, minHeight: 40),
-                icon: Icon(
-                  typed ? Icons.close_rounded : Icons.mic_rounded,
-                  color: t.drawerText,
-                ),
-                onPressed: typed
-                    ? () {
-                        controller.clear();
-                        onChanged();
-                        focus.requestFocus();
-                      }
-                    : () => unawaited(_voice(context)),
               );
             },
           ),
           PopupMenuButton<String>(
             padding: EdgeInsets.zero,
-            child: SizedBox(
-              width: 30,
-              height: 40,
-              child: Icon(Icons.more_vert_rounded, color: t.drawerText),
+            onOpened: () => unawaited(HapticFeedback.selectionClick()),
+            child: PressScale(
+              child: SizedBox(
+                width: 30,
+                height: 40,
+                child: Icon(Icons.more_vert_rounded, color: t.drawerText),
+              ),
             ),
             color: t.menuBg,
             shape: RoundedRectangleBorder(
