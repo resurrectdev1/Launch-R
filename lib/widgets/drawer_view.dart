@@ -113,6 +113,8 @@ class _DrawerViewState extends State<DrawerView> {
 
   void _prev() {
     if (_pages.hasClients) {
+      if ((_pages.page ?? 0).round() <= 0) return;
+      unawaited(HapticFeedback.selectionClick());
       unawaited(
         _pages.previousPage(duration: Motion.slow, curve: Motion.standard),
       );
@@ -122,6 +124,7 @@ class _DrawerViewState extends State<DrawerView> {
   void _next() {
     if (!_pages.hasClients) return;
     if ((_pages.page?.round() ?? 0) >= _pageCount - 1) return;
+    unawaited(HapticFeedback.selectionClick());
     unawaited(_pages.nextPage(duration: Motion.slow, curve: Motion.standard));
   }
 
