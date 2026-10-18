@@ -28,6 +28,7 @@ class LauncherCell extends StatefulWidget {
     this.showLabel = true,
     this.canDrop,
     this.dot = false,
+    this.slotKey,
   });
 
   final Zone zone;
@@ -41,6 +42,8 @@ class LauncherCell extends StatefulWidget {
   final bool showLabel;
 
   final bool dot;
+
+  final String? slotKey;
   final void Function(DragData data, Hover hover) onDrop;
 
   final bool Function(DragData data)? canDrop;
@@ -51,6 +54,19 @@ class LauncherCell extends StatefulWidget {
 
 class _LauncherCellState extends State<LauncherCell> {
   Hover _hover = Hover.none;
+  bool _pop = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final item = widget.item;
+    if (item != null) {
+      _pop = context.read<ShellController>().takeDropped(
+        widget.slotKey,
+        item.id,
+      );
+    }
+  }
 
   bool _accepts(DragData d) {
     final veto = widget.canDrop;
@@ -110,8 +126,8 @@ class _LauncherCellState extends State<LauncherCell> {
 
   void _onMove(DragData d, Offset pos) {
     final raw = _calc(d, pos);
-    if (widget.zone == Zone.drawer && raw == Hover.merge && !_mergeArmed) {
-      _setHover(_side(pos));
+    if (raw == Hover.merge && !_mergeArmed) {
+      _setHover(widget.zone == Zone.drawer ? _side(pos) : Hover.none);
       _dwell ??= Timer(_mergeDwell, () {
         _dwell = null;
         if (!mounted) return;
@@ -123,6 +139,12 @@ class _LauncherCellState extends State<LauncherCell> {
     }
     if (raw != Hover.merge) _resetDwell();
     _setHover(raw);
+  }
+
+  void _onEnter(DragData d) {
+    if (widget.item == null) {
+      unawaited(HapticFeedback.selectionClick());
+    }
   }
 
   void _onLeave() {
@@ -138,6 +160,7 @@ class _LauncherCellState extends State<LauncherCell> {
     }
     _resetDwell();
     _setHover(Hover.none);
+    context.read<ShellController>().markDropped(widget.slotKey, d.item.id);
     widget.onDrop(d, h);
   }
 
@@ -160,7 +183,11 @@ class _LauncherCellState extends State<LauncherCell> {
   Widget build(BuildContext context) {
     final gridOn = context.select<ShellController, bool>(_gridOn);
     return DragTarget<DragData>(
-      onWillAcceptWithDetails: (d) => _accepts(d.data),
+      onWillAcceptWithDetails: (d) {
+        final ok = _accepts(d.data);
+        if (ok) _onEnter(d.data);
+        return ok;
+      },
       onMove: (d) => _onMove(d.data, d.offset),
       onLeave: (_) => _onLeave(),
       onAcceptWithDetails: (d) => _onAccept(d.data, d.offset),
@@ -276,7 +303,7 @@ class _LauncherCellState extends State<LauncherCell> {
         ],
       ),
     );
-    return DraggableItem(
+    final draggable = DraggableItem(
       item: item,
       zone: widget.zone,
       locked: widget.locked,
@@ -285,6 +312,14 @@ class _LauncherCellState extends State<LauncherCell> {
       onTap: () => openItem(context, item, widget.zone),
       onMenu: (pos) => showItemMenu(context, pos, item, widget.zone),
       child: resting,
+    );
+    if (!_pop) return draggable;
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.78, end: 1),
+      duration: Motion.emphasized,
+      curve: Motion.emphasizedCurve,
+      child: draggable,
+      builder: (context, s, child) => Transform.scale(scale: s, child: child),
     );
   }
 }
