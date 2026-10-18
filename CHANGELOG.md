@@ -12,7 +12,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-* Hint in settings sheet under search telling you how "/" will show hidden apps
+* Hint in settings sheet under search telling you how "/" will show hidden apps. (to be done)
+* Haptic feedback when you pick up an app, folder or widget to drag it, and a lighter tap when you drop it.
+
+### Changed
+
+* App and folder icons now shrink slightly while you press them and spring back when you let go, so taps feel more responsive. Widgets are not affected.
 
 ---
 
