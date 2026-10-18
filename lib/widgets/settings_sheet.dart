@@ -571,6 +571,21 @@ class _SettingsSheet extends StatelessWidget {
                 value: s.showClearButton,
                 onChanged: s.setShowClearButton,
               ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 2, 24, 6),
+                child: Text(
+                  'Tip: start a search with "${LauncherModel.hiddenSearchPrefix}" '
+                  'to include hidden apps. For example, '
+                  '"${LauncherModel.hiddenSearchPrefix}bank" searches everything, '
+                  'and a lone "${LauncherModel.hiddenSearchPrefix}" lists every '
+                  'hidden app.',
+                  style: TextStyle(
+                    color: t.drawerTextMuted,
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+              ),
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
                 leading: Icon(Icons.sell_outlined, color: t.drawerText),
