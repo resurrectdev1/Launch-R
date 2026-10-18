@@ -55,6 +55,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   int iconRevision = 0;
 
   int get appCount => _apps.length;
+  bool hasApp(String pkg) => _apps.containsKey(pkg);
   int get hiddenCount => _apps.keys.where(_hidden.contains).length;
   List<LauncherApp> get hiddenApps => [
     for (final a in _apps.values)
@@ -477,7 +478,8 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     final home = jsonEncode(
       _home
           .map(
-            (pg) => pg.map((e) => e is WidgetCover ? null : e?.toJson()).toList(),
+            (pg) =>
+                pg.map((e) => e is WidgetCover ? null : e?.toJson()).toList(),
           )
           .toList(),
     );
