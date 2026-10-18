@@ -23,6 +23,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * Icons now pop in with a short spring when you drop them in a new spot.
 * A light haptic tick when dragging to the edge of the screen flips the page, on the home screen and the app drawer.
 * A light haptic tick when you drag an app, folder or widget into an empty spot on the home screen, dock or app drawer.
+* Home screen and dock now show the same insert bar as the app drawer when you hold a dragged icon over the left or right edge of another icon. Drop it there to slot it in between; neighbours in that row shift over into the nearest empty spot (the middle of an icon still makes a folder).
 
 ### Changed
 
@@ -36,6 +37,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 * Fixed a rare case where quick back-to-back edits could leave your layout out of sync after a restart.
+* Dropping an icon between others on a full dock or home row no longer throws an error; it falls back to a normal drop.
 
 ---
 
