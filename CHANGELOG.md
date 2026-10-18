@@ -17,6 +17,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * Haptic feedback when you pick up an app, folder or widget to drag it, and a lighter tap when you drop it.
 * A light haptic tick each time you swipe over to another home screen page.
 * Haptic feedback on the app drawer's mic, ✕ and three-dot menu buttons.
+* New Gestures section in launcher settings.
+* Home screen swipe left / swipe right gestures. When there’s no page to swipe to (swipe left on your last page, swipe right on your first), you can assign an action: open an app, recent apps, launcher settings, app drawer, app drawer search or the notification panel.
+* Recent apps needs the Launch-R accessibility service (Android doesn’t let launchers open recents any other way). It subscribes to no events and can’t read your screen.
 
 ### Changed
 
@@ -24,6 +27,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * The app drawer's mic, ✕ and three-dot menu buttons get the same press-down effect.
 * Moving apps and folders around now feels smoother, especially on slower phones.
 * New app icon (all assets have been updated to match the new icon aswell).
+* “Swipe up again to go home” and “Swipe up again to search” moved from Search to Gestures, under a new App drawer heading.
 
 ### Fixed
 
