@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/shell_controller.dart';
+import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/item_actions.dart';
 
 class DraggableItem extends StatefulWidget {
@@ -45,6 +48,21 @@ class _DraggableItemState extends State<DraggableItem> {
   Offset _pointer = Offset.zero;
   Offset? _holdStart;
   bool _menuUp = false;
+  bool _pressed = false;
+
+  void _setPressed(bool v) {
+    if (_pressed != v && mounted) setState(() => _pressed = v);
+  }
+
+  Widget _pressScale(Widget child) {
+    if (widget.onTap == null) return child;
+    return AnimatedScale(
+      scale: _pressed ? 0.92 : 1,
+      duration: Motion.fast,
+      curve: Motion.standard,
+      child: child,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,8 +78,11 @@ class _DraggableItemState extends State<DraggableItem> {
       return GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
+        onTapDown: widget.onTap == null ? null : (_) => _setPressed(true),
+        onTapUp: widget.onTap == null ? null : (_) => _setPressed(false),
+        onTapCancel: widget.onTap == null ? null : () => _setPressed(false),
         onLongPressStart: (d) => widget.onMenu(d.globalPosition),
-        child: widget.child,
+        child: _pressScale(widget.child),
       );
     }
 
@@ -105,6 +126,8 @@ class _DraggableItemState extends State<DraggableItem> {
         ),
         childWhenDragging: Opacity(opacity: 0, child: widget.child),
         onDragStarted: () {
+          _setPressed(false);
+          unawaited(HapticFeedback.mediumImpact());
           _holdStart = _pointer;
           shell.dragStart(data);
           _menuUp = true;
@@ -122,6 +145,7 @@ class _DraggableItemState extends State<DraggableItem> {
           shell.dragMove(data, d.globalPosition);
         },
         onDragEnd: (d) {
+          unawaited(HapticFeedback.lightImpact());
           _menuUp = false;
           _holdStart = null;
           shell.dragEnd();
@@ -130,7 +154,10 @@ class _DraggableItemState extends State<DraggableItem> {
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: widget.onTap,
-          child: widget.child,
+          onTapDown: widget.onTap == null ? null : (_) => _setPressed(true),
+          onTapUp: widget.onTap == null ? null : (_) => _setPressed(false),
+          onTapCancel: widget.onTap == null ? null : () => _setPressed(false),
+          child: _pressScale(widget.child),
         ),
       ),
     );
