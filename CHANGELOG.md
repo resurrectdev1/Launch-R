@@ -21,7 +21,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 * App and folder icons now shrink slightly while you press them and spring back when you let go, so taps feel more responsive. Widgets are not affected.
 * The app drawer's mic, ✕ and three-dot menu buttons get the same press-down effect.
+* Moving apps and folders around now feels smoother, especially on slower phones.
 * New app icon (all assets have been updated to match the new icon aswell).
+
+### Fixed
+
+* Fixed a rare case where quick back-to-back edits could leave your layout out of sync after a restart.
 
 ---
 
