@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:launch_r/models/gesture_models.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
@@ -10,6 +11,7 @@ import 'package:launch_r/theme/icon_shapes.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/widgets/accent_picker_sheet.dart';
 import 'package:launch_r/widgets/font_sheet.dart';
+import 'package:launch_r/widgets/gesture_sheets.dart';
 import 'package:launch_r/widgets/hidden_apps_sheet.dart';
 import 'package:launch_r/widgets/icon_pack_sheet.dart';
 import 'package:launch_r/widgets/tag_manager_sheet.dart';
@@ -43,6 +45,19 @@ class _SettingsSheet extends StatelessWidget {
           color: t.accentText,
           fontWeight: FontWeight.w700,
           fontSize: 13,
+        ),
+      ),
+    );
+
+    Widget subHeader(String text) => Padding(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 2),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: t.drawerTextMuted,
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+          letterSpacing: 0.4,
         ),
       ),
     );
@@ -533,32 +548,6 @@ class _SettingsSheet extends StatelessWidget {
               SwitchListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
                 title: Text(
-                  'Swipe up again to go home',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  'Swiping up on the open app drawer closes it and returns to the home screen',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.swipeUpHome,
-                onChanged: s.setSwipeUpHome,
-              ),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Swipe up again to search',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  'Swiping up on the open app drawer opens the keyboard so you can search',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.swipeUpSearch,
-                onChanged: s.setSwipeUpSearch,
-              ),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
                   'Voice search button',
                   style: TextStyle(color: t.drawerText),
                 ),
@@ -598,6 +587,70 @@ class _SettingsSheet extends StatelessWidget {
                   color: t.drawerTextMuted,
                 ),
                 onTap: () => showTagManager(context),
+              ),
+              header('Gestures'),
+              subHeader('HOME SCREEN'),
+              for (final side in GestureSide.values)
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                  leading: Icon(
+                    side == GestureSide.left
+                        ? Icons.arrow_back_rounded
+                        : Icons.arrow_forward_rounded,
+                    color: t.drawerText,
+                  ),
+                  title: Text(
+                    side.label,
+                    style: TextStyle(color: t.drawerText),
+                  ),
+                  subtitle: Text(
+                    s.gestureFor(side).summary,
+                    style: TextStyle(color: t.drawerTextMuted),
+                  ),
+                  trailing: Icon(
+                    Icons.chevron_right_rounded,
+                    color: t.drawerTextMuted,
+                  ),
+                  onTap: () => showGesturePicker(context, side),
+                ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 2, 24, 6),
+                child: Text(
+                  'Swipe left works on your last home page and swipe right on '
+                  'your first, when there is no page left to swipe to.',
+                  style: TextStyle(
+                    color: t.drawerTextMuted,
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+              subHeader('APP DRAWER'),
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
+                  'Swipe up again to go home',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  'Swiping up on the open app drawer closes it and returns to the home screen',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                value: s.swipeUpHome,
+                onChanged: s.setSwipeUpHome,
+              ),
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                title: Text(
+                  'Swipe up again to search',
+                  style: TextStyle(color: t.drawerText),
+                ),
+                subtitle: Text(
+                  'Swiping up on the open app drawer opens the keyboard so you can search',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                value: s.swipeUpSearch,
+                onChanged: s.setSwipeUpSearch,
               ),
               header('System'),
               ListTile(
