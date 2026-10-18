@@ -828,13 +828,6 @@ class _SearchPill extends StatelessWidget {
           PopupMenuButton<String>(
             padding: EdgeInsets.zero,
             onOpened: () => unawaited(HapticFeedback.selectionClick()),
-            child: PressScale(
-              child: SizedBox(
-                width: 30,
-                height: 40,
-                child: Icon(Icons.more_vert_rounded, color: t.drawerText),
-              ),
-            ),
             color: t.menuBg,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(22),
@@ -878,6 +871,13 @@ class _SearchPill extends StatelessWidget {
                 ),
               ),
             ],
+            child: PressScale(
+              child: SizedBox(
+                width: 30,
+                height: 40,
+                child: Icon(Icons.more_vert_rounded, color: t.drawerText),
+              ),
+            ),
           ),
         ],
       ),
