@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:launch_r/models/gesture_models.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/services/font_service.dart';
 import 'package:launch_r/theme/app_fonts.dart';
@@ -21,6 +22,8 @@ class LauncherSettings extends ChangeNotifier {
   bool _drawerAutoSearch = false;
   bool _swipeUpHome = false;
   bool _swipeUpSearch = false;
+  HomeGesture _swipeLeft = const HomeGesture();
+  HomeGesture _swipeRight = const HomeGesture();
   bool _fuzzySearch = true;
   bool _showVoiceButton = true;
   bool _showClearButton = true;
@@ -59,6 +62,10 @@ class LauncherSettings extends ChangeNotifier {
   bool get drawerAutoSearch => _drawerAutoSearch;
   bool get swipeUpHome => _swipeUpHome;
   bool get swipeUpSearch => _swipeUpSearch;
+  HomeGesture get swipeLeft => _swipeLeft;
+  HomeGesture get swipeRight => _swipeRight;
+  HomeGesture gestureFor(GestureSide side) =>
+      side == GestureSide.left ? _swipeLeft : _swipeRight;
   bool get fuzzySearch => _fuzzySearch;
   bool get showVoiceButton => _showVoiceButton;
   bool get showClearButton => _showClearButton;
@@ -125,6 +132,8 @@ class LauncherSettings extends ChangeNotifier {
       _swipeUpSearch = false;
       await p.setBool('swipe_up_search', false);
     }
+    _swipeLeft = _readGesture(p, 'gesture_left');
+    _swipeRight = _readGesture(p, 'gesture_right');
     _fuzzySearch = p.getBool('fuzzy_search') ?? true;
     _showVoiceButton = p.getBool('show_voice_button') ?? true;
     _showClearButton = p.getBool('show_clear_button') ?? true;
@@ -343,6 +352,39 @@ class LauncherSettings extends ChangeNotifier {
     notifyListeners();
     await _prefs?.setBool('swipe_up_search', v);
     if (turnedOffOther) await _prefs?.setBool('swipe_up_home', false);
+  }
+
+  static HomeGesture _readGesture(SharedPreferences p, String key) =>
+      HomeGesture(
+        action: GestureAction.fromName(p.getString('${key}_action')),
+        pkg: p.getString('${key}_app'),
+        label: p.getString('${key}_app_label'),
+      );
+
+  Future<void> setGesture(
+    GestureSide side, {
+    GestureAction? action,
+    String? pkg,
+    String? label,
+  }) async {
+    final isLeft = side == GestureSide.left;
+    final next = (isLeft ? _swipeLeft : _swipeRight).copyWith(
+      action: action,
+      pkg: pkg,
+      label: label,
+    );
+    if (isLeft) {
+      _swipeLeft = next;
+    } else {
+      _swipeRight = next;
+    }
+    notifyListeners();
+    final p = _prefs;
+    if (p == null) return;
+    final key = isLeft ? 'gesture_left' : 'gesture_right';
+    await p.setString('${key}_action', next.action.name);
+    if (next.pkg != null) await p.setString('${key}_app', next.pkg!);
+    if (next.label != null) await p.setString('${key}_app_label', next.label!);
   }
 
   Future<void> setFuzzySearch(bool v) async {
