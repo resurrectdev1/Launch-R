@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
@@ -67,11 +68,13 @@ class HomeView extends StatelessWidget {
           children: [
             SizedBox(height: pad.top + 10),
             Expanded(
-              child: PageView.builder(
-                controller: controller,
-                itemCount: model.home.length,
-                itemBuilder: (context, p) => PageKeepAlive(
-                  child: _HomePage(page: p, style: style),
+              child: _PageHaptics(
+                child: PageView.builder(
+                  controller: controller,
+                  itemCount: model.home.length,
+                  itemBuilder: (context, p) => PageKeepAlive(
+                    child: _HomePage(page: p, style: style),
+                  ),
                 ),
               ),
             ),
@@ -456,6 +459,48 @@ class _Dock extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+class _PageHaptics extends StatefulWidget {
+  const _PageHaptics({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_PageHaptics> createState() => _PageHapticsState();
+}
+
+class _PageHapticsState extends State<_PageHaptics> {
+  bool _byUser = false;
+  int? _last;
+
+  bool _onScroll(ScrollNotification n) {
+    if (n.depth != 0) return false;
+    final m = n.metrics;
+    if (m is! PageMetrics) return false;
+
+    if (n is ScrollStartNotification) {
+      _byUser = n.dragDetails != null;
+      _last = m.page?.round();
+    } else if (n is ScrollUpdateNotification && _byUser) {
+      final p = m.page?.round();
+      if (p != null && p != _last) {
+        _last = p;
+        unawaited(HapticFeedback.selectionClick());
+      }
+    } else if (n is ScrollEndNotification) {
+      _byUser = false;
+    }
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NotificationListener<ScrollNotification>(
+      onNotification: _onScroll,
+      child: widget.child,
     );
   }
 }
