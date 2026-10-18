@@ -336,6 +336,32 @@ class MainActivity : FlutterActivity() {
                 result.success(null)
             }
 
+            "openRecents" -> result.success(LaunchRAccessibilityService.openRecents())
+
+            "hasRecentsAccess" -> {
+                val flat = Settings.Secure.getString(
+                    contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+                )
+                val on = flat?.split(':')?.any {
+                    ComponentName.unflattenFromString(it)?.let { c ->
+                        c.packageName == packageName &&
+                            c.className.endsWith("LaunchRAccessibilityService")
+                    } == true
+                } == true
+                result.success(on)
+            }
+
+            "openAccessibilitySettings" -> {
+                try {
+                    startActivity(
+                        Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                } catch (_: Exception) {
+                }
+                result.success(null)
+            }
+
             "pickFont" -> pickFont(result)
             "pickBackground" -> pickBackground(result)
 
