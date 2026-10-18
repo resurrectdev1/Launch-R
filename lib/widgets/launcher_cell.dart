@@ -88,11 +88,20 @@ class _LauncherCellState extends State<LauncherCell> {
     if (widget.item == null) return Hover.none;
     final canMerge = d.item is AppItem;
     if (widget.zone != Zone.drawer) {
-      if (d.zone == Zone.drawer &&
-          !context.read<LauncherModel>().canCopyToHome(d.item, widget.item)) {
-        return Hover.none;
+      final model = context.read<LauncherModel>();
+      final fromDrawer = d.zone == Zone.drawer;
+      final mergeOk =
+          canMerge && (!fromDrawer || model.canCopyToHome(d.item, widget.item));
+      final insertOk =
+          d.item is! WidgetItem &&
+          (!fromDrawer || model.canCopyToHome(d.item, null));
+      final fx = _fx(global);
+      final lo = _hover == Hover.merge ? 0.20 : 0.28;
+      if (mergeOk && fx > lo && fx < 1 - lo) return Hover.merge;
+      if (insertOk && (fx <= lo || fx >= 1 - lo)) {
+        return fx < 0.5 ? Hover.before : Hover.after;
       }
-      return canMerge ? Hover.merge : Hover.none;
+      return Hover.none;
     }
     final fx = _fx(global);
     final lo = _hover == Hover.merge ? 0.20 : 0.30;
