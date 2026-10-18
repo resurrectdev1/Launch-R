@@ -20,6 +20,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * New Gestures section in launcher settings.
 * Home screen swipe left / swipe right gestures. When there’s no page to swipe to (swipe left on your last page, swipe right on your first), you can assign an action: open an app, recent apps, launcher settings, app drawer, app drawer search or the notification panel.
 * Recent apps needs the Launch-R accessibility service (Android doesn’t let launchers open recents any other way). It subscribes to no events and can’t read your screen.
+* Icons now pop in with a short spring when you drop them in a new spot.
+* A light haptic tick when dragging to the edge of the screen flips the page, on the home screen and the app drawer.
+* A light haptic tick when you drag an app, folder or widget into an empty spot on the home screen, dock or app drawer.
 
 ### Changed
 
@@ -28,6 +31,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * Moving apps and folders around now feels smoother, especially on slower phones.
 * New app icon (all assets have been updated to match the new icon aswell).
 * “Swipe up again to go home” and “Swipe up again to search” moved from Search to Gestures, under a new App drawer heading.
+* Dragging an app over another app on the home screen or dock now waits a moment before showing the folder highlight, then gives a light tick when it’s ready to merge, just like the app drawer. Before, the highlight flashed on every app you dragged past.
 
 ### Fixed
 
