@@ -16,7 +16,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-* Hint in settings sheet under search telling you how "/" will show hidden apps. (to be done)
+* Hint in settings sheet under search telling you how "/" will show hidden apps.
 * Haptic feedback when you pick up an app, folder or widget to drag it, and a lighter tap when you drop it.
 * A light haptic tick each time you swipe over to another home screen page.
 * Haptic feedback on the app drawer's mic, ✕ and three-dot menu buttons.
