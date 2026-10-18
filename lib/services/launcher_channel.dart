@@ -150,6 +150,15 @@ class LauncherChannel {
   Future<void> expandNotifications() =>
       _safe(() => _ch.invokeMethod<void>('expandNotifications'));
 
+  Future<bool> openRecents() async =>
+      await _safe(() => _ch.invokeMethod<bool>('openRecents')) ?? false;
+
+  Future<bool> hasRecentsAccess() async =>
+      await _safe(() => _ch.invokeMethod<bool>('hasRecentsAccess')) ?? false;
+
+  Future<void> openAccessibilitySettings() =>
+      _safe(() => _ch.invokeMethod<void>('openAccessibilitySettings'));
+
   static const widgetViewType = 'com.resurrect.launch_r/widget';
 
   Future<List<WidgetProvider>> getWidgetProviders() async {
