@@ -908,6 +908,101 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     return DropOutcome.done;
   }
 
+  LItem? _freshHomeCopy(LItem src) {
+    if (src is AppItem) return _homeContains(src.pkg) ? null : AppItem(src.pkg);
+    if (src is FolderItem) {
+      final fresh = src.pkgs.where((p) => !_homeContains(p)).toList();
+      if (fresh.isEmpty) return null;
+      if (fresh.length == 1) return AppItem(fresh.first);
+      return FolderItem(
+        fid: _newFid(),
+        name: src.name,
+        pkgs: fresh,
+        color: src.color,
+      );
+    }
+    return null;
+  }
+
+  bool _movable(LItem? it) => it is! WidgetItem && it is! WidgetCover;
+
+  bool _shiftInsert(List<LItem?> list, int index, bool after, LItem item) {
+    final cols = identical(list, _dock) ? list.length : _homeCols;
+    final start = (index ~/ cols) * cols;
+    final end = start + cols;
+    final pos = after ? index + 1 : index;
+
+    if (pos < end) {
+      var k = pos;
+      while (k < end && list[k] != null && _movable(list[k])) {
+        k++;
+      }
+      if (k < end && list[k] == null) {
+        for (var j = k; j > pos; j--) {
+          list[j] = list[j - 1];
+        }
+        list[pos] = item;
+        return true;
+      }
+    }
+
+    final to = pos - 1;
+    if (to >= start) {
+      var k = to;
+      while (k >= start && list[k] != null && _movable(list[k])) {
+        k--;
+      }
+      if (k >= start && list[k] == null) {
+        for (var j = k; j < to; j++) {
+          list[j] = list[j + 1];
+        }
+        list[to] = item;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  DropOutcome slotInsert(
+    DragData d,
+    Zone z,
+    int page,
+    int index, {
+    required bool after,
+  }) {
+    if (d.item is WidgetItem) return slotDrop(d, z, page, index);
+    final list = z == Zone.dock ? _dock : _home[page];
+    final t = list[index];
+    if (t == null || t.id == d.item.id || !_movable(t)) {
+      return slotDrop(d, z, page, index);
+    }
+
+    if (d.zone == Zone.drawer) {
+      final fresh = _freshHomeCopy(d.item);
+      if (fresh == null) return DropOutcome.alreadyOnHome;
+      if (!_shiftInsert(list, index, after, fresh)) {
+        return slotDrop(d, z, page, index);
+      }
+      _commit();
+      return DropOutcome.done;
+    }
+
+    final snapHome = [for (final p in _home) List<LItem?>.of(p)];
+    final snapDock = List<LItem?>.of(_dock);
+    final moved = _detach(d);
+    if (moved == null) return DropOutcome.done;
+    final target = z == Zone.dock ? _dock : _home[page];
+    if (!_shiftInsert(target, index, after, moved)) {
+      for (var i = 0; i < _home.length && i < snapHome.length; i++) {
+        _home[i].setRange(0, snapHome[i].length, snapHome[i]);
+      }
+      _dock.setRange(0, snapDock.length, snapDock);
+      return slotDrop(d, z, page, index);
+    }
+    _commit();
+    return DropOutcome.done;
+  }
+
   bool addHomePage() {
     if (_home.last.any((e) => e != null)) {
       _home.add(_blankPage());
