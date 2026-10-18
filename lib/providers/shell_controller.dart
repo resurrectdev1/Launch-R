@@ -69,6 +69,18 @@ class ShellController extends ChangeNotifier {
 
   void openDrawer() => unawaited(drawer.animateTo(1, curve: Motion.standard));
 
+  void openDrawerWithSearch() {
+    if (drawer.value >= 0.99) {
+      requestSearch();
+      return;
+    }
+    unawaited(
+      drawer.animateTo(1, curve: Motion.standard).whenComplete(() {
+        if (drawer.value >= 0.99) requestSearch();
+      }),
+    );
+  }
+
   void closeDrawer() {
     FocusManager.instance.primaryFocus?.unfocus();
     unawaited(drawer.animateBack(0, curve: Motion.exit));
