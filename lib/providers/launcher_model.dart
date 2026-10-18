@@ -218,7 +218,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
 
   void _commitTags() {
     notifyListeners();
-    unawaited(_persist());
+    _schedulePersist();
   }
 
   Future<void> init() async {
@@ -263,6 +263,10 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       unawaited(_refreshAccessAndBadges());
+    } else if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      unawaited(flushPersist());
     }
   }
 
@@ -278,6 +282,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    unawaited(flushPersist());
     super.dispose();
   }
 
@@ -425,40 +430,102 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
 
   String _enc(List<LItem?> l) => jsonEncode(l.map((e) => e?.toJson()).toList());
 
+  static const _persistDelay = Duration(milliseconds: 300);
+  Timer? _persistTimer;
+  bool _persistDirty = false;
+  Future<void> _persistInFlight = Future<void>.value();
+
+  final Map<String, String> _lastWritten = {};
+
+  void _schedulePersist() {
+    _persistDirty = true;
+    _persistTimer?.cancel();
+    _persistTimer = Timer(_persistDelay, () => unawaited(flushPersist()));
+  }
+
+  Future<void> flushPersist() {
+    _persistTimer?.cancel();
+    if (!_persistDirty) return _persistInFlight;
+    _persistDirty = false;
+    return _persistInFlight = _persistInFlight
+        .then((_) => _persist())
+        .catchError((Object e, StackTrace s) {
+          debugPrint('Launch-R: persist failed: $e\n$s');
+        });
+  }
+
+  Future<void> _put(
+    String key,
+    String sig,
+    Future<bool> Function() write,
+  ) async {
+    if (_lastWritten[key] == sig) return;
+    if (await write()) _lastWritten[key] = sig;
+  }
+
   Future<void> _persist() async {
     final p = _prefs;
     if (p == null) return;
-    await p.setInt(_kCols, _homeCols);
-    await p.setInt(_kRows, _homeRows);
-    await p.setInt(_kDefaultPage, _defaultPage);
-    await p.setInt(_kPinnedPages, _pinnedPages);
-    await p.setStringList(_kHidden, _hidden.toList());
-    await p.setBool(_kDrawerFree, _drawerFree);
-    await p.setBool(_kAutoAdd, _autoAddNew);
-    await p.setStringList(_kKnown, _known.toList());
-    await p.setString(
-      _kTags,
-      jsonEncode({for (final e in _tags.entries) e.key: e.value.toList()}),
+
+    final hidden = _hidden.toList();
+    final known = _known.toList();
+    final tags = jsonEncode({
+      for (final e in _tags.entries) e.key: e.value.toList(),
+    });
+    final drawer = _enc(_drawer);
+    final dock = _enc(_dock);
+    final home = jsonEncode(
+      _home
+          .map(
+            (pg) => pg.map((e) => e is WidgetCover ? null : e?.toJson()).toList(),
+          )
+          .toList(),
     );
-    await p.setString(_kDrawer, _enc(_drawer));
-    await p.setString(_kDock, _enc(_dock));
-    await p.setString(
-      _kHome,
-      jsonEncode(
-        _home
-            .map(
-              (pg) =>
-                  pg.map((e) => e is WidgetCover ? null : e?.toJson()).toList(),
-            )
-            .toList(),
-      ),
+    final cols = _homeCols;
+    final rows = _homeRows;
+    final defaultPage = _defaultPage;
+    final pinnedPages = _pinnedPages;
+    final drawerFree = _drawerFree;
+    final autoAdd = _autoAddNew;
+
+    await _put(_kCols, '$cols', () => p.setInt(_kCols, cols));
+    await _put(_kRows, '$rows', () => p.setInt(_kRows, rows));
+    await _put(
+      _kDefaultPage,
+      '$defaultPage',
+      () => p.setInt(_kDefaultPage, defaultPage),
     );
+    await _put(
+      _kPinnedPages,
+      '$pinnedPages',
+      () => p.setInt(_kPinnedPages, pinnedPages),
+    );
+    await _put(
+      _kHidden,
+      jsonEncode(hidden),
+      () => p.setStringList(_kHidden, hidden),
+    );
+    await _put(
+      _kDrawerFree,
+      '$drawerFree',
+      () => p.setBool(_kDrawerFree, drawerFree),
+    );
+    await _put(_kAutoAdd, '$autoAdd', () => p.setBool(_kAutoAdd, autoAdd));
+    await _put(
+      _kKnown,
+      jsonEncode(known),
+      () => p.setStringList(_kKnown, known),
+    );
+    await _put(_kTags, tags, () => p.setString(_kTags, tags));
+    await _put(_kDrawer, drawer, () => p.setString(_kDrawer, drawer));
+    await _put(_kDock, dock, () => p.setString(_kDock, dock));
+    await _put(_kHome, home, () => p.setString(_kHome, home));
   }
 
   void _commit() {
     _normalizeDrawer();
     notifyListeners();
-    unawaited(_persist());
+    _schedulePersist();
   }
 
   int _byLabel(LauncherApp a, LauncherApp b) =>
@@ -843,7 +910,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     if (_home.last.any((e) => e != null)) {
       _home.add(_blankPage());
       notifyListeners();
-      unawaited(_persist());
+      _schedulePersist();
       return true;
     }
     return false;
