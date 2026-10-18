@@ -122,6 +122,26 @@ class ShellController extends ChangeNotifier {
     notifyListeners();
   }
 
+  String? _droppedSlot;
+  String? _droppedItem;
+  DateTime _droppedAt = DateTime.fromMillisecondsSinceEpoch(0);
+
+  void markDropped(String? slot, String itemId) {
+    _droppedSlot = slot;
+    _droppedItem = itemId;
+    _droppedAt = DateTime.now();
+  }
+
+  bool takeDropped(String? slot, String itemId) {
+    final hit =
+        (slot != null && _droppedSlot == slot) || _droppedItem == itemId;
+    if (!hit) return false;
+    _droppedSlot = null;
+    _droppedItem = null;
+    return DateTime.now().difference(_droppedAt) <
+        const Duration(milliseconds: 800);
+  }
+
   void dragStart(DragData d) {
     drag = d;
     resizingWid = null;
