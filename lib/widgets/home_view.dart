@@ -22,6 +22,8 @@ class HomeView extends StatelessWidget {
 
   void _prev() {
     if (!controller.hasClients) return;
+    if ((controller.page ?? 0).round() <= 0) return;
+    unawaited(HapticFeedback.selectionClick());
     unawaited(
       controller.previousPage(duration: Motion.slow, curve: Motion.standard),
     );
@@ -30,9 +32,13 @@ class HomeView extends StatelessWidget {
   void _next(LauncherModel model) {
     if (!controller.hasClients) return;
     final cur = controller.page?.round() ?? 0;
-    void go() => unawaited(
-      controller.nextPage(duration: Motion.slow, curve: Motion.standard),
-    );
+    void go() {
+      unawaited(HapticFeedback.selectionClick());
+      unawaited(
+        controller.nextPage(duration: Motion.slow, curve: Motion.standard),
+      );
+    }
+
     if (cur >= model.home.length - 1) {
       if (model.addHomePage()) {
         WidgetsBinding.instance.addPostFrameCallback((_) => go());
@@ -254,6 +260,7 @@ class _HomePage extends StatelessWidget {
   ) {
     return LauncherCell(
       key: ValueKey('home-$page-$index-${item?.id}'),
+      slotKey: 'home-$page-$index',
       zone: Zone.home,
       item: item,
       label: item == null ? '' : model.labelOf(item),
@@ -440,6 +447,7 @@ class _Dock extends StatelessWidget {
                   Expanded(
                     child: LauncherCell(
                       key: ValueKey('dock-$i-${dock[i]?.id}'),
+                      slotKey: 'dock-$i',
                       zone: Zone.dock,
                       item: dock[i],
                       label: dock[i] == null ? '' : model.labelOf(dock[i]!),
