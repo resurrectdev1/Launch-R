@@ -279,8 +279,18 @@ class _HomePage extends StatelessWidget {
         }
         return !model.slotIsWidgetPart(page, index);
       },
-      onDrop: (d, _) =>
-          _announce(context, model.slotDrop(d, Zone.home, page, index)),
+      onDrop: (d, h) => _announce(
+        context,
+        h == Hover.before || h == Hover.after
+            ? model.slotInsert(
+                d,
+                Zone.home,
+                page,
+                index,
+                after: h == Hover.after,
+              )
+            : model.slotDrop(d, Zone.home, page, index),
+      ),
     );
   }
 }
@@ -460,9 +470,17 @@ class _Dock extends StatelessWidget {
                       locked: settings.lockLayout,
                       showLabel: false,
                       canDrop: (d) => d.item is! WidgetItem,
-                      onDrop: (d, _) => _announce(
+                      onDrop: (d, h) => _announce(
                         context,
-                        model.slotDrop(d, Zone.dock, 0, i),
+                        h == Hover.before || h == Hover.after
+                            ? model.slotInsert(
+                                d,
+                                Zone.dock,
+                                0,
+                                i,
+                                after: h == Hover.after,
+                              )
+                            : model.slotDrop(d, Zone.dock, 0, i),
                       ),
                     ),
                   ),
