@@ -10,6 +10,7 @@ import 'package:launch_r/providers/shell_controller.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/edge_flipper.dart';
+import 'package:launch_r/widgets/home_edge_swipe.dart';
 import 'package:launch_r/widgets/keep_alive.dart';
 import 'package:launch_r/widgets/launcher_cell.dart';
 import 'package:launch_r/widgets/page_dots.dart';
@@ -69,11 +70,14 @@ class HomeView extends StatelessWidget {
             SizedBox(height: pad.top + 10),
             Expanded(
               child: _PageHaptics(
-                child: PageView.builder(
-                  controller: controller,
-                  itemCount: model.home.length,
-                  itemBuilder: (context, p) => PageKeepAlive(
-                    child: _HomePage(page: p, style: style),
+                child: HomeEdgeSwipe(
+                  child: PageView.builder(
+                    controller: controller,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: model.home.length,
+                    itemBuilder: (context, p) => PageKeepAlive(
+                      child: _HomePage(page: p, style: style),
+                    ),
                   ),
                 ),
               ),
