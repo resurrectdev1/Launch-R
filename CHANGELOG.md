@@ -17,6 +17,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * Folder polish: the title and color dot fade in, the panel and color dot fade smoothly between colors, color swatches press in, apps dropped into a folder pop in with a short spring, and the panel resizes smoothly instead of jumping.
 * Info sheet at bottom of settings sheet.
 * App shortcuts: long-press an app to see its shortcuts (like Camera -> “Take selfie”) at the top of the menu. Only shows when Launch-R is your default launcher.
+* Pinned shortcuts: apps that offer "Add to Home screen" shortcuts (Browsers, Settings & more) can now put them on your home screen. They get your icon shape with a small badge of the app they came from, open when tapped, can be dragged around or into the dock, and are removed with long-press -> Remove or the drag bar. Only works when Launch-R is your default launcher.
 
 ### Changed
 
