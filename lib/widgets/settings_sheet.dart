@@ -9,6 +9,7 @@ import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/icon_shapes.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/widgets/about_sheet.dart';
 import 'package:launch_r/widgets/accent_picker_sheet.dart';
 import 'package:launch_r/widgets/font_sheet.dart';
 import 'package:launch_r/widgets/gesture_sheets.dart';
@@ -703,6 +704,12 @@ class _SettingsSheet extends StatelessWidget {
                   style: TextStyle(color: t.drawerText),
                 ),
                 onTap: ch.openHomeSettings,
+              ),
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                leading: Icon(Icons.info_outline_rounded, color: t.drawerText),
+                title: Text('About', style: TextStyle(color: t.drawerText)),
+                onTap: () => showLaunchRAbout(context),
               ),
             ],
           ),
