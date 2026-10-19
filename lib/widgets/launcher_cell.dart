@@ -86,7 +86,8 @@ class _LauncherCellState extends State<LauncherCell> {
 
   Hover _calc(DragData d, Offset global) {
     if (widget.item == null) return Hover.none;
-    final canMerge = d.item is AppItem;
+    final it = widget.item;
+    final canMerge = d.item is AppItem && (it is AppItem || it is FolderItem);
     if (widget.zone != Zone.drawer) {
       final model = context.read<LauncherModel>();
       final fromDrawer = d.zone == Zone.drawer;
