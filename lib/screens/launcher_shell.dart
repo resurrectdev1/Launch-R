@@ -43,14 +43,51 @@ class _LauncherShellState extends State<LauncherShell>
   void initState() {
     super.initState();
     LauncherChannel.instance.onHome = _onHome;
+    LauncherChannel.instance.onPinRequest = _handlePinRequest;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _handlePinRequest());
   }
 
   @override
   void dispose() {
     LauncherChannel.instance.onHome = null;
+    LauncherChannel.instance.onPinRequest = null;
     _homePages.dispose();
     _shell.dispose();
     super.dispose();
+  }
+
+  Future<void> _handlePinRequest() async {
+    final model = context.read<LauncherModel>();
+    if (!model.ready) {
+      final ready = Completer<void>();
+      void check() {
+        if (model.ready && !ready.isCompleted) ready.complete();
+      }
+
+      model.addListener(check);
+      check();
+      await ready.future;
+      model.removeListener(check);
+    }
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final r = await model.handlePinRequest();
+    if (!mounted) return;
+    if (r.label != null) {
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text('${r.label} added to Home'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else if (r.refused) {
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text("Couldn't add shortcut. Home screen is full"),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   void _onHome() {
