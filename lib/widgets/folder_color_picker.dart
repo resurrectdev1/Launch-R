@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/theme/motion.dart';
+import 'package:launch_r/widgets/press_scale.dart';
 
 const _palette = <Color>[
   Color(0xCCFF5B5B),
@@ -111,26 +114,33 @@ class _FolderColorSheetState extends State<_FolderColorSheet> {
         selected: selected,
         label: label,
         child: GestureDetector(
-          onTap: () => model.recolorFolder(zone, fid, color),
-          child: Container(
-            width: 46,
-            height: 46,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color ?? t.folderBgDrawer,
-              border: Border.all(
-                color: selected ? t.accent : t.drawerTextMuted,
-                width: selected ? 3 : 1,
+          onTap: () {
+            if (!selected) unawaited(HapticFeedback.selectionClick());
+            model.recolorFolder(zone, fid, color);
+          },
+          child: PressScale(
+            child: AnimatedContainer(
+              duration: Motion.base,
+              curve: Motion.standard,
+              width: 46,
+              height: 46,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color ?? t.folderBgDrawer,
+                border: Border.all(
+                  color: selected ? t.accent : t.drawerTextMuted,
+                  width: selected ? 3 : 1,
+                ),
               ),
+              child: color == null
+                  ? Icon(
+                      Icons.format_color_reset_rounded,
+                      size: 22,
+                      color: t.drawerText,
+                    )
+                  : null,
             ),
-            child: color == null
-                ? Icon(
-                    Icons.format_color_reset_rounded,
-                    size: 22,
-                    color: t.drawerText,
-                  )
-                : null,
           ),
         ),
       );
