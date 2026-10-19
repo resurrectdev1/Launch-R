@@ -11,6 +11,7 @@ class LauncherChannel {
 
   VoidCallback? onPackagesChanged;
   VoidCallback? onHome;
+  VoidCallback? onPinRequest;
   void Function(Map<String, int> badges)? onBadges;
 
   void init() {
@@ -20,6 +21,8 @@ class LauncherChannel {
           onPackagesChanged?.call();
         case 'onHome':
           onHome?.call();
+        case 'onPinRequest':
+          onPinRequest?.call();
         case 'onBadges':
           onBadges?.call(_toBadges(call.arguments));
       }
@@ -132,6 +135,36 @@ class LauncherChannel {
     return await _safe(() => _ch.invokeMethod<bool>('startShortcut', args)) ??
         false;
   }
+
+  Future<Uint8List?> getShortcutIcon(
+    String pkg,
+    String id, {
+    int size = 192,
+    IconShape shape = IconShape.squircle,
+  }) => _safe(
+    () => _ch.invokeMethod<Uint8List>('getShortcutIcon', {
+      'package': pkg,
+      'id': id,
+      'size': size,
+      'shape': shape.name,
+    }),
+  );
+
+  Future<PinRequest?> getPendingPin() async {
+    final r = await _safe(
+      () => _ch.invokeMapMethod<String, dynamic>('getPendingPin'),
+    );
+    return r == null ? null : PinRequest.fromMap(r);
+  }
+
+  Future<bool> acceptPin() async =>
+      await _safe(() => _ch.invokeMethod<bool>('acceptPin')) ?? false;
+
+  Future<void> rejectPin() => _safe(() => _ch.invokeMethod<void>('rejectPin'));
+
+  Future<void> unpinShortcut(String pkg, String id) => _safe(
+    () => _ch.invokeMethod<void>('unpinShortcut', {'package': pkg, 'id': id}),
+  );
 
   Future<void> openAppInfo(String pkg) =>
       _safe(() => _ch.invokeMethod<void>('openAppInfo', {'package': pkg}));
