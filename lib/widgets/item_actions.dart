@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
@@ -68,10 +69,19 @@ void _closeItemMenu(String? choice) {
 }
 
 class _MenuOption {
-  const _MenuOption(this.value, this.icon, this.label);
+  const _MenuOption(
+    this.value,
+    this.icon,
+    this.label, {
+    this.iconBytes,
+    this.dividerAbove = false,
+  });
   final String value;
   final IconData icon;
   final String label;
+
+  final Uint8List? iconBytes;
+  final bool dividerAbove;
 }
 
 Future<String?> _showOverlayMenu(
@@ -157,7 +167,15 @@ class _ItemMenu extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            for (final o in options)
+                            for (final o in options) ...[
+                              if (o.dividerAbove)
+                                Divider(
+                                  height: 9,
+                                  thickness: 1,
+                                  indent: 16,
+                                  endIndent: 16,
+                                  color: t.drawerText.withValues(alpha: 0.12),
+                                ),
                               InkWell(
                                 onTap: () => onChoose(o.value),
                                 child: SizedBox(
@@ -168,11 +186,25 @@ class _ItemMenu extends StatelessWidget {
                                     ),
                                     child: Row(
                                       children: [
-                                        Icon(
-                                          o.icon,
-                                          size: 21,
-                                          color: t.drawerText,
-                                        ),
+                                        if (o.iconBytes != null)
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
+                                            child: Image.memory(
+                                              o.iconBytes!,
+                                              width: 21,
+                                              height: 21,
+                                              fit: BoxFit.cover,
+                                              gaplessPlayback: true,
+                                            ),
+                                          )
+                                        else
+                                          Icon(
+                                            o.icon,
+                                            size: 21,
+                                            color: t.drawerText,
+                                          ),
                                         const SizedBox(width: 14),
                                         Text(
                                           o.label,
@@ -186,6 +218,7 @@ class _ItemMenu extends StatelessWidget {
                                   ),
                                 ),
                               ),
+                            ],
                           ],
                         ),
                       ),
@@ -253,21 +286,53 @@ Future<void> showItemMenu(
     if (token != _menuToken || !context.mounted) return;
   }
 
+  Rect? iconRect;
+  final iconBox = context.findRenderObject();
+  if (iconBox is RenderBox && iconBox.attached) {
+    iconRect = iconBox.localToGlobal(Offset.zero) & iconBox.size;
+  }
+  final dpr = MediaQuery.devicePixelRatioOf(context);
+
+  var shortcuts = const <AppShortcut>[];
+  if (item is AppItem) {
+    shortcuts = await LauncherChannel.instance
+        .getShortcuts(item.pkg)
+        .timeout(
+          const Duration(milliseconds: 800),
+          onTimeout: () => const <AppShortcut>[],
+        );
+    if (token != _menuToken || !context.mounted) return;
+  }
+
   final entries = <_MenuOption>[
     if (item is AppItem) ...[
+      for (final sc in shortcuts)
+        _MenuOption(
+          'shortcut:${sc.id}',
+          Icons.bolt_rounded,
+          sc.label,
+          iconBytes: sc.icon,
+        ),
       if (fromFolder == null)
         inDrawer
-            ? const _MenuOption(
+            ? _MenuOption(
                 'add',
                 Icons.add_to_home_screen_rounded,
                 'Add to Home',
+                dividerAbove: shortcuts.isNotEmpty,
               )
-            : const _MenuOption(
+            : _MenuOption(
                 'remove',
                 Icons.remove_circle_outline_rounded,
                 'Remove',
+                dividerAbove: shortcuts.isNotEmpty,
               ),
-      const _MenuOption('tags', Icons.sell_outlined, 'Tags'),
+      _MenuOption(
+        'tags',
+        Icons.sell_outlined,
+        'Tags',
+        dividerAbove: shortcuts.isNotEmpty && fromFolder != null,
+      ),
       const _MenuOption('hide', Icons.visibility_off_outlined, 'Hide app'),
       const _MenuOption('info', Icons.info_outline_rounded, 'App info'),
       const _MenuOption('uninstall', Icons.delete_outline_rounded, 'Uninstall'),
@@ -301,6 +366,19 @@ Future<void> showItemMenu(
 
   final choice = await _showOverlayMenu(context, pos, t, entries);
   if (choice == null) return;
+
+  if (choice.startsWith('shortcut:') && item is AppItem) {
+    if (context.mounted) context.read<ShellController>().closeFolder();
+    unawaited(
+      LauncherChannel.instance.startShortcut(
+        item.pkg,
+        choice.substring('shortcut:'.length),
+        from: iconRect,
+        dpr: dpr,
+      ),
+    );
+    return;
+  }
 
   switch (choice) {
     case 'add':
