@@ -10,6 +10,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+### Changed
+
+* AMOLED Black now uses soft dark greys for settings, sheets, menus, folder panels and dialogs instead of pure black; App drawer remains pure black.
+
 ---
 
 ## [0.4.0] - 2026-10-18
