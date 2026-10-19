@@ -35,7 +35,11 @@ class _LaunchRAppState extends State<LaunchRApp> with WidgetsBindingObserver {
       seedColor: lt.accent,
       brightness: lt.brightness,
     ).copyWith(primary: lt.accent, onPrimary: lt.onAccent);
-    if (lt.amoled) scheme = scheme.copyWith(surface: Colors.black);
+    if (lt.amoled)
+      scheme = scheme.copyWith(
+        surface: const Color(0xFF0A0A0A),
+        surfaceContainerHighest: const Color(0xFF121212),
+      );
     return ThemeData(
       useMaterial3: true,
       fontFamily: fontFamily,
