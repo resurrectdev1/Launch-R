@@ -72,12 +72,12 @@ class LaunchRTheme extends ThemeExtension<LaunchRTheme> {
       : popupBg;
 
   Color get menuBg {
-    if (amoled) return const Color(0xFF000000);
+    if (amoled) return const Color(0xFF121212);
     return dark ? const Color(0xFF2B2B31) : const Color(0xFFF7F7FB);
   }
 
   Color get popupBg {
-    if (amoled) return const Color(0xFF0D0D0D);
+    if (amoled) return const Color(0xFF1A1A1A);
     return dark ? const Color(0xF2303036) : const Color(0xF2F5F5F9);
   }
 
