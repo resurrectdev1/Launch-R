@@ -63,6 +63,8 @@ class MainActivity : FlutterActivity() {
     private var pendingBackground: MethodChannel.Result? = null
     private var pendingVoice: MethodChannel.Result? = null
 
+    @Volatile private var pendingPin: LauncherApps.PinItemRequest? = null
+
     @Volatile private var iconPack: IconPack? = null
     @Volatile private var iconPackPkg: String? = null
 
@@ -189,11 +191,36 @@ class MainActivity : FlutterActivity() {
         super.onActivityResult(requestCode, resultCode, data)
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        capturePinRequest(intent)
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        if (capturePinRequest(intent)) {
+            channel?.invokeMethod("onPinRequest", null)
+        }
         if (intent.hasCategory(Intent.CATEGORY_HOME)) {
             channel?.invokeMethod("onHome", null)
         }
+    }
+
+    /** Remembers a "pin this shortcut" request until Dart accepts or rejects it. */
+    private fun capturePinRequest(intent: Intent?): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false
+        if (intent == null || intent.action != LauncherApps.ACTION_CONFIRM_PIN_SHORTCUT) return false
+        val apps = getSystemService(Context.LAUNCHER_APPS_SERVICE) as? LauncherApps ?: return false
+        val req = try {
+            apps.getPinItemRequest(intent)
+        } catch (_: Throwable) {
+            null
+        } ?: return false
+        if (req.requestType != LauncherApps.PinItemRequest.REQUEST_TYPE_SHORTCUT || !req.isValid) {
+            return false
+        }
+        pendingPin = req
+        return true
     }
 
     override fun onDestroy() {
@@ -317,6 +344,63 @@ class MainActivity : FlutterActivity() {
                     ActivityOptions.makeScaleUpAnimation(window.decorView, l, t, w, h).toBundle()
                 } else null
                 result.success(startShortcut(pkg, id, opts))
+            }
+
+            "getPendingPin" -> {
+                val req = pendingPin
+                val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && req?.isValid == true) {
+                    req.shortcutInfo
+                } else null
+                if (info == null) {
+                    pendingPin = null
+                    result.success(null)
+                } else {
+                    result.success(
+                        mapOf(
+                            "package" to info.`package`,
+                            "id" to info.id,
+                            "label" to (info.shortLabel ?: info.longLabel)?.toString().orEmpty(),
+                        )
+                    )
+                }
+            }
+
+            "acceptPin" -> {
+                val req = pendingPin
+                pendingPin = null
+                val ok = try {
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                        req != null && req.isValid && req.accept()
+                } catch (_: Throwable) { false }
+                result.success(ok)
+            }
+
+            "rejectPin" -> {
+                pendingPin = null
+                result.success(null)
+            }
+
+            "unpinShortcut" -> {
+                val pkg = call.argument<String>("package")
+                val id = call.argument<String>("id")
+                if (pkg != null && id != null) {
+                    io.execute { try { unpinShortcut(pkg, id) } catch (_: Throwable) {} }
+                }
+                result.success(null)
+            }
+
+            "getShortcutIcon" -> {
+                val pkg = call.argument<String>("package")
+                val id = call.argument<String>("id")
+                val size = call.argument<Int>("size") ?: 192
+                val shape = call.argument<String>("shape") ?: "squircle"
+                if (pkg == null || id == null) { result.success(null); return }
+                io.execute {
+                    val bytes = try {
+                        renderShortcutIcon(pkg, id, size, shape)
+                    } catch (_: Throwable) { null }
+                    runOnUiThread { result.success(bytes) }
+                }
             }
 
             "openAppInfo" -> {
@@ -819,6 +903,80 @@ class MainActivity : FlutterActivity() {
         } catch (_: Throwable) {
             false
         }
+    }
+
+    /** Stops pinning [id] for [pkg] so Android can clean it up once nothing shows it. */
+    private fun unpinShortcut(pkg: String, id: String) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1) return
+        val apps = getSystemService(Context.LAUNCHER_APPS_SERVICE) as? LauncherApps ?: return
+        val user = Process.myUserHandle()
+        val query = LauncherApps.ShortcutQuery()
+            .setPackage(pkg)
+            .setQueryFlags(LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED)
+        val pinned = try { apps.getShortcuts(query, user) } catch (_: SecurityException) { null } ?: return
+        apps.pinShortcuts(pkg, pinned.map { it.id }.filter { it != id }, user)
+    }
+
+    /**
+     * A pinned shortcut's icon clipped to the user's icon shape, with the owning
+     * app's icon as a small badge in the corner (like the stock launcher does).
+     */
+    private fun renderShortcutIcon(pkg: String, id: String, size: Int, shape: String): ByteArray? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1) return null
+        val apps = getSystemService(Context.LAUNCHER_APPS_SERVICE) as? LauncherApps ?: return null
+        val query = LauncherApps.ShortcutQuery()
+            .setPackage(pkg)
+            .setShortcutIds(listOf(id))
+            .setQueryFlags(
+                LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED or
+                    LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC or
+                    LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST
+            )
+        val found = try {
+            apps.getShortcuts(query, Process.myUserHandle())
+        } catch (_: SecurityException) {
+            null
+        }
+        val info = found?.firstOrNull() ?: return null
+        val drawable = apps.getShortcutIconDrawable(info, resources.displayMetrics.densityDpi)
+            ?: return null
+
+        val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bmp)
+        val s = size.toFloat()
+        val layer = canvas.saveLayer(0f, 0f, s, s, null)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && drawable is AdaptiveIconDrawable) {
+            val pad = (size * 0.25f).toInt()
+            val bounds = Rect(-pad, -pad, size + pad, size + pad)
+            drawable.background?.let { it.bounds = bounds; it.draw(canvas) }
+            drawable.foreground?.let { it.bounds = bounds; it.draw(canvas) }
+        } else {
+            canvas.drawColor(0xFFF2F2F2.toInt())
+            val inset = (size * 0.16f).toInt()
+            drawable.setBounds(inset, inset, size - inset, size - inset)
+            drawable.draw(canvas)
+        }
+        val outside = shapePath(shape, s).apply { fillType = Path.FillType.INVERSE_WINDING }
+        val eraser = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+        }
+        canvas.drawPath(outside, eraser)
+        canvas.restoreToCount(layer)
+
+        try {
+            val badge = (size * 0.4f).toInt()
+            val appBytes = renderIcon(pkg, badge, "circle")
+            val appBmp = BitmapFactory.decodeByteArray(appBytes, 0, appBytes.size)
+            if (appBmp != null) {
+                val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+                val cx = s - badge / 2f
+                canvas.drawCircle(cx, cx, badge / 2f + size * 0.015f, ring)
+                canvas.drawBitmap(appBmp, s - badge, s - badge, Paint(Paint.ANTI_ALIAS_FLAG))
+                appBmp.recycle()
+            }
+        } catch (_: Throwable) {
+        }
+        return encode(bmp)
     }
 
     private fun renderIcon(
