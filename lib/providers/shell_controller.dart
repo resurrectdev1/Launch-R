@@ -35,6 +35,12 @@ class ShellController extends ChangeNotifier {
 
   bool leftFolder = false;
 
+  bool folderPeek = false;
+
+  Rect? _peekOrigin;
+  bool _peekEntered = false;
+  Timer? _peekStray;
+
   bool dragToHome = false;
 
   bool inHomeBand = false;
@@ -100,16 +106,37 @@ class ShellController extends ChangeNotifier {
 
   bool folderClosing = false;
 
-  void openFolder(Zone zone, String fid, {bool rename = false, Rect? from}) {
+  void openFolder(
+    Zone zone,
+    String fid, {
+    bool rename = false,
+    Rect? from,
+    bool peek = false,
+  }) {
     folder = OpenFolder(zone, fid, from: from);
     folderClosing = false;
     renameRequested = rename;
+    _resetPeek();
+    folderPeek = peek;
+    _peekOrigin = peek ? from : null;
+    unawaited(
+      peek ? HapticFeedback.mediumImpact() : HapticFeedback.selectionClick(),
+    );
     notifyListeners();
+  }
+
+  void _resetPeek() {
+    folderPeek = false;
+    _peekOrigin = null;
+    _peekEntered = false;
+    _peekStray?.cancel();
+    _peekStray = null;
   }
 
   void closeFolder() {
     if (folder == null || folderClosing) return;
     folderClosing = true;
+    unawaited(HapticFeedback.selectionClick());
     notifyListeners();
   }
 
@@ -118,7 +145,8 @@ class ShellController extends ChangeNotifier {
     folder = null;
     folderClosing = false;
     renameRequested = false;
-    leftFolder = false;
+    _resetPeek();
+    if (drag == null) leftFolder = false;
     notifyListeners();
   }
 
@@ -158,7 +186,38 @@ class ShellController extends ChangeNotifier {
     _trackHomeBand(d, pos);
   }
 
+  void _trackPeekExit(Offset pos) {
+    if (!folderPeek || folder == null || folderClosing) return;
+    final box = folderPanelKey.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.attached) return;
+    final panel = (box.localToGlobal(Offset.zero) & box.size).inflate(8);
+    if (panel.contains(pos)) {
+      _peekEntered = true;
+      _peekStray?.cancel();
+      _peekStray = null;
+      return;
+    }
+    if (_peekEntered) {
+      closeFolder();
+      return;
+    }
+    final origin = _peekOrigin;
+    if (origin != null && origin.inflate(24).contains(pos)) {
+      _peekStray?.cancel();
+      _peekStray = null;
+    } else {
+      _peekStray ??= Timer(const Duration(milliseconds: 700), () {
+        _peekStray = null;
+        if (folderPeek && !_peekEntered) closeFolder();
+      });
+    }
+  }
+
   void _trackFolderExit(DragData d, Offset pos) {
+    if (folderPeek) {
+      _trackPeekExit(pos);
+      return;
+    }
     if (d.fromFolder == null || leftFolder) return;
     final box = folderPanelKey.currentContext?.findRenderObject();
     if (box is! RenderBox || !box.attached) return;
@@ -207,6 +266,11 @@ class ShellController extends ChangeNotifier {
     drag = null;
     widgetDragPos.value = null;
     leftFolder = false;
+    _peekStray?.cancel();
+    _peekStray = null;
+    folderPeek = false;
+    _peekOrigin = null;
+    _peekEntered = false;
     if (wasOut) {
       folder = null;
       folderClosing = false;
@@ -218,6 +282,7 @@ class ShellController extends ChangeNotifier {
   @override
   void dispose() {
     _dwell?.cancel();
+    _peekStray?.cancel();
     widgetDragPos.dispose();
     searchRequest.dispose();
     drawer.dispose();
