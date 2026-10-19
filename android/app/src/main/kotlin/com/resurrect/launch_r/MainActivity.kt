@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.LauncherApps
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.drawable.ColorDrawable
@@ -27,6 +28,7 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
+import android.os.Process
 import android.speech.RecognizerIntent
 import android.provider.MediaStore
 import android.provider.OpenableColumns
@@ -80,6 +82,7 @@ class MainActivity : FlutterActivity() {
         private const val REQ_RECONFIGURE_WIDGET = 7005
         private const val REQ_VOICE_SEARCH = 7006
         private const val MAX_FONT_BYTES = 25L * 1024 * 1024
+        private const val MAX_SHORTCUTS = 4
     }
 
     private val packageReceiver = object : BroadcastReceiver() {
@@ -282,6 +285,38 @@ class MainActivity : FlutterActivity() {
                 } catch (_: Exception) {
                     result.success(false)
                 }
+            }
+
+            "getShortcuts" -> {
+                val pkg = call.argument<String>("package")
+                val size = call.argument<Int>("size") ?: 96
+                if (pkg == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1) {
+                    result.success(emptyList<Map<String, Any?>>())
+                    return
+                }
+                io.execute {
+                    val out = try {
+                        queryShortcuts(pkg, size)
+                    } catch (_: Throwable) { emptyList() }
+                    runOnUiThread { result.success(out) }
+                }
+            }
+
+            "startShortcut" -> {
+                val pkg = call.argument<String>("package")
+                val id = call.argument<String>("id")
+                if (pkg == null || id == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1) {
+                    result.success(false)
+                    return
+                }
+                val l = call.argument<Int>("left")
+                val t = call.argument<Int>("top")
+                val w = call.argument<Int>("width")
+                val h = call.argument<Int>("height")
+                val opts = if (l != null && t != null && w != null && h != null) {
+                    ActivityOptions.makeScaleUpAnimation(window.decorView, l, t, w, h).toBundle()
+                } else null
+                result.success(startShortcut(pkg, id, opts))
             }
 
             "openAppInfo" -> {
@@ -734,6 +769,55 @@ class MainActivity : FlutterActivity() {
         } else {
             try { widgetHost.deleteAppWidgetId(p.id) } catch (_: Exception) {}
             p.result.success(null)
+        }
+    }
+
+    /**
+     * Static + dynamic shortcuts an app publishes (the entries you get when you
+     * long-press an icon in other launchers). Android only hands these to the
+     * current default home app, so this returns an empty list otherwise.
+     */
+    private fun queryShortcuts(pkg: String, size: Int): List<Map<String, Any?>> {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1) return emptyList()
+        val apps = getSystemService(Context.LAUNCHER_APPS_SERVICE) as? LauncherApps
+            ?: return emptyList()
+        val query = LauncherApps.ShortcutQuery()
+            .setPackage(pkg)
+            .setQueryFlags(
+                LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC or
+                    LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST
+            )
+        val user = Process.myUserHandle()
+        val found = try {
+            apps.getShortcuts(query, user)
+        } catch (_: SecurityException) {
+            null
+        } ?: return emptyList()
+
+        val dpi = resources.displayMetrics.densityDpi
+        return found
+            .filter { it.isEnabled }
+            .sortedBy { it.rank }
+            .take(MAX_SHORTCUTS)
+            .map { info ->
+                val label = (info.shortLabel ?: info.longLabel)?.toString().orEmpty()
+                val icon = try {
+                    apps.getShortcutIconDrawable(info, dpi)?.let { encode(toBitmap(it, size)) }
+                } catch (_: Throwable) { null }
+                mapOf("id" to info.id, "label" to label, "icon" to icon)
+            }
+            .filter { (it["label"] as String).isNotEmpty() }
+    }
+
+    private fun startShortcut(pkg: String, id: String, opts: Bundle?): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1) return false
+        return try {
+            val apps = getSystemService(Context.LAUNCHER_APPS_SERVICE) as? LauncherApps
+                ?: return false
+            apps.startShortcut(pkg, id, null, opts, Process.myUserHandle())
+            true
+        } catch (_: Throwable) {
+            false
         }
     }
 
