@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
@@ -17,8 +18,20 @@ import 'package:launch_r/widgets/item_actions.dart';
 import 'package:launch_r/widgets/keep_alive.dart';
 import 'package:launch_r/widgets/launcher_cell.dart';
 import 'package:launch_r/widgets/page_dots.dart';
+import 'package:launch_r/widgets/page_haptics.dart';
+import 'package:launch_r/widgets/press_scale.dart';
 
 const _panelRadius = 58.0;
+
+bool _folderAccepts(ShellController s, DragData d, String fid) {
+  if (d.fromFolder == fid) return true;
+  return s.folderPeek &&
+      !s.folderClosing &&
+      s.folder?.fid == fid &&
+      d.item is AppItem &&
+      d.fromFolder == null &&
+      d.zone == Zone.drawer;
+}
 
 class FolderPopup extends StatefulWidget {
   const FolderPopup({super.key});
@@ -127,7 +140,7 @@ class _FolderPopupState extends State<FolderPopup>
     final hidden = shell.leftFolder;
     return Positioned.fill(
       child: IgnorePointer(
-        ignoring: hidden,
+        ignoring: hidden || (shell.folderPeek && shell.folderClosing),
         child: AnimatedOpacity(
           opacity: hidden ? 0 : 1,
           duration: Motion.fast,
@@ -177,6 +190,7 @@ class _FolderPopupState extends State<FolderPopup>
                     );
                   },
                   child: _PanelDecor(
+                    zone: open.zone,
                     shellKey: shell.folderPanelKey,
                     t: _t,
                     s0: s0,
@@ -207,6 +221,7 @@ class _FolderPopupState extends State<FolderPopup>
 
 class _PanelDecor extends StatelessWidget {
   const _PanelDecor({
+    required this.zone,
     required this.shellKey,
     required this.t,
     required this.s0,
@@ -217,6 +232,7 @@ class _PanelDecor extends StatelessWidget {
     required this.child,
   });
 
+  final Zone zone;
   final GlobalKey shellKey;
   final Animation<double> t;
   final double s0;
@@ -228,30 +244,42 @@ class _PanelDecor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DragTarget<DragData>(
-      onWillAcceptWithDetails: (d) => d.data.fromFolder == folderFid,
-      onAcceptWithDetails: (_) {},
-      builder: (context, _, _) => AnimatedBuilder(
-        animation: t,
-        builder: (context, child) {
-          final v = t.value;
-          final k = v.clamp(0.0, 1.0);
-          final scale = math.max(0.05, s0 + (1 - s0) * v);
-          final rendered = iconRadius + (_panelRadius - iconRadius) * k;
-          return Container(
-            key: shellKey,
-            width: width,
-            padding: const EdgeInsets.fromLTRB(12, 18, 12, 10),
-            decoration: ShapeDecoration(
-              color: color,
-              shape: ContinuousRectangleBorder(
-                borderRadius: BorderRadius.circular(rendered / scale),
-              ),
-            ),
-            child: child,
-          );
+    final shell = context.read<ShellController>();
+    final model = context.read<LauncherModel>();
+    return TweenAnimationBuilder<Color?>(
+      tween: ColorTween(end: color),
+      duration: Motion.base,
+      curve: Motion.standard,
+      builder: (context, tinted, _) => DragTarget<DragData>(
+        onWillAcceptWithDetails: (d) =>
+            _folderAccepts(shell, d.data, folderFid),
+        onAcceptWithDetails: (d) {
+          if (d.data.fromFolder == folderFid) return;
+          shell.markDropped(null, d.data.item.id);
+          model.dropIntoFolder(zone, folderFid, d.data);
         },
-        child: child,
+        builder: (context, _, _) => AnimatedBuilder(
+          animation: t,
+          builder: (context, child) {
+            final v = t.value;
+            final k = v.clamp(0.0, 1.0);
+            final scale = math.max(0.05, s0 + (1 - s0) * v);
+            final rendered = iconRadius + (_panelRadius - iconRadius) * k;
+            return Container(
+              key: shellKey,
+              width: width,
+              padding: const EdgeInsets.fromLTRB(12, 18, 12, 10),
+              decoration: ShapeDecoration(
+                color: tinted ?? color,
+                shape: ContinuousRectangleBorder(
+                  borderRadius: BorderRadius.circular(rendered / scale),
+                ),
+              ),
+              child: child,
+            );
+          },
+          child: child,
+        ),
       ),
     );
   }
@@ -308,6 +336,7 @@ class _FolderPageState extends State<_FolderPage> {
     final cur = _pages.page?.round() ?? 0;
     final next = cur + delta;
     if (next < 0 || next >= _pageCount) return;
+    unawaited(HapticFeedback.selectionClick());
     unawaited(
       _pages.animateToPage(next, duration: Motion.slow, curve: Motion.standard),
     );
@@ -332,9 +361,17 @@ class _FolderPageState extends State<_FolderPage> {
     final pkgs = widget.folder.pkgs;
     final pageCount = math.max(1, (pkgs.length / _perPage).ceil());
     _pageCount = pageCount;
+    final peeking = context.select<ShellController, bool>(
+      (s) =>
+          s.folderPeek &&
+          s.drag != null &&
+          !s.folderClosing &&
+          s.folder?.fid == widget.folder.fid,
+    );
+    final slots = pkgs.length + (peeking && pkgs.length < _perPage ? 1 : 0);
     final rows = math.min(
       4,
-      math.max(1, (math.min(pkgs.length, _perPage) / _cols).ceil()),
+      math.max(1, (math.min(slots, _perPage) / _cols).ceil()),
     );
     final tint = widget.folder.color;
     final darkText = context.read<LauncherSettings>().darkHomeText;
@@ -355,139 +392,190 @@ class _FolderPageState extends State<_FolderPage> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          children: [
-            const SizedBox(width: 40),
-            Expanded(
-              child: TextField(
-                controller: _title,
-                autofocus: widget.autofocusTitle,
-                textAlign: TextAlign.center,
-                maxLength: 24,
-                style: TextStyle(
-                  color: fg,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w600,
+        _RevealFade(
+          reveal: widget.reveal,
+          child: Row(
+            children: [
+              const SizedBox(width: 40),
+              Expanded(
+                child: TextField(
+                  controller: _title,
+                  autofocus: widget.autofocusTitle,
+                  textAlign: TextAlign.center,
+                  maxLength: 24,
+                  style: TextStyle(
+                    color: fg,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  cursorColor: tint == null ? t.accent : fg,
+                  decoration: InputDecoration(
+                    counterText: '',
+                    isCollapsed: true,
+                    border: InputBorder.none,
+                    hintText: 'Folder name',
+                    hintStyle: TextStyle(color: fgMuted),
+                  ),
+                  onSubmitted: (_) => _commit(),
+                  onTapOutside: (_) {
+                    _commit();
+                    FocusManager.instance.primaryFocus?.unfocus();
+                  },
                 ),
-                cursorColor: tint == null ? t.accent : fg,
-                decoration: InputDecoration(
-                  counterText: '',
-                  isCollapsed: true,
-                  border: InputBorder.none,
-                  hintText: 'Folder name',
-                  hintStyle: TextStyle(color: fgMuted),
-                ),
-                onSubmitted: (_) => _commit(),
-                onTapOutside: (_) {
-                  _commit();
-                  FocusManager.instance.primaryFocus?.unfocus();
-                },
               ),
-            ),
-            Semantics(
-              button: true,
-              label: 'Folder color',
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  _commit();
-                  FocusManager.instance.primaryFocus?.unfocus();
-                  showFolderColorPicker(
-                    context,
-                    widget.zone,
-                    widget.folder.fid,
-                  );
-                },
-                child: SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Center(
-                    child: Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: tint != null ? Color(tint) : t.folderBgDrawer,
-                        border: Border.all(color: fgMuted, width: 1.5),
+              Semantics(
+                button: true,
+                label: 'Folder color',
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    unawaited(HapticFeedback.selectionClick());
+                    _commit();
+                    FocusManager.instance.primaryFocus?.unfocus();
+                    showFolderColorPicker(
+                      context,
+                      widget.zone,
+                      widget.folder.fid,
+                    );
+                  },
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Center(
+                      child: PressScale(
+                        child: AnimatedContainer(
+                          duration: Motion.base,
+                          curve: Motion.standard,
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: tint != null
+                                ? Color(tint)
+                                : t.folderBgDrawer,
+                            border: Border.all(color: fgMuted, width: 1.5),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: rows * _cellH,
-          child: Stack(
-            children: [
-              PageView.builder(
-                controller: _pages,
-                itemCount: pageCount,
-                itemBuilder: (context, p) {
-                  final slice = pkgs.skip(p * _perPage).take(_perPage).toList();
-                  return PageKeepAlive(
-                    child: Column(
-                      children: [
-                        for (var r = 0; r < rows; r++)
-                          SizedBox(
-                            height: _cellH,
-                            child: Row(
-                              children: [
-                                for (var c = 0; c < _cols; c++)
-                                  SizedBox(
-                                    width: cellW,
-                                    child: r * _cols + c < slice.length
-                                        ? _PopupCell(
-                                            key: ValueKey(slice[r * _cols + c]),
-                                            pkg: slice[r * _cols + c],
-                                            index: r * _cols + c,
-                                            zone: widget.zone,
-                                            fid: widget.folder.fid,
-                                            width: cellW,
-                                            style: style,
-                                            reveal: widget.reveal,
-                                            dot: c < _cols - 1 && r < rows - 1,
-                                          )
-                                        : _EndSlot(
-                                            zone: widget.zone,
-                                            fid: widget.folder.fid,
-                                            fg: style.label,
-                                            dot: c < _cols - 1 && r < rows - 1,
-                                          ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              if (pageCount > 1)
-                Positioned.fill(
-                  child: EdgeFlipper(
-                    onPrev: () => _flip(-1),
-                    onNext: () => _flip(1),
-                  ),
-                ),
             ],
           ),
         ),
+        const SizedBox(height: 12),
+        AnimatedSize(
+          duration: Motion.base,
+          curve: Motion.standard,
+          alignment: Alignment.topCenter,
+          child: SizedBox(
+            height: rows * _cellH,
+            child: Stack(
+              children: [
+                PageHaptics(
+                  child: PageView.builder(
+                    controller: _pages,
+                    itemCount: pageCount,
+                    itemBuilder: (context, p) {
+                      final slice = pkgs
+                          .skip(p * _perPage)
+                          .take(_perPage)
+                          .toList();
+                      return PageKeepAlive(
+                        child: Column(
+                          children: [
+                            for (var r = 0; r < rows; r++)
+                              SizedBox(
+                                height: _cellH,
+                                child: Row(
+                                  children: [
+                                    for (var c = 0; c < _cols; c++)
+                                      SizedBox(
+                                        width: cellW,
+                                        child: r * _cols + c < slice.length
+                                            ? _PopupCell(
+                                                key: ValueKey(
+                                                  slice[r * _cols + c],
+                                                ),
+                                                pkg: slice[r * _cols + c],
+                                                index: r * _cols + c,
+                                                zone: widget.zone,
+                                                fid: widget.folder.fid,
+                                                width: cellW,
+                                                style: style,
+                                                reveal: widget.reveal,
+                                                dot:
+                                                    c < _cols - 1 &&
+                                                    r < rows - 1,
+                                              )
+                                            : _EndSlot(
+                                                zone: widget.zone,
+                                                fid: widget.folder.fid,
+                                                fg: style.label,
+                                                dot:
+                                                    c < _cols - 1 &&
+                                                    r < rows - 1,
+                                              ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                if (pageCount > 1)
+                  Positioned.fill(
+                    child: EdgeFlipper(
+                      onPrev: () => _flip(-1),
+                      onNext: () => _flip(1),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
         if (pageCount > 1)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: PageDots(controller: _pages, count: pageCount, color: fg),
+          _RevealFade(
+            reveal: widget.reveal,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: PageDots(controller: _pages, count: pageCount, color: fg),
+            ),
           ),
       ],
     );
   }
 }
 
+class _RevealFade extends StatelessWidget {
+  const _RevealFade({required this.reveal, required this.child});
+
+  final Animation<double> reveal;
+  final Widget child;
+
+  static const _curve = Interval(0.15, 0.7, curve: Curves.easeOut);
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: reveal,
+      child: child,
+      builder: (context, child) => Opacity(
+        opacity: _curve.transform(reveal.value.clamp(0.0, 1.0)),
+        child: child,
+      ),
+    );
+  }
+}
+
 bool _folderGridOn(ShellController s, String fid) {
   final d = s.drag;
-  return d != null && d.fromFolder == fid && !s.leftFolder;
+  if (d == null || s.leftFolder) return false;
+  return d.fromFolder == fid || _folderAccepts(s, d, fid);
 }
 
 class _SlotGuide extends StatelessWidget {
@@ -559,14 +647,25 @@ class _EndSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final model = context.read<LauncherModel>();
+    final shell = context.read<ShellController>();
     final gridOn = context.select<ShellController, bool>(
       (s) => _folderGridOn(s, fid),
     );
     return DragTarget<DragData>(
-      onWillAcceptWithDetails: (d) => d.data.fromFolder == fid,
+      onWillAcceptWithDetails: (d) {
+        final ok = _folderAccepts(shell, d.data, fid);
+        if (ok) unawaited(HapticFeedback.selectionClick());
+        return ok;
+      },
       onAcceptWithDetails: (d) {
         final dragged = d.data.item;
-        if (dragged is AppItem) model.moveToEndInFolder(zone, fid, dragged.pkg);
+        if (dragged is! AppItem) return;
+        if (d.data.fromFolder == fid) {
+          model.moveToEndInFolder(zone, fid, dragged.pkg);
+        } else {
+          shell.markDropped(null, dragged.id);
+          model.dropIntoFolder(zone, fid, d.data);
+        }
       },
       builder: (context, candidate, _) => Stack(
         clipBehavior: Clip.none,
@@ -611,6 +710,16 @@ class _PopupCell extends StatefulWidget {
 
 class _PopupCellState extends State<_PopupCell> {
   Hover _hover = Hover.none;
+  bool _pop = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _pop = context.read<ShellController>().takeDropped(
+      null,
+      AppItem(widget.pkg).id,
+    );
+  }
 
   Hover _side(Offset global) {
     final box = context.findRenderObject();
@@ -620,12 +729,15 @@ class _PopupCellState extends State<_PopupCell> {
   }
 
   void _setHover(Hover h) {
-    if (h != _hover && mounted) setState(() => _hover = h);
+    if (h == _hover || !mounted) return;
+    if (h != Hover.none) unawaited(HapticFeedback.selectionClick());
+    setState(() => _hover = h);
   }
 
   @override
   Widget build(BuildContext context) {
     final model = context.watch<LauncherModel>();
+    final shell = context.read<ShellController>();
     final locked = context.watch<LauncherSettings>().lockLayout;
     final accent = LaunchRTheme.of(context).accent;
     final gridOn = context.select<ShellController, bool>(
@@ -644,19 +756,36 @@ class _PopupCellState extends State<_PopupCell> {
 
     final cell = DragTarget<DragData>(
       onWillAcceptWithDetails: (d) =>
-          d.data.fromFolder == widget.fid && d.data.item.id != item.id,
-      onMove: (d) => _setHover(_side(d.offset)),
+          _folderAccepts(shell, d.data, widget.fid) &&
+          d.data.item.id != item.id,
+      onMove: (d) {
+        if (!_folderAccepts(shell, d.data, widget.fid) ||
+            d.data.item.id == item.id) {
+          return;
+        }
+        _setHover(_side(d.offset));
+      },
       onLeave: (_) => _setHover(Hover.none),
       onAcceptWithDetails: (d) {
         final dragged = d.data.item;
         final h = _hover == Hover.none ? _side(d.offset) : _hover;
         _setHover(Hover.none);
-        if (dragged is AppItem) {
+        if (dragged is! AppItem) return;
+        if (d.data.fromFolder == widget.fid) {
           model.insertInFolder(
             widget.zone,
             widget.fid,
             dragged.pkg,
             pkg,
+            after: h == Hover.after,
+          );
+        } else {
+          shell.markDropped(null, dragged.id);
+          model.dropIntoFolder(
+            widget.zone,
+            widget.fid,
+            d.data,
+            targetPkg: pkg,
             after: h == Hover.after,
           );
         }
@@ -724,9 +853,19 @@ class _PopupCellState extends State<_PopupCell> {
 
     final start = (0.22 + 0.025 * widget.index).clamp(0.0, 0.7);
     final stagger = Interval(start, 1, curve: Motion.standard);
+    final popped = !_pop
+        ? cell
+        : TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0.78, end: 1),
+            duration: Motion.emphasized,
+            curve: Motion.emphasizedCurve,
+            child: cell,
+            builder: (context, sc, child) =>
+                Transform.scale(scale: sc, child: child),
+          );
     return AnimatedBuilder(
       animation: widget.reveal,
-      child: cell,
+      child: popped,
       builder: (context, child) {
         final p = stagger.transform(widget.reveal.value.clamp(0.0, 1.0));
         if (p >= 1) return child!;
