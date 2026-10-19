@@ -16,6 +16,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * Haptics for folders: a tick when a folder opens or closes, when you swipe or edge-flip between its pages, when you hover between apps while rearranging, and when you pick a folder color.
 * Folder polish: the title and color dot fade in, the panel and color dot fade smoothly between colors, color swatches press in, apps dropped into a folder pop in with a short spring, and the panel resizes smoothly instead of jumping.
 * Info sheet at bottom of settings sheet.
+* App shortcuts: long-press an app to see its shortcuts (like Camera -> “Take selfie”) at the top of the menu. Only shows when Launch-R is your default launcher.
 
 ### Changed
 
