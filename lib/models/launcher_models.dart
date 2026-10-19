@@ -102,6 +102,18 @@ sealed class LItem {
             canV: raw['v'] != false,
           );
         }
+      case 's':
+        final sid = raw['id'];
+        final p = raw['p'];
+        final k = raw['k'];
+        if (sid is String && p is String && k is String) {
+          return ShortcutItem(
+            sid: sid,
+            pkg: p,
+            shortcutId: k,
+            label: raw['n'] is String ? raw['n'] as String : 'Shortcut',
+          );
+        }
       case 'f':
         final id = raw['id'];
         final n = raw['n'];
@@ -129,6 +141,48 @@ class AppItem extends LItem {
 
   @override
   Map<String, dynamic> toJson() => {'t': 'a', 'p': pkg};
+}
+
+class ShortcutItem extends LItem {
+  final String sid;
+  final String pkg;
+  final String shortcutId;
+  final String label;
+  const ShortcutItem({
+    required this.sid,
+    required this.pkg,
+    required this.shortcutId,
+    required this.label,
+  });
+
+  @override
+  String get id => 's:$sid';
+
+  @override
+  Map<String, dynamic> toJson() => {
+    't': 's',
+    'id': sid,
+    'p': pkg,
+    'k': shortcutId,
+    'n': label,
+  };
+}
+
+class PinRequest {
+  final String package;
+  final String id;
+  final String label;
+  const PinRequest({
+    required this.package,
+    required this.id,
+    required this.label,
+  });
+
+  factory PinRequest.fromMap(Map<dynamic, dynamic> m) => PinRequest(
+    package: m['package'] as String,
+    id: m['id'] as String,
+    label: (m['label'] as String?) ?? '',
+  );
 }
 
 class FolderItem extends LItem {
