@@ -124,13 +124,40 @@ class _LauncherCellState extends State<LauncherCell> {
   }
 
   static const _mergeDwell = Duration(milliseconds: 160);
+
+  static const _openDwell = Duration(milliseconds: 450);
   Timer? _dwell;
+  Timer? _openTimer;
   bool _mergeArmed = false;
 
   void _resetDwell() {
     _dwell?.cancel();
     _dwell = null;
+    _openTimer?.cancel();
+    _openTimer = null;
     _mergeArmed = false;
+  }
+
+  void _armOpen(DragData d) {
+    final item = widget.item;
+    if (widget.zone != Zone.drawer ||
+        item is! FolderItem ||
+        d.item is! AppItem ||
+        d.fromFolder != null) {
+      return;
+    }
+    _openTimer ??= Timer(_openDwell, () {
+      _openTimer = null;
+      if (!mounted || _hover != Hover.merge) return;
+      final shell = context.read<ShellController>();
+      if (shell.folder != null || shell.drag == null) return;
+      Rect? from;
+      final box = context.findRenderObject();
+      if (box is RenderBox && box.attached) {
+        from = box.localToGlobal(Offset.zero) & box.size;
+      }
+      shell.openFolder(Zone.drawer, item.fid, from: from, peek: true);
+    });
   }
 
   void _onMove(DragData d, Offset pos) {
@@ -143,6 +170,7 @@ class _LauncherCellState extends State<LauncherCell> {
         _mergeArmed = true;
         unawaited(HapticFeedback.selectionClick());
         _setHover(Hover.merge);
+        _armOpen(d);
       });
       return;
     }
@@ -176,6 +204,7 @@ class _LauncherCellState extends State<LauncherCell> {
   @override
   void dispose() {
     _dwell?.cancel();
+    _openTimer?.cancel();
     super.dispose();
   }
 
