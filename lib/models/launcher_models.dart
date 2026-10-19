@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 enum Zone { home, dock, drawer }
 
 enum DropOutcome { done, alreadyOnHome, rejected, noRoom }
@@ -38,6 +40,19 @@ class LauncherApp {
 
   factory LauncherApp.fromMap(Map<dynamic, dynamic> m) =>
       LauncherApp(package: m['package'] as String, label: m['label'] as String);
+}
+
+class AppShortcut {
+  final String id;
+  final String label;
+  final Uint8List? icon;
+  const AppShortcut({required this.id, required this.label, this.icon});
+
+  factory AppShortcut.fromMap(Map<dynamic, dynamic> m) => AppShortcut(
+    id: m['id'] as String,
+    label: m['label'] as String,
+    icon: m['icon'] as Uint8List?,
+  );
 }
 
 class IconPackInfo {
