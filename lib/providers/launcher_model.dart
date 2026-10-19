@@ -1170,6 +1170,37 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     _commit();
   }
 
+  void dropIntoFolder(
+    Zone z,
+    String fid,
+    DragData d, {
+    String? targetPkg,
+    bool after = true,
+  }) {
+    if (d.item is! AppItem || d.fromFolder == fid) return;
+    final pkg = (d.item as AppItem).pkg;
+    final before = _findRoot(z, 'f:$fid')?.item;
+    if (before is! FolderItem || before.pkgs.contains(pkg)) return;
+    final moved = _detach(d);
+    if (moved is! AppItem) return;
+    final loc = _findRoot(z, 'f:$fid');
+    final f = loc?.item;
+    if (loc == null || f is! FolderItem) {
+      _drawer.add(moved);
+      _commit();
+      return;
+    }
+    final pk = [...f.pkgs];
+    final at = targetPkg == null ? -1 : pk.indexOf(targetPkg);
+    if (at < 0) {
+      pk.add(pkg);
+    } else {
+      pk.insert(after ? at + 1 : at, pkg);
+    }
+    loc.list[loc.index] = f.copyWith(pkgs: pk);
+    _commit();
+  }
+
   void dissolveFolder(Zone z, String fid) {
     final loc = _findRoot(z, 'f:$fid');
     final f = loc?.item;
