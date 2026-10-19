@@ -9,9 +9,16 @@ import 'package:launch_r/theme/icon_shapes.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 
 class AppIconImage extends StatefulWidget {
-  const AppIconImage({super.key, required this.pkg, required this.size});
+  const AppIconImage({
+    super.key,
+    required this.pkg,
+    required this.size,
+    this.shortcutId,
+  });
   final String pkg;
   final double size;
+
+  final String? shortcutId;
 
   @override
   State<AppIconImage> createState() => _AppIconImageState();
@@ -30,19 +37,24 @@ class _AppIconImageState extends State<AppIconImage> {
   @override
   void didUpdateWidget(AppIconImage old) {
     super.didUpdateWidget(old);
-    if (old.pkg != widget.pkg) _resolve();
+    if (old.pkg != widget.pkg || old.shortcutId != widget.shortcutId) {
+      _resolve();
+    }
   }
 
   void _resolve() {
-    final pkg = widget.pkg;
-    _bytes = IconCache.instance.peek(pkg);
+    _bytes = IconCache.instance.peek(widget.pkg, shortcutId: widget.shortcutId);
     if (_bytes == null) _fetch();
   }
 
   void _fetch() {
     final pkg = widget.pkg;
-    IconCache.instance.load(pkg).then((b) {
-      if (mounted && b != null && widget.pkg == pkg) {
+    final sc = widget.shortcutId;
+    IconCache.instance.load(pkg, shortcutId: sc).then((b) {
+      if (mounted &&
+          b != null &&
+          widget.pkg == pkg &&
+          widget.shortcutId == sc) {
         setState(() => _bytes = b);
       }
     });
@@ -52,7 +64,10 @@ class _AppIconImageState extends State<AppIconImage> {
   Widget build(BuildContext context) {
     final rev = context.select<LauncherModel, int>((m) => m.iconRevision);
     if (_rev != null && _rev != rev) {
-      final cached = IconCache.instance.peek(widget.pkg);
+      final cached = IconCache.instance.peek(
+        widget.pkg,
+        shortcutId: widget.shortcutId,
+      );
       if (cached != null) {
         _bytes = cached;
       } else {
@@ -222,6 +237,11 @@ class ItemVisual extends StatelessWidget {
   Widget build(BuildContext context) {
     final glyph = switch (item) {
       AppItem(:final pkg) => AppIconImage(pkg: pkg, size: iconSize),
+      ShortcutItem(:final pkg, :final shortcutId) => AppIconImage(
+        pkg: pkg,
+        shortcutId: shortcutId,
+        size: iconSize,
+      ),
       FolderItem(:final pkgs, :final color) => FolderGlyph(
         pkgs: pkgs,
         size: iconSize,
