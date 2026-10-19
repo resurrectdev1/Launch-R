@@ -40,6 +40,21 @@ void openItem(BuildContext context, LItem item, Zone zone) {
         from = box.localToGlobal(Offset.zero) & box.size;
       }
       context.read<ShellController>().openFolder(zone, fid, from: from);
+    case ShortcutItem(:final pkg, :final shortcutId):
+      Rect? from;
+      final box = context.findRenderObject();
+      if (box is RenderBox && box.attached) {
+        from = box.localToGlobal(Offset.zero) & box.size;
+      }
+      context.read<ShellController>().closeFolder();
+      unawaited(
+        LauncherChannel.instance.startShortcut(
+          pkg,
+          shortcutId,
+          from: from,
+          dpr: MediaQuery.devicePixelRatioOf(context),
+        ),
+      );
     case WidgetItem() || WidgetCover():
       break;
   }
@@ -337,6 +352,12 @@ Future<void> showItemMenu(
       const _MenuOption('info', Icons.info_outline_rounded, 'App info'),
       const _MenuOption('uninstall', Icons.delete_outline_rounded, 'Uninstall'),
     ],
+    if (item is ShortcutItem)
+      const _MenuOption(
+        'remove',
+        Icons.remove_circle_outline_rounded,
+        'Remove',
+      ),
     if (item is FolderItem) ...[
       const _MenuOption('rename', Icons.edit_outlined, 'Rename'),
       const _MenuOption('color', Icons.palette_outlined, 'Color'),
