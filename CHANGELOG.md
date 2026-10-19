@@ -15,7 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * Hover an app over a folder in the app drawer for a moment and the folder opens as if the app were already in it. Drop it on a spot to place it there, or drop it anywhere on the panel to add it to the end. Move away and the folder closes again.
 * Haptics for folders: a tick when a folder opens or closes, when you swipe or edge-flip between its pages, when you hover between apps while rearranging, and when you pick a folder color.
 * Folder polish: the title and color dot fade in, the panel and color dot fade smoothly between colors, color swatches press in, apps dropped into a folder pop in with a short spring, and the panel resizes smoothly instead of jumping.
-* Info sheet (to be done
+* Info sheet at bottom of settings sheet.
 
 ### Changed
 
