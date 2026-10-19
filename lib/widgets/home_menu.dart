@@ -372,6 +372,11 @@ class _PagePreview extends StatelessWidget {
   static Widget _mini(LItem? it, double s) => switch (it) {
     null => const SizedBox.shrink(),
     AppItem(:final pkg) => AppIconImage(pkg: pkg, size: s),
+    ShortcutItem(:final pkg, :final shortcutId) => AppIconImage(
+      pkg: pkg,
+      shortcutId: shortcutId,
+      size: s,
+    ),
     FolderItem(:final pkgs, :final color) => FolderGlyph(
       pkgs: pkgs,
       size: s,
