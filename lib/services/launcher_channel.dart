@@ -106,6 +106,33 @@ class LauncherChannel {
         false;
   }
 
+  Future<List<AppShortcut>> getShortcuts(String pkg, {int size = 96}) async {
+    final r = await _safe(
+      () => _ch.invokeListMethod<Map>('getShortcuts', {
+        'package': pkg,
+        'size': size,
+      }),
+    );
+    return r?.map(AppShortcut.fromMap).toList() ?? [];
+  }
+
+  Future<bool> startShortcut(
+    String pkg,
+    String id, {
+    Rect? from,
+    double dpr = 1,
+  }) async {
+    final args = <String, dynamic>{'package': pkg, 'id': id};
+    if (from != null) {
+      args['left'] = (from.left * dpr).round();
+      args['top'] = (from.top * dpr).round();
+      args['width'] = (from.width * dpr).round();
+      args['height'] = (from.height * dpr).round();
+    }
+    return await _safe(() => _ch.invokeMethod<bool>('startShortcut', args)) ??
+        false;
+  }
+
   Future<void> openAppInfo(String pkg) =>
       _safe(() => _ch.invokeMethod<void>('openAppInfo', {'package': pkg}));
 
