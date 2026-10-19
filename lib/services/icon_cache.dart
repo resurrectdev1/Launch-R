@@ -17,26 +17,37 @@ class IconCache {
 
   int get count => _bytes.length;
 
-  Uint8List? peek(String pkg) => _bytes[pkg];
+  static const _scPrefix = '\u0001';
+  static String _scKey(String pkg, String id) => '$_scPrefix$pkg/$id';
 
-  Future<Uint8List?> load(String pkg) {
-    final hit = _bytes[pkg];
+  Uint8List? peek(String pkg, {String? shortcutId}) =>
+      _bytes[shortcutId == null ? pkg : _scKey(pkg, shortcutId)];
+
+  Future<Uint8List?> load(String pkg, {String? shortcutId}) {
+    final key = shortcutId == null ? pkg : _scKey(pkg, shortcutId);
+    final hit = _bytes[key];
     if (hit != null) return Future.value(hit);
-    return _pending.putIfAbsent(pkg, () async {
+    return _pending.putIfAbsent(key, () async {
       final gen = _gen;
-      final b = await LauncherChannel.instance.getIcon(
-        pkg,
-        shape: shape,
-        themed: themed,
-      );
+      final b = shortcutId == null
+          ? await LauncherChannel.instance.getIcon(
+              pkg,
+              shape: shape,
+              themed: themed,
+            )
+          : await LauncherChannel.instance.getShortcutIcon(
+              pkg,
+              shortcutId,
+              shape: shape,
+            );
       if (gen != _gen) {
-        return load(pkg);
+        return load(pkg, shortcutId: shortcutId);
       }
-      unawaited(_pending.remove(pkg));
+      unawaited(_pending.remove(key));
       if (b != null) {
-        _bytes[pkg] = b;
+        _bytes[key] = b;
       } else {
-        debugPrint('Launch-R: icon failed for $pkg');
+        debugPrint('Launch-R: icon failed for $key');
       }
       return b;
     });
@@ -51,5 +62,8 @@ class IconCache {
   void invalidate(String pkg) {
     _bytes.remove(pkg);
     _pending.remove(pkg);
+    final prefix = '$_scPrefix$pkg/';
+    _bytes.removeWhere((k, _) => k.startsWith(prefix));
+    _pending.removeWhere((k, _) => k.startsWith(prefix));
   }
 }
