@@ -87,6 +87,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     AppItem(:final pkg) => _apps[pkg]?.label ?? pkg,
     FolderItem(:final name) => name,
     WidgetItem(:final label) => label,
+    ShortcutItem(:final label) => label,
     WidgetCover() => '',
   };
 
@@ -96,7 +97,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
       0,
       (sum, p) => sum + (_badges[p] ?? 0),
     ),
-    WidgetItem() || WidgetCover() => 0,
+    WidgetItem() || ShortcutItem() || WidgetCover() => 0,
   };
 
   FolderItem? folderOf(Zone z, String fid) {
@@ -608,6 +609,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
         case null:
           if (_drawerFree) cleaned.add(null);
         case WidgetItem():
+        case ShortcutItem():
         case WidgetCover():
           if (_drawerFree) cleaned.add(null);
       }
@@ -644,6 +646,8 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
         if (pk.length >= 2) return f.copyWith(pkgs: pk);
         if (pk.length == 1) return AppItem(pk.first);
         return null;
+      case ShortcutItem(:final pkg):
+        return _apps.containsKey(pkg) ? it : null;
       case WidgetItem():
       case WidgetCover():
         return it;
@@ -817,6 +821,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
       case FolderItem(:final pkgs):
         return target == null && pkgs.any((p) => !_homeContains(p));
       case WidgetItem():
+      case ShortcutItem():
       case WidgetCover():
         return false;
     }
@@ -826,7 +831,9 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     final list = z == Zone.dock ? _dock : _home[page];
     final src = d.item;
     final t = list[index];
-    if (t is WidgetItem || t is WidgetCover) return DropOutcome.rejected;
+    if (t is WidgetItem || t is WidgetCover || t is ShortcutItem) {
+      return DropOutcome.rejected;
+    }
 
     if (src is FolderItem) {
       if (t != null) return DropOutcome.rejected;
@@ -879,7 +886,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
       return DropOutcome.done;
     }
 
-    if (d.item is AppItem) {
+    if (d.item is AppItem && (t is AppItem || t is FolderItem)) {
       if (d.fromFolder != null && t is FolderItem && t.fid == d.fromFolder) {
         return DropOutcome.done;
       }
@@ -1034,10 +1041,12 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
 
   bool removeHomePage(int index) {
     if (_home.length <= 1 || index < 0 || index >= _home.length) return false;
-    for (final it in _home[index]) {
-      if (it is WidgetItem) _releaseWidget(it);
-    }
+    final removed = _home[index];
     _home.removeAt(index);
+    for (final it in removed) {
+      if (it is WidgetItem) _releaseWidget(it);
+      if (it is ShortcutItem) _releaseShortcut(it);
+    }
     if (index < _pinnedPages) _pinnedPages--;
     if (index == _defaultPage) {
       _defaultPage = 0;
@@ -1094,6 +1103,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
       _releaseWidget(it);
     } else {
       loc.list[loc.index] = null;
+      if (it is ShortcutItem) _releaseShortcut(it);
     }
     _commit();
   }
@@ -1102,7 +1112,63 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     final it = _detach(d);
     if (it == null) return;
     if (it is WidgetItem) _releaseWidget(it);
+    if (it is ShortcutItem) _releaseShortcut(it);
     _commit();
+  }
+
+  bool _homeHasShortcut(String pkg, String shortcutId) {
+    for (final list in _listsOf(Zone.home)) {
+      for (final it in list) {
+        if (it is ShortcutItem &&
+            it.pkg == pkg &&
+            it.shortcutId == shortcutId) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool get _homeHasRoom =>
+      _home.length < maxHomePages ||
+      _home.any((pg) => pg.any((e) => e == null));
+
+  bool canPinShortcut(PinRequest r) =>
+      _homeHasShortcut(r.package, r.id) || _homeHasRoom;
+
+  bool addShortcutToHome(PinRequest r) {
+    if (_homeHasShortcut(r.package, r.id)) return true;
+    if (!_homeHasRoom) return false;
+    _placeInFirstEmpty(
+      ShortcutItem(
+        sid: _newFid(),
+        pkg: r.package,
+        shortcutId: r.id,
+        label: r.label.isEmpty ? labelForPkg(r.package) : r.label,
+      ),
+    );
+    _commit();
+    return true;
+  }
+
+  Future<({String? label, bool refused})> handlePinRequest() async {
+    final ch = LauncherChannel.instance;
+    final req = await ch.getPendingPin();
+    if (req == null) return (label: null, refused: false);
+    if (!canPinShortcut(req)) {
+      await ch.rejectPin();
+      return (label: null, refused: true);
+    }
+    if (!await ch.acceptPin() || !addShortcutToHome(req)) {
+      return (label: null, refused: true);
+    }
+    final name = req.label.isEmpty ? labelForPkg(req.package) : req.label;
+    return (label: name, refused: false);
+  }
+
+  void _releaseShortcut(ShortcutItem s) {
+    if (_homeHasShortcut(s.pkg, s.shortcutId)) return;
+    unawaited(LauncherChannel.instance.unpinShortcut(s.pkg, s.shortcutId));
   }
 
   void renameFolder(Zone z, String fid, String name) {
