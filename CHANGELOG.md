@@ -10,6 +10,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+---
+
+## [0.4.2] - 2026-10-20
+
 ### Added
 
 * Hover an app over a folder in the app drawer for a moment and the folder opens as if the app were already in it. Drop it on a spot to place it there, or drop it anywhere on the panel to add it to the end. Move away and the folder closes again.
