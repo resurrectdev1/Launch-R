@@ -30,8 +30,11 @@ bool _folderAccepts(ShellController s, DragData d, String fid) {
       s.folder?.fid == fid &&
       d.item is AppItem &&
       d.fromFolder == null &&
-      d.zone == Zone.drawer;
+      _sameSpace(d.zone, s.folder?.zone);
 }
+
+bool _sameSpace(Zone a, Zone? b) =>
+    b != null && (a == Zone.drawer) == (b == Zone.drawer);
 
 class FolderPopup extends StatefulWidget {
   const FolderPopup({super.key});
