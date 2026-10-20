@@ -14,7 +14,11 @@ Tired of the same old ctrl c & ctrl v Android home launchers? So am I and thus I
 
 ### How does it work?
 
-Simply open or set Launch-R as your default home launcher then swipe up to access your app drawer and search bar. If you tap and hold on an app you can drag it to move it around or put it on top of another app to maker a folder. Then inside the app drawer in the top right you will find three dots if you clicking on it will open up a menu of actions, clicking on launcher settings will bring you into the settings allowing you to customize numerous features in the app like the color, font, even icon shapes & much much more.
+1. Open **Launch-R**, or set it as your default home launcher.
+2. Swipe up to open the app drawer and search bar.
+3. Tap and hold an app to drag it around. Drop it on top of another app to make a folder.
+4. Tap the three dots in the top right of the app drawer to open the actions menu.
+5. Tap **Launcher settings** to customize the color, font, icon shapes & much much more.
 
 ### Features
 
@@ -34,9 +38,15 @@ Simply open or set Launch-R as your default home launcher then swipe up to acces
 
 🔤 **Fonts & Text:** Pick a built-in font or load your own custom font, scale text size to your liking and turn on bold text.
 
-🙈 **Hide Apps:** Keep apps out of sight and manage them anytime from launcher settings.
+🙈 **Hide Apps:** Keep apps out of sight, and start a search with `/` to find them anyway.
 
 🔔 **Icon Badges:** Optional notification badges on your app icons, off by default until you choose to enable them.
+
+👆 **Swipe Gestures:** Assign actions to home screen swipes, like opening an app, recent apps or the notification panel.
+
+⚡ **Shortcuts:** Long-press an app for its shortcuts, and pin "Add to Home screen" shortcuts right on your home screen. *(Default launcher only.)*
+
+📳 **Haptics & Animations:** Subtle haptics and spring animations when dragging, dropping and opening folders.
 
 ## What's New
 
