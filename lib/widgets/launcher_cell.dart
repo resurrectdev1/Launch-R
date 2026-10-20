@@ -141,12 +141,11 @@ class _LauncherCellState extends State<LauncherCell> {
 
   void _armOpen(DragData d) {
     final item = widget.item;
-    if (widget.zone != Zone.drawer ||
-        item is! FolderItem ||
-        d.item is! AppItem ||
-        d.fromFolder != null) {
+    if (item is! FolderItem || d.item is! AppItem || d.fromFolder != null) {
       return;
     }
+    if ((widget.zone == Zone.drawer) != (d.zone == Zone.drawer)) return;
+    final zone = widget.zone;
     _openTimer ??= Timer(_openDwell, () {
       _openTimer = null;
       if (!mounted || _hover != Hover.merge) return;
@@ -157,7 +156,7 @@ class _LauncherCellState extends State<LauncherCell> {
       if (box is RenderBox && box.attached) {
         from = box.localToGlobal(Offset.zero) & box.size;
       }
-      shell.openFolder(Zone.drawer, item.fid, from: from, peek: true);
+      shell.openFolder(zone, item.fid, from: from, peek: true);
     });
   }
 
