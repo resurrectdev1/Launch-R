@@ -10,6 +10,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+### Added
+
+* Indication for left and right gestures (to be done)
+* Sensetivity adjuster of gesture detection in settings (to be done)
+
+### Changed
+
+* Rehaul settings sheet (e.g. all appearance settings will show as appearance and clicking on appearance will take you to a new sheet and show all appearance settings) (to be done)
+
 ---
 
 ## [0.4.2] - 2026-10-20
