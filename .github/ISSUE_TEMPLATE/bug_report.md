@@ -21,7 +21,7 @@ What actually happened.
 **Device info**
 - Android version:
 - Device model:
-- Grove version (check the info tab):
+- Launch-R version (check the info tab):
 
 **Screenshots or logs**
 If applicable, add screenshots or a logcat output.
