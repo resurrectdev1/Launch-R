@@ -10,7 +10,7 @@ import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/widgets/app_icon.dart';
 
-IconData _iconFor(GestureAction a) => switch (a) {
+IconData gestureIcon(GestureAction a) => switch (a) {
   GestureAction.none => Icons.block_rounded,
   GestureAction.openApp => Icons.open_in_new_rounded,
   GestureAction.recents => Icons.filter_none_rounded,
@@ -180,7 +180,7 @@ class _GestureSheet extends StatelessWidget {
             ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 24),
               leading: Icon(
-                _iconFor(a),
+                gestureIcon(a),
                 color: current.action == a ? t.accent : t.drawerText,
               ),
               title: Text(
