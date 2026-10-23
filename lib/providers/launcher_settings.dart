@@ -24,6 +24,7 @@ class LauncherSettings extends ChangeNotifier {
   bool _swipeUpSearch = false;
   HomeGesture _swipeLeft = const HomeGesture();
   HomeGesture _swipeRight = const HomeGesture();
+  double _gestureSensitivity = 1.0;
   bool _fuzzySearch = true;
   bool _showVoiceButton = true;
   bool _showClearButton = true;
@@ -64,6 +65,7 @@ class LauncherSettings extends ChangeNotifier {
   bool get swipeUpSearch => _swipeUpSearch;
   HomeGesture get swipeLeft => _swipeLeft;
   HomeGesture get swipeRight => _swipeRight;
+  double get gestureSensitivity => _gestureSensitivity;
   HomeGesture gestureFor(GestureSide side) =>
       side == GestureSide.left ? _swipeLeft : _swipeRight;
   bool get fuzzySearch => _fuzzySearch;
@@ -94,6 +96,8 @@ class LauncherSettings extends ChangeNotifier {
     return AppFont.byId(id)?.label ?? 'System default';
   }
 
+  static const double minGestureSensitivity = 0.5;
+  static const double maxGestureSensitivity = 1.5;
   static const double minTextScale = 0.85;
   static const double maxTextScale = 1.3;
   IconShape get iconShape => _iconShape;
@@ -134,6 +138,9 @@ class LauncherSettings extends ChangeNotifier {
     }
     _swipeLeft = _readGesture(p, 'gesture_left');
     _swipeRight = _readGesture(p, 'gesture_right');
+    _gestureSensitivity = (p.getDouble('gesture_sensitivity') ?? 1.0)
+        .clamp(minGestureSensitivity, maxGestureSensitivity)
+        .toDouble();
     _fuzzySearch = p.getBool('fuzzy_search') ?? true;
     _showVoiceButton = p.getBool('show_voice_button') ?? true;
     _showClearButton = p.getBool('show_clear_button') ?? true;
@@ -385,6 +392,16 @@ class LauncherSettings extends ChangeNotifier {
     await p.setString('${key}_action', next.action.name);
     if (next.pkg != null) await p.setString('${key}_app', next.pkg!);
     if (next.label != null) await p.setString('${key}_app_label', next.label!);
+  }
+
+  Future<void> setGestureSensitivity(double v) async {
+    final next = v
+        .clamp(minGestureSensitivity, maxGestureSensitivity)
+        .toDouble();
+    if (next == _gestureSensitivity) return;
+    _gestureSensitivity = next;
+    notifyListeners();
+    await _prefs?.setDouble('gesture_sensitivity', next);
   }
 
   Future<void> setFuzzySearch(bool v) async {
