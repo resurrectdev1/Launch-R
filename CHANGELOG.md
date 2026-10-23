@@ -17,7 +17,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-* Rehaul settings sheet (e.g. all appearance settings will show as appearance and clicking on appearance will take you to a new sheet and show all appearance settings) (to be done)
+* Settings sheet rehaul: Launcher settings is now a short list of categories (Appearance, Text, Layout, Icons, Search, Gestures, System) and tapping one opens a sheet with just those settings. Swipe down or tap the back arrow to return to the list.
 
 ---
 
