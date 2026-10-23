@@ -750,6 +750,50 @@ class _GesturesPage extends StatelessWidget {
           'Swipe left works on your last home page and swipe right on '
           'your first, when there is no page left to swipe to.',
         ),
+        Padding(
+          padding: _rowPadding,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Gesture sensitivity',
+                  style: TextStyle(color: t.drawerText),
+                ),
+              ),
+              Text(
+                '${(s.gestureSensitivity * 100).round()}%',
+                style: TextStyle(color: t.drawerTextMuted),
+              ),
+              if ((s.gestureSensitivity - 1.0).abs() > 0.001)
+                IconButton(
+                  tooltip: 'Reset sensitivity',
+                  visualDensity: VisualDensity.compact,
+                  icon: Icon(
+                    Icons.restart_alt_rounded,
+                    color: t.drawerTextMuted,
+                  ),
+                  onPressed: () => s.setGestureSensitivity(1.0),
+                ),
+            ],
+          ),
+        ),
+        Slider(
+          value: s.gestureSensitivity,
+          min: LauncherSettings.minGestureSensitivity,
+          max: LauncherSettings.maxGestureSensitivity,
+          divisions: 10,
+          activeColor: t.accent,
+          label: '${(s.gestureSensitivity * 100).round()}%',
+          onChanged: (v) {
+            HapticFeedback.selectionClick();
+            unawaited(s.setGestureSensitivity(v));
+          },
+        ),
+        _hint(
+          t,
+          'Higher means a shorter, lighter swipe triggers the gesture. '
+          'Lower means you need to swipe further or faster.',
+        ),
         _subHeader(t, 'APP DRAWER'),
         _switchRow(
           t,
