@@ -118,18 +118,6 @@ class _SettingsPage extends StatelessWidget {
   }
 }
 
-Widget _header(LaunchRTheme t, String text) => Padding(
-  padding: const EdgeInsets.fromLTRB(24, 18, 24, 6),
-  child: Text(
-    text,
-    style: TextStyle(
-      color: t.accentText,
-      fontWeight: FontWeight.w700,
-      fontSize: 13,
-    ),
-  ),
-);
-
 Widget _subHeader(LaunchRTheme t, String text) => Padding(
   padding: const EdgeInsets.fromLTRB(24, 12, 24, 2),
   child: Text(
