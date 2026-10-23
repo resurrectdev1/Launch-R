@@ -26,40 +26,37 @@ void showLaunchRSettings(BuildContext context) {
   );
 }
 
-class _SettingsSheet extends StatelessWidget {
-  const _SettingsSheet();
+Future<bool?> _openPage(BuildContext context, Widget page) {
+  return showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => page,
+  );
+}
+
+const _rowPadding = EdgeInsets.symmetric(horizontal: 24);
+
+class _SettingsPage extends StatelessWidget {
+  const _SettingsPage({
+    required this.title,
+    required this.children,
+    this.showBack = true,
+  });
+
+  final String title;
+  final List<Widget> children;
+  final bool showBack;
 
   @override
   Widget build(BuildContext context) {
     final t = LaunchRTheme.of(context);
-    final s = context.watch<LauncherSettings>();
-    final model = context.watch<LauncherModel>();
-    final ch = LauncherChannel.instance;
-    final grid = '${model.homeCols}x${model.homeRows}';
-    final materialYou = s.materialYou && s.dynamicAvailable;
-
-    Widget header(String text) => Padding(
-      padding: const EdgeInsets.fromLTRB(24, 18, 24, 6),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: t.accentText,
-          fontWeight: FontWeight.w700,
-          fontSize: 13,
-        ),
-      ),
-    );
-
-    Widget subHeader(String text) => Padding(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 2),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: t.drawerTextMuted,
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
-          letterSpacing: 0.4,
-        ),
+    final titleText = Text(
+      title,
+      style: TextStyle(
+        color: t.drawerText,
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
       ),
     );
 
@@ -90,631 +87,737 @@ class _SettingsSheet extends StatelessWidget {
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                child: Text(
-                  'Launcher settings',
-                  style: TextStyle(
-                    color: t.drawerText,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              header('Appearance'),
-              RadioGroup<AppearanceMode>(
-                groupValue: s.appearance,
-                onChanged: (m) {
-                  if (m == null) return;
-                  HapticFeedback.selectionClick();
-                  unawaited(s.setAppearance(m));
-                },
-                child: Column(
-                  children: [
-                    for (final m in AppearanceMode.values)
-                      RadioListTile<AppearanceMode>(
-                        value: m,
-                        activeColor: t.accent,
-                        fillColor: WidgetStateProperty.resolveWith(
-                          (states) => states.contains(WidgetState.selected)
-                              ? t.accent
-                              : t.drawerTextMuted,
+              if (showBack)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 24, 0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        tooltip: 'Back',
+                        icon: Icon(
+                          Icons.arrow_back_rounded,
+                          color: t.drawerText,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                        ),
-                        title: Text(
-                          m.label,
-                          style: TextStyle(color: t.drawerText),
-                        ),
+                        onPressed: () => Navigator.of(context).pop(),
                       ),
-                  ],
-                ),
-              ),
-              if (s.dynamicAvailable || s.materialYou)
-                SwitchListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                  title: Text(
-                    'Material You',
-                    style: TextStyle(color: t.drawerText),
-                  ),
-                  subtitle: Text(
-                    'Use your wallpaper accent color',
-                    style: TextStyle(color: t.drawerTextMuted),
-                  ),
-                  value: s.materialYou,
-                  onChanged: (v) {
-                    HapticFeedback.selectionClick();
-                    unawaited(s.setMaterialYou(v));
-                  },
-                ),
-              const SizedBox(height: 6),
-              ListTile(
-                enabled: !materialYou,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                leading: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: t.accent,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: t.drawerTextMuted, width: 1),
-                    boxShadow: [
-                      BoxShadow(
-                        color: t.accent.withValues(alpha: 0.45),
-                        blurRadius: 8,
-                      ),
+                      Expanded(child: titleText),
                     ],
                   ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                  child: titleText,
                 ),
-                title: Text(
-                  'Accent color',
-                  style: TextStyle(
-                    color: materialYou ? t.drawerTextMuted : t.drawerText,
-                  ),
-                ),
-                subtitle: Text(
-                  materialYou
-                      ? 'Following your wallpaper'
-                      : s.customAccent == null
-                      ? 'Orange (default)'
-                      : '#${hexOfColor(s.customAccent!)}',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                trailing: materialYou
-                    ? null
-                    : Icon(
-                        Icons.chevron_right_rounded,
-                        color: t.drawerTextMuted,
-                      ),
-                onTap: materialYou
-                    ? null
-                    : () async {
-                        final navigator = Navigator.of(context);
-                        final changed = await showAccentPicker(context);
-                        if (changed && navigator.mounted) navigator.pop();
-                      },
-              ),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Dark home text',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  'For light wallpapers',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.darkHomeText,
-                onChanged: s.setDarkHomeText,
-              ),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Match folder popup color',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  s.solidHomeFolders
-                      ? 'Home screen and app drawer folders use the open folder color'
-                      : 'Home folders are see-through over your wallpaper',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.solidHomeFolders,
-                onChanged: s.setSolidHomeFolders,
-              ),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'See-through drawer folders',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  s.solidHomeFolders
-                      ? 'Turn off "Match folder popup color" to use this'
-                      : (s.homeLookDrawerFolders
-                            ? 'App drawer folders look like home screen folders'
-                            : 'App drawer folders use the folder popup color'),
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.homeLookDrawerFolders && !s.solidHomeFolders,
-                onChanged: s.solidHomeFolders
-                    ? null
-                    : s.setHomeLookDrawerFolders,
-              ),
-              header('Background'),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Fix black flash on app close',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  s.ownBackground
-                      ? 'Using your own background instead of the system wallpaper'
-                      : 'Draws its own background from an image you pick instead of the system wallpaper',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.ownBackground,
-                onChanged: s.setOwnBackground,
-              ),
-              if (s.ownBackground) ...[
-                ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                  leading: Icon(Icons.wallpaper_rounded, color: t.drawerText),
-                  title: Text(
-                    'Choose background image',
-                    style: TextStyle(color: t.drawerText),
-                  ),
-                  subtitle: Text(
-                    s.backgroundPath == null ? 'None selected' : 'Custom image',
-                    style: TextStyle(color: t.drawerTextMuted),
-                  ),
-                  onTap: () async {
-                    final path = await LauncherChannel.instance
-                        .pickBackground();
-                    if (path != null) await s.setBackgroundPath(path);
-                  },
-                ),
-                if (s.backgroundPath != null)
-                  ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                    leading: Icon(
-                      Icons.delete_outline_rounded,
-                      color: t.drawerText,
-                    ),
-                    title: Text(
-                      'Remove background image',
-                      style: TextStyle(color: t.drawerText),
-                    ),
-                    onTap: () => s.setBackgroundPath(null),
-                  ),
-              ],
-              header('Text'),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                leading: Icon(Icons.text_fields_rounded, color: t.drawerText),
-                title: Text('Font', style: TextStyle(color: t.drawerText)),
-                subtitle: Text(
-                  s.fontLabel,
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                trailing: Icon(
-                  Icons.chevron_right_rounded,
-                  color: t.drawerTextMuted,
-                ),
-                onTap: () => showFontPicker(context),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Text size',
-                        style: TextStyle(color: t.drawerText),
-                      ),
-                    ),
-                    Text(
-                      '${(s.textScale * 100).round()}%',
-                      style: TextStyle(color: t.drawerTextMuted),
-                    ),
-                    if ((s.textScale - 1.0).abs() > 0.001)
-                      IconButton(
-                        tooltip: 'Reset text size',
-                        visualDensity: VisualDensity.compact,
-                        icon: Icon(
-                          Icons.restart_alt_rounded,
-                          color: t.drawerTextMuted,
-                        ),
-                        onPressed: () => s.setTextScale(1.0),
-                      ),
-                  ],
-                ),
-              ),
-              Slider(
-                value: s.textScale,
-                min: LauncherSettings.minTextScale,
-                max: LauncherSettings.maxTextScale,
-                divisions: 9,
-                activeColor: t.accent,
-                label: '${(s.textScale * 100).round()}%',
-                onChanged: (v) {
-                  HapticFeedback.selectionClick();
-                  unawaited(s.setTextScale(v));
-                },
-              ),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text('Bold text', style: TextStyle(color: t.drawerText)),
-                subtitle: Text(
-                  'Makes labels and menus easier to read',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.boldText,
-                onChanged: s.setBoldText,
-              ),
-              header('Layout'),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Wrap(
-                  spacing: 8,
-                  children: [
-                    for (final g in const [
-                      [4, 5],
-                      [4, 6],
-                      [5, 5],
-                      [5, 6],
-                    ])
-                      ChoiceChip(
-                        label: Text('Home ${g[0]}×${g[1]}'),
-                        selected: grid == '${g[0]}x${g[1]}',
-                        onSelected: (_) => model.setHomeGrid(g[0], g[1]),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Wrap(
-                  spacing: 8,
-                  children: [
-                    for (final c in const [4, 5])
-                      ChoiceChip(
-                        label: Text('Apps screen $c columns'),
-                        selected: s.drawerCols == c,
-                        onSelected: (_) => s.setDrawerCols(c),
-                      ),
-                  ],
-                ),
-              ),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Lock layout',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  'Prevent dragging and rearranging',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.lockLayout,
-                onChanged: s.setLockLayout,
-              ),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Remember app positions',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  model.drawerFree
-                      ? 'Apps screen keeps empty spots where you leave them'
-                      : 'Apps always fill in from the start',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: model.drawerFree,
-                onChanged: model.setDrawerFree,
-              ),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Add new apps to home',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  model.autoAddNew
-                      ? 'Newly installed apps are placed on your home screen'
-                      : 'New apps only appear in the apps screen',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: model.autoAddNew,
-                onChanged: model.setAutoAddNew,
-              ),
-              header('Icons'),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                leading: Icon(Icons.palette_outlined, color: t.drawerText),
-                title: Text('Icon pack', style: TextStyle(color: t.drawerText)),
-                subtitle: Text(
-                  s.iconPack == null
-                      ? 'System default'
-                      : (s.iconPackLabel ?? s.iconPack!),
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                trailing: Icon(
-                  Icons.chevron_right_rounded,
-                  color: t.drawerTextMuted,
-                ),
-                onTap: () => showIconPackPicker(context),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 6, 24, 10),
-                child: Wrap(
-                  spacing: 16,
-                  runSpacing: 14,
-                  children: [
-                    for (final shape in IconShape.values)
-                      _ShapeChoice(
-                        shape: shape,
-                        selected: s.iconShape == shape,
-                        onTap: () {
-                          unawaited(s.setIconShape(shape));
-                          model.applyIconShape(shape);
-                        },
-                      ),
-                  ],
-                ),
-              ),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Themed icons',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  s.themedIcons
-                      ? 'Icons are tinted to match your theme'
-                      : 'Use each app\'s own colors',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.themedIcons,
-                onChanged: s.setThemedIcons,
-              ),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Icon badges',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  model.notificationAccess
-                      ? 'Shows notification counts on icons'
-                      : 'Needs notification access',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.showBadges,
-                onChanged: (v) {
-                  s.setShowBadges(v);
-                  if (v && !model.notificationAccess) {
-                    ch.openNotificationAccessSettings();
-                  }
-                },
-              ),
-              header('Search'),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Fuzzy search',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  s.fuzzySearch
-                      ? 'Finds apps despite typos and abbreviations'
-                      : 'Only names that start with or contain your text',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.fuzzySearch,
-                onChanged: s.setFuzzySearch,
-              ),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Suggestions & recent searches',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  s.drawerSuggestions
-                      ? 'Shows your usual apps and past searches when you tap the search bar'
-                      : 'Search bar stays empty until you type',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.drawerSuggestions,
-                onChanged: s.setDrawerSuggestions,
-              ),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Search on open',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  'Opens the keyboard when the app drawer opens',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.drawerAutoSearch,
-                onChanged: s.setDrawerAutoSearch,
-              ),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Voice search button',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  'Shows a mic in the search bar',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.showVoiceButton,
-                onChanged: s.setShowVoiceButton,
-              ),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Clear button',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  'Shows an ✕ in the search bar once you type',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.showClearButton,
-                onChanged: s.setShowClearButton,
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 2, 24, 6),
-                child: Text(
-                  'Tip: start a search with "${LauncherModel.hiddenSearchPrefix}" '
-                  'to include hidden apps. For example, '
-                  '"${LauncherModel.hiddenSearchPrefix}bank" searches everything, '
-                  'and a lone "${LauncherModel.hiddenSearchPrefix}" lists every '
-                  'hidden app.',
-                  style: TextStyle(
-                    color: t.drawerTextMuted,
-                    fontSize: 12,
-                    height: 1.35,
-                  ),
-                ),
-              ),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                leading: Icon(Icons.sell_outlined, color: t.drawerText),
-                title: Text('Tags', style: TextStyle(color: t.drawerText)),
-                subtitle: Text(
-                  model.tagCounts.isEmpty
-                      ? 'None yet'
-                      : '${model.tagCounts.length} '
-                            '${model.tagCounts.length == 1 ? 'tag' : 'tags'}',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                trailing: Icon(
-                  Icons.chevron_right_rounded,
-                  color: t.drawerTextMuted,
-                ),
-                onTap: () => showTagManager(context),
-              ),
-              header('Gestures'),
-              subHeader('HOME SCREEN'),
-              for (final side in GestureSide.values)
-                ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                  leading: Icon(
-                    side == GestureSide.left
-                        ? Icons.arrow_back_rounded
-                        : Icons.arrow_forward_rounded,
-                    color: t.drawerText,
-                  ),
-                  title: Text(
-                    side.label,
-                    style: TextStyle(color: t.drawerText),
-                  ),
-                  subtitle: Text(
-                    s.gestureFor(side).summary,
-                    style: TextStyle(color: t.drawerTextMuted),
-                  ),
-                  trailing: Icon(
-                    Icons.chevron_right_rounded,
-                    color: t.drawerTextMuted,
-                  ),
-                  onTap: () => showGesturePicker(context, side),
-                ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 2, 24, 6),
-                child: Text(
-                  'Swipe left works on your last home page and swipe right on '
-                  'your first, when there is no page left to swipe to.',
-                  style: TextStyle(
-                    color: t.drawerTextMuted,
-                    fontSize: 12,
-                    height: 1.35,
-                  ),
-                ),
-              ),
-              subHeader('APP DRAWER'),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Swipe up again to go home',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  'Swiping up on the open app drawer closes it and returns to the home screen',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.swipeUpHome,
-                onChanged: s.setSwipeUpHome,
-              ),
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                title: Text(
-                  'Swipe up again to search',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  'Swiping up on the open app drawer opens the keyboard so you can search',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                value: s.swipeUpSearch,
-                onChanged: s.setSwipeUpSearch,
-              ),
-              header('System'),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                leading: Icon(
-                  Icons.visibility_off_outlined,
-                  color: t.drawerText,
-                ),
-                title: Text(
-                  'Hidden apps',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                subtitle: Text(
-                  model.hiddenCount == 0
-                      ? 'None'
-                      : '${model.hiddenCount} hidden',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                onTap: () => showHiddenApps(context),
-              ),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                leading: Icon(Icons.wallpaper_rounded, color: t.drawerText),
-                title: Text(
-                  'Change wallpaper',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                onTap: ch.openWallpaperPicker,
-              ),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                leading: Icon(Icons.home_rounded, color: t.drawerText),
-                title: Text(
-                  'Default home app',
-                  style: TextStyle(color: t.drawerText),
-                ),
-                onTap: ch.openHomeSettings,
-              ),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                leading: Icon(Icons.info_outline_rounded, color: t.drawerText),
-                title: Text('About', style: TextStyle(color: t.drawerText)),
-                onTap: () => showLaunchRAbout(context),
-              ),
+              ...children,
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+Widget _header(LaunchRTheme t, String text) => Padding(
+  padding: const EdgeInsets.fromLTRB(24, 18, 24, 6),
+  child: Text(
+    text,
+    style: TextStyle(
+      color: t.accentText,
+      fontWeight: FontWeight.w700,
+      fontSize: 13,
+    ),
+  ),
+);
+
+Widget _subHeader(LaunchRTheme t, String text) => Padding(
+  padding: const EdgeInsets.fromLTRB(24, 12, 24, 2),
+  child: Text(
+    text,
+    style: TextStyle(
+      color: t.drawerTextMuted,
+      fontWeight: FontWeight.w600,
+      fontSize: 12,
+      letterSpacing: 0.4,
+    ),
+  ),
+);
+
+Widget _hint(LaunchRTheme t, String text) => Padding(
+  padding: const EdgeInsets.fromLTRB(24, 2, 24, 6),
+  child: Text(
+    text,
+    style: TextStyle(color: t.drawerTextMuted, fontSize: 12, height: 1.35),
+  ),
+);
+
+Widget _switchRow(
+  LaunchRTheme t, {
+  required String title,
+  required String subtitle,
+  required bool value,
+  required ValueChanged<bool>? onChanged,
+}) => SwitchListTile(
+  contentPadding: _rowPadding,
+  title: Text(title, style: TextStyle(color: t.drawerText)),
+  subtitle: Text(subtitle, style: TextStyle(color: t.drawerTextMuted)),
+  value: value,
+  onChanged: onChanged,
+);
+
+Widget _tile(
+  LaunchRTheme t, {
+  required String title,
+  required VoidCallback? onTap,
+  IconData? icon,
+  String? subtitle,
+  bool chevron = false,
+}) => ListTile(
+  contentPadding: _rowPadding,
+  leading: icon == null ? null : Icon(icon, color: t.drawerText),
+  title: Text(title, style: TextStyle(color: t.drawerText)),
+  subtitle: subtitle == null
+      ? null
+      : Text(subtitle, style: TextStyle(color: t.drawerTextMuted)),
+  trailing: chevron
+      ? Icon(Icons.chevron_right_rounded, color: t.drawerTextMuted)
+      : null,
+  onTap: onTap,
+);
+
+class _SettingsSheet extends StatelessWidget {
+  const _SettingsSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    final s = context.watch<LauncherSettings>();
+    final model = context.watch<LauncherModel>();
+
+    Widget category({
+      required IconData icon,
+      required String title,
+      required String subtitle,
+      required Future<void> Function() onTap,
+    }) => ListTile(
+      contentPadding: _rowPadding,
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: t.accent.withValues(alpha: 0.16),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: t.accentText, size: 22),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(color: t.drawerText, fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(subtitle, style: TextStyle(color: t.drawerTextMuted)),
+      trailing: Icon(Icons.chevron_right_rounded, color: t.drawerTextMuted),
+      onTap: onTap,
+    );
+
+    final materialYou = s.materialYou && s.dynamicAvailable;
+    final grid = '${model.homeCols}×${model.homeRows}';
+
+    return _SettingsPage(
+      title: 'Launcher settings',
+      showBack: false,
+      children: [
+        category(
+          icon: Icons.color_lens_outlined,
+          title: 'Appearance',
+          subtitle: materialYou
+              ? '${s.appearance.label} · Material You'
+              : s.appearance.label,
+          onTap: () async {
+            final navigator = Navigator.of(context);
+            final closeAll = await _openPage(context, const _AppearancePage());
+            if (closeAll == true && navigator.mounted) navigator.pop();
+          },
+        ),
+        category(
+          icon: Icons.text_fields_rounded,
+          title: 'Text',
+          subtitle: '${s.fontLabel} · ${(s.textScale * 100).round()}%',
+          onTap: () => _openPage(context, const _TextPage()),
+        ),
+        category(
+          icon: Icons.grid_view_rounded,
+          title: 'Layout',
+          subtitle: 'Home $grid · Apps screen ${s.drawerCols} columns',
+          onTap: () => _openPage(context, const _LayoutPage()),
+        ),
+        category(
+          icon: Icons.apps_rounded,
+          title: 'Icons',
+          subtitle: s.iconPack == null
+              ? '${s.iconShape.label} · System default'
+              : '${s.iconShape.label} · ${s.iconPackLabel ?? s.iconPack!}',
+          onTap: () => _openPage(context, const _IconsPage()),
+        ),
+        category(
+          icon: Icons.search_rounded,
+          title: 'Search',
+          subtitle: 'Fuzzy search, suggestions, tags',
+          onTap: () => _openPage(context, const _SearchPage()),
+        ),
+        category(
+          icon: Icons.swipe_rounded,
+          title: 'Gestures',
+          subtitle: 'Home screen and app drawer swipes',
+          onTap: () => _openPage(context, const _GesturesPage()),
+        ),
+        category(
+          icon: Icons.tune_rounded,
+          title: 'System',
+          subtitle: 'Hidden apps, wallpaper, default home app',
+          onTap: () => _openPage(context, const _SystemPage()),
+        ),
+        const SizedBox(height: 4),
+        _tile(
+          t,
+          icon: Icons.info_outline_rounded,
+          title: 'About',
+          onTap: () => showLaunchRAbout(context),
+        ),
+      ],
+    );
+  }
+}
+
+class _AppearancePage extends StatelessWidget {
+  const _AppearancePage();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    final s = context.watch<LauncherSettings>();
+    final materialYou = s.materialYou && s.dynamicAvailable;
+
+    return _SettingsPage(
+      title: 'Appearance',
+      children: [
+        _subHeader(t, 'THEME'),
+        RadioGroup<AppearanceMode>(
+          groupValue: s.appearance,
+          onChanged: (m) {
+            if (m == null) return;
+            HapticFeedback.selectionClick();
+            unawaited(s.setAppearance(m));
+          },
+          child: Column(
+            children: [
+              for (final m in AppearanceMode.values)
+                RadioListTile<AppearanceMode>(
+                  value: m,
+                  activeColor: t.accent,
+                  fillColor: WidgetStateProperty.resolveWith(
+                    (states) => states.contains(WidgetState.selected)
+                        ? t.accent
+                        : t.drawerTextMuted,
+                  ),
+                  contentPadding: _rowPadding,
+                  title: Text(m.label, style: TextStyle(color: t.drawerText)),
+                ),
+            ],
+          ),
+        ),
+        _subHeader(t, 'COLORS'),
+        if (s.dynamicAvailable || s.materialYou)
+          _switchRow(
+            t,
+            title: 'Material You',
+            subtitle: 'Use your wallpaper accent color',
+            value: s.materialYou,
+            onChanged: (v) {
+              HapticFeedback.selectionClick();
+              unawaited(s.setMaterialYou(v));
+            },
+          ),
+        ListTile(
+          enabled: !materialYou,
+          contentPadding: _rowPadding,
+          leading: Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: t.accent,
+              shape: BoxShape.circle,
+              border: Border.all(color: t.drawerTextMuted, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: t.accent.withValues(alpha: 0.45),
+                  blurRadius: 8,
+                ),
+              ],
+            ),
+          ),
+          title: Text(
+            'Accent color',
+            style: TextStyle(
+              color: materialYou ? t.drawerTextMuted : t.drawerText,
+            ),
+          ),
+          subtitle: Text(
+            materialYou
+                ? 'Following your wallpaper'
+                : s.customAccent == null
+                ? 'Orange (default)'
+                : '#${hexOfColor(s.customAccent!)}',
+            style: TextStyle(color: t.drawerTextMuted),
+          ),
+          trailing: materialYou
+              ? null
+              : Icon(Icons.chevron_right_rounded, color: t.drawerTextMuted),
+          onTap: materialYou
+              ? null
+              : () async {
+                  final navigator = Navigator.of(context);
+                  final changed = await showAccentPicker(context);
+                  if (changed && navigator.mounted) navigator.pop(true);
+                },
+        ),
+        _switchRow(
+          t,
+          title: 'Dark home text',
+          subtitle: 'For light wallpapers',
+          value: s.darkHomeText,
+          onChanged: s.setDarkHomeText,
+        ),
+        _subHeader(t, 'FOLDERS'),
+        _switchRow(
+          t,
+          title: 'Match folder popup color',
+          subtitle: s.solidHomeFolders
+              ? 'Home screen and app drawer folders use the open folder color'
+              : 'Home folders are see-through over your wallpaper',
+          value: s.solidHomeFolders,
+          onChanged: s.setSolidHomeFolders,
+        ),
+        _switchRow(
+          t,
+          title: 'See-through drawer folders',
+          subtitle: s.solidHomeFolders
+              ? 'Turn off "Match folder popup color" to use this'
+              : (s.homeLookDrawerFolders
+                    ? 'App drawer folders look like home screen folders'
+                    : 'App drawer folders use the folder popup color'),
+          value: s.homeLookDrawerFolders && !s.solidHomeFolders,
+          onChanged: s.solidHomeFolders ? null : s.setHomeLookDrawerFolders,
+        ),
+        _subHeader(t, 'BACKGROUND'),
+        _switchRow(
+          t,
+          title: 'Fix black flash on app close',
+          subtitle: s.ownBackground
+              ? 'Using your own background instead of the system wallpaper'
+              : 'Draws its own background from an image you pick instead of the system wallpaper',
+          value: s.ownBackground,
+          onChanged: s.setOwnBackground,
+        ),
+        if (s.ownBackground) ...[
+          _tile(
+            t,
+            icon: Icons.wallpaper_rounded,
+            title: 'Choose background image',
+            subtitle: s.backgroundPath == null
+                ? 'None selected'
+                : 'Custom image',
+            onTap: () async {
+              final path = await LauncherChannel.instance.pickBackground();
+              if (path != null) await s.setBackgroundPath(path);
+            },
+          ),
+          if (s.backgroundPath != null)
+            _tile(
+              t,
+              icon: Icons.delete_outline_rounded,
+              title: 'Remove background image',
+              onTap: () => s.setBackgroundPath(null),
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+class _TextPage extends StatelessWidget {
+  const _TextPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    final s = context.watch<LauncherSettings>();
+
+    return _SettingsPage(
+      title: 'Text',
+      children: [
+        _tile(
+          t,
+          icon: Icons.text_fields_rounded,
+          title: 'Font',
+          subtitle: s.fontLabel,
+          chevron: true,
+          onTap: () => showFontPicker(context),
+        ),
+        Padding(
+          padding: _rowPadding,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text('Text size', style: TextStyle(color: t.drawerText)),
+              ),
+              Text(
+                '${(s.textScale * 100).round()}%',
+                style: TextStyle(color: t.drawerTextMuted),
+              ),
+              if ((s.textScale - 1.0).abs() > 0.001)
+                IconButton(
+                  tooltip: 'Reset text size',
+                  visualDensity: VisualDensity.compact,
+                  icon: Icon(
+                    Icons.restart_alt_rounded,
+                    color: t.drawerTextMuted,
+                  ),
+                  onPressed: () => s.setTextScale(1.0),
+                ),
+            ],
+          ),
+        ),
+        Slider(
+          value: s.textScale,
+          min: LauncherSettings.minTextScale,
+          max: LauncherSettings.maxTextScale,
+          divisions: 9,
+          activeColor: t.accent,
+          label: '${(s.textScale * 100).round()}%',
+          onChanged: (v) {
+            HapticFeedback.selectionClick();
+            unawaited(s.setTextScale(v));
+          },
+        ),
+        _switchRow(
+          t,
+          title: 'Bold text',
+          subtitle: 'Makes labels and menus easier to read',
+          value: s.boldText,
+          onChanged: s.setBoldText,
+        ),
+      ],
+    );
+  }
+}
+
+class _LayoutPage extends StatelessWidget {
+  const _LayoutPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    final s = context.watch<LauncherSettings>();
+    final model = context.watch<LauncherModel>();
+    final grid = '${model.homeCols}x${model.homeRows}';
+
+    return _SettingsPage(
+      title: 'Layout',
+      children: [
+        _subHeader(t, 'GRID'),
+        Padding(
+          padding: _rowPadding,
+          child: Wrap(
+            spacing: 8,
+            children: [
+              for (final g in const [
+                [4, 5],
+                [4, 6],
+                [5, 5],
+                [5, 6],
+              ])
+                ChoiceChip(
+                  label: Text('Home ${g[0]}×${g[1]}'),
+                  selected: grid == '${g[0]}x${g[1]}',
+                  onSelected: (_) => model.setHomeGrid(g[0], g[1]),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Padding(
+          padding: _rowPadding,
+          child: Wrap(
+            spacing: 8,
+            children: [
+              for (final c in const [4, 5])
+                ChoiceChip(
+                  label: Text('Apps screen $c columns'),
+                  selected: s.drawerCols == c,
+                  onSelected: (_) => s.setDrawerCols(c),
+                ),
+            ],
+          ),
+        ),
+        _subHeader(t, 'BEHAVIOR'),
+        _switchRow(
+          t,
+          title: 'Lock layout',
+          subtitle: 'Prevent dragging and rearranging',
+          value: s.lockLayout,
+          onChanged: s.setLockLayout,
+        ),
+        _switchRow(
+          t,
+          title: 'Remember app positions',
+          subtitle: model.drawerFree
+              ? 'Apps screen keeps empty spots where you leave them'
+              : 'Apps always fill in from the start',
+          value: model.drawerFree,
+          onChanged: model.setDrawerFree,
+        ),
+        _switchRow(
+          t,
+          title: 'Add new apps to home',
+          subtitle: model.autoAddNew
+              ? 'Newly installed apps are placed on your home screen'
+              : 'New apps only appear in the apps screen',
+          value: model.autoAddNew,
+          onChanged: model.setAutoAddNew,
+        ),
+      ],
+    );
+  }
+}
+
+class _IconsPage extends StatelessWidget {
+  const _IconsPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    final s = context.watch<LauncherSettings>();
+    final model = context.watch<LauncherModel>();
+    final ch = LauncherChannel.instance;
+
+    return _SettingsPage(
+      title: 'Icons',
+      children: [
+        _tile(
+          t,
+          icon: Icons.palette_outlined,
+          title: 'Icon pack',
+          subtitle: s.iconPack == null
+              ? 'System default'
+              : (s.iconPackLabel ?? s.iconPack!),
+          chevron: true,
+          onTap: () => showIconPackPicker(context),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 6, 24, 10),
+          child: Wrap(
+            spacing: 16,
+            runSpacing: 14,
+            children: [
+              for (final shape in IconShape.values)
+                _ShapeChoice(
+                  shape: shape,
+                  selected: s.iconShape == shape,
+                  onTap: () {
+                    unawaited(s.setIconShape(shape));
+                    model.applyIconShape(shape);
+                  },
+                ),
+            ],
+          ),
+        ),
+        _switchRow(
+          t,
+          title: 'Themed icons',
+          subtitle: s.themedIcons
+              ? 'Icons are tinted to match your theme'
+              : 'Use each app\'s own colors',
+          value: s.themedIcons,
+          onChanged: s.setThemedIcons,
+        ),
+        _switchRow(
+          t,
+          title: 'Icon badges',
+          subtitle: model.notificationAccess
+              ? 'Shows notification counts on icons'
+              : 'Needs notification access',
+          value: s.showBadges,
+          onChanged: (v) {
+            s.setShowBadges(v);
+            if (v && !model.notificationAccess) {
+              ch.openNotificationAccessSettings();
+            }
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _SearchPage extends StatelessWidget {
+  const _SearchPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    final s = context.watch<LauncherSettings>();
+    final model = context.watch<LauncherModel>();
+
+    return _SettingsPage(
+      title: 'Search',
+      children: [
+        _switchRow(
+          t,
+          title: 'Fuzzy search',
+          subtitle: s.fuzzySearch
+              ? 'Finds apps despite typos and abbreviations'
+              : 'Only names that start with or contain your text',
+          value: s.fuzzySearch,
+          onChanged: s.setFuzzySearch,
+        ),
+        _switchRow(
+          t,
+          title: 'Suggestions & recent searches',
+          subtitle: s.drawerSuggestions
+              ? 'Shows your usual apps and past searches when you tap the search bar'
+              : 'Search bar stays empty until you type',
+          value: s.drawerSuggestions,
+          onChanged: s.setDrawerSuggestions,
+        ),
+        _switchRow(
+          t,
+          title: 'Search on open',
+          subtitle: 'Opens the keyboard when the app drawer opens',
+          value: s.drawerAutoSearch,
+          onChanged: s.setDrawerAutoSearch,
+        ),
+        _switchRow(
+          t,
+          title: 'Voice search button',
+          subtitle: 'Shows a mic in the search bar',
+          value: s.showVoiceButton,
+          onChanged: s.setShowVoiceButton,
+        ),
+        _switchRow(
+          t,
+          title: 'Clear button',
+          subtitle: 'Shows an ✕ in the search bar once you type',
+          value: s.showClearButton,
+          onChanged: s.setShowClearButton,
+        ),
+        _hint(
+          t,
+          'Tip: start a search with "${LauncherModel.hiddenSearchPrefix}" '
+          'to include hidden apps. For example, '
+          '"${LauncherModel.hiddenSearchPrefix}bank" searches everything, '
+          'and a lone "${LauncherModel.hiddenSearchPrefix}" lists every '
+          'hidden app.',
+        ),
+        _tile(
+          t,
+          icon: Icons.sell_outlined,
+          title: 'Tags',
+          subtitle: model.tagCounts.isEmpty
+              ? 'None yet'
+              : '${model.tagCounts.length} '
+                    '${model.tagCounts.length == 1 ? 'tag' : 'tags'}',
+          chevron: true,
+          onTap: () => showTagManager(context),
+        ),
+      ],
+    );
+  }
+}
+
+class _GesturesPage extends StatelessWidget {
+  const _GesturesPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    final s = context.watch<LauncherSettings>();
+
+    return _SettingsPage(
+      title: 'Gestures',
+      children: [
+        _subHeader(t, 'HOME SCREEN'),
+        for (final side in GestureSide.values)
+          _tile(
+            t,
+            icon: side == GestureSide.left
+                ? Icons.arrow_back_rounded
+                : Icons.arrow_forward_rounded,
+            title: side.label,
+            subtitle: s.gestureFor(side).summary,
+            chevron: true,
+            onTap: () => showGesturePicker(context, side),
+          ),
+        _hint(
+          t,
+          'Swipe left works on your last home page and swipe right on '
+          'your first, when there is no page left to swipe to.',
+        ),
+        _subHeader(t, 'APP DRAWER'),
+        _switchRow(
+          t,
+          title: 'Swipe up again to go home',
+          subtitle:
+              'Swiping up on the open app drawer closes it and returns to the home screen',
+          value: s.swipeUpHome,
+          onChanged: s.setSwipeUpHome,
+        ),
+        _switchRow(
+          t,
+          title: 'Swipe up again to search',
+          subtitle:
+              'Swiping up on the open app drawer opens the keyboard so you can search',
+          value: s.swipeUpSearch,
+          onChanged: s.setSwipeUpSearch,
+        ),
+      ],
+    );
+  }
+}
+
+class _SystemPage extends StatelessWidget {
+  const _SystemPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    final model = context.watch<LauncherModel>();
+    final ch = LauncherChannel.instance;
+
+    return _SettingsPage(
+      title: 'System',
+      children: [
+        _tile(
+          t,
+          icon: Icons.visibility_off_outlined,
+          title: 'Hidden apps',
+          subtitle: model.hiddenCount == 0
+              ? 'None'
+              : '${model.hiddenCount} hidden',
+          onTap: () => showHiddenApps(context),
+        ),
+        _tile(
+          t,
+          icon: Icons.wallpaper_rounded,
+          title: 'Change wallpaper',
+          onTap: ch.openWallpaperPicker,
+        ),
+        _tile(
+          t,
+          icon: Icons.home_rounded,
+          title: 'Default home app',
+          onTap: ch.openHomeSettings,
+        ),
+      ],
     );
   }
 }
