@@ -12,8 +12,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-* Indication for left and right gestures (to be done)
-* Sensetivity adjuster of gesture detection in settings (to be done)
+* Indication for left and right gestures: while you pull past the first or last home page, a pill with the gesture’s icon slides in from that edge and fills with your accent color when you’ve pulled far enough to trigger it (with a small tick). Nothing shows if that side is set to “Nothing”.
+* Gesture sensitivity slider in Settings -> Gestures (50%–150%). Higher means a shorter, lighter swipe triggers the home screen gestures; lower means you need to swipe further or faster.
 
 ### Changed
 
