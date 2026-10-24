@@ -14,6 +14,7 @@ class LauncherSettings extends ChangeNotifier {
   bool _materialYou = false;
   Color? _customAccent;
   bool _darkHomeText = false;
+  bool _hideStatusBar = false;
   bool _solidHomeFolders = false;
   bool _homeLookDrawerFolders = true;
   int _drawerCols = 4;
@@ -56,6 +57,7 @@ class LauncherSettings extends ChangeNotifier {
       ? (_dynamicDark ?? _dynamicLight)
       : (_dynamicLight ?? _dynamicDark);
   bool get darkHomeText => _darkHomeText;
+  bool get hideStatusBar => _hideStatusBar;
   bool get solidHomeFolders => _solidHomeFolders;
   bool get homeLookDrawerFolders => _homeLookDrawerFolders;
   int get drawerCols => _drawerCols;
@@ -126,6 +128,7 @@ class LauncherSettings extends ChangeNotifier {
     final accentArgb = p.getInt('custom_accent');
     if (accentArgb != null) _customAccent = Color(accentArgb | 0xFF000000);
     _darkHomeText = p.getBool('dark_home_text') ?? false;
+    _hideStatusBar = p.getBool('hide_status_bar') ?? false;
     _solidHomeFolders = p.getBool('solid_home_folders') ?? false;
     _homeLookDrawerFolders = p.getBool('home_look_drawer_folders') ?? true;
     _drawerCols = p.getInt('drawer_cols') ?? 4;
@@ -303,6 +306,13 @@ class LauncherSettings extends ChangeNotifier {
     _darkHomeText = v;
     notifyListeners();
     await _prefs?.setBool('dark_home_text', v);
+  }
+
+  Future<void> setHideStatusBar(bool v) async {
+    if (v == _hideStatusBar) return;
+    _hideStatusBar = v;
+    notifyListeners();
+    await _prefs?.setBool('hide_status_bar', v);
   }
 
   Future<void> setSolidHomeFolders(bool v) async {
