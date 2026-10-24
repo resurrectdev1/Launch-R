@@ -750,6 +750,27 @@ class _GesturesPage extends StatelessWidget {
           'Swipe left works on your last home page and swipe right on '
           'your first, when there is no page left to swipe to.',
         ),
+        _switchRow(
+          t,
+          title: 'Double tap to lock',
+          subtitle:
+              'Double tap an empty spot on the home screen to turn the screen off. '
+              'Needs the Launch-R accessibility service and Android 9 or newer',
+          value: s.doubleTapLock,
+          onChanged: (v) async {
+            await s.setDoubleTapLock(v);
+            if (!v) return;
+            final ok = await LauncherChannel.instance.hasRecentsAccess();
+            if (!ok && context.mounted) {
+              await explainAccessibilityAccess(
+                context,
+                title: 'Allow double tap to lock',
+                doWhat: 'lock the screen',
+                usedFor: 'lock your screen',
+              );
+            }
+          },
+        ),
         Padding(
           padding: _rowPadding,
           child: Row(
