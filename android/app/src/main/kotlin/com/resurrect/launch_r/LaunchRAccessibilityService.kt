@@ -2,6 +2,7 @@ package com.resurrect.launch_r
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
+import android.os.Build
 import android.view.accessibility.AccessibilityEvent
 
 class LaunchRAccessibilityService : AccessibilityService() {
@@ -11,6 +12,11 @@ class LaunchRAccessibilityService : AccessibilityService() {
 
         fun openRecents(): Boolean =
             instance?.performGlobalAction(GLOBAL_ACTION_RECENTS) ?: false
+
+        fun lockScreen(): Boolean {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return false
+            return instance?.performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN) ?: false
+        }
     }
 
     override fun onServiceConnected() {
