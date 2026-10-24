@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
+import 'package:launch_r/models/layout_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/providers/shell_controller.dart';
@@ -20,7 +21,7 @@ import 'package:launch_r/widgets/page_dots.dart';
 import 'package:launch_r/widgets/press_scale.dart';
 import 'package:launch_r/widgets/settings_sheet.dart';
 
-const _kRowPitch = 106.0;
+double _rowPitchFor(bool labels) => labels ? 106.0 : 84.0;
 
 class DrawerView extends StatefulWidget {
   const DrawerView({super.key, required this.drawer});
@@ -234,10 +235,15 @@ class _DrawerViewState extends State<DrawerView> {
 
     return LayoutBuilder(
       builder: (context, c) {
-        const dotsH = 26.0;
+        final dotsH = settings.pageIndicator == PageIndicatorStyle.hidden
+            ? 8.0
+            : 26.0;
         final gridH = c.maxHeight - dotsH;
         final cols = settings.drawerCols;
-        final rows = math.max(3, (gridH / _kRowPitch).floor());
+        final rows = math.max(
+          3,
+          (gridH / _rowPitchFor(settings.showDrawerLabels)).floor(),
+        );
         final perPage = cols * rows;
         final n = items.length;
         final pages = math.max(1, (n / perPage).ceil());
@@ -262,6 +268,7 @@ class _DrawerViewState extends State<DrawerView> {
             width: cw,
             style: style,
             locked: settings.lockLayout,
+            showLabel: settings.showDrawerLabels,
             dot:
                 idx % perPage % cols < cols - 1 &&
                 idx % perPage ~/ cols < rows - 1,
@@ -314,6 +321,7 @@ class _DrawerViewState extends State<DrawerView> {
                   controller: _pages,
                   count: pages,
                   color: t.drawerText,
+                  style: settings.pageIndicator,
                 ),
               ),
             ),
@@ -467,7 +475,7 @@ class _DrawerViewState extends State<DrawerView> {
                         for (var i = 0; i < cols; i++)
                           SizedBox(
                             width: cw,
-                            height: _kRowPitch,
+                            height: _rowPitchFor(settings.showDrawerLabels),
                             child: i < suggested.length
                                 ? Builder(
                                     builder: (cellContext) {
@@ -495,6 +503,8 @@ class _DrawerViewState extends State<DrawerView> {
                                             iconSize: iconSize,
                                             width: cw,
                                             style: style,
+                                            showLabel:
+                                                settings.showDrawerLabels,
                                           ),
                                         ),
                                       );
@@ -586,7 +596,7 @@ class _DrawerViewState extends State<DrawerView> {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: cols,
-            mainAxisExtent: _kRowPitch,
+            mainAxisExtent: _rowPitchFor(settings.showDrawerLabels),
           ),
           itemCount: results.length,
           itemBuilder: (context, i) {
@@ -613,6 +623,7 @@ class _DrawerViewState extends State<DrawerView> {
                     iconSize: iconSize,
                     width: cw,
                     style: style,
+                    showLabel: settings.showDrawerLabels,
                   ),
                 ),
               ),
