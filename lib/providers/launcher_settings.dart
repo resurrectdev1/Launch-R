@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:launch_r/models/gesture_models.dart';
+import 'package:launch_r/models/layout_models.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/services/font_service.dart';
 import 'package:launch_r/theme/app_fonts.dart';
@@ -19,6 +20,11 @@ class LauncherSettings extends ChangeNotifier {
   bool _homeLookDrawerFolders = true;
   int _drawerCols = 4;
   bool _lockLayout = false;
+  bool _showHomeLabels = true;
+  bool _showDrawerLabels = true;
+  bool _showDockLabels = false;
+  PageIndicatorStyle _pageIndicator = PageIndicatorStyle.dots;
+  bool _loopPages = false;
   bool _showBadges = false;
   bool _drawerAutoSearch = false;
   bool _swipeUpHome = false;
@@ -63,6 +69,11 @@ class LauncherSettings extends ChangeNotifier {
   bool get homeLookDrawerFolders => _homeLookDrawerFolders;
   int get drawerCols => _drawerCols;
   bool get lockLayout => _lockLayout;
+  bool get showHomeLabels => _showHomeLabels;
+  bool get showDrawerLabels => _showDrawerLabels;
+  bool get showDockLabels => _showDockLabels;
+  PageIndicatorStyle get pageIndicator => _pageIndicator;
+  bool get loopPages => _loopPages;
   bool get showBadges => _showBadges;
   bool get drawerAutoSearch => _drawerAutoSearch;
   bool get swipeUpHome => _swipeUpHome;
@@ -135,7 +146,15 @@ class LauncherSettings extends ChangeNotifier {
     _hideStatusBar = p.getBool('hide_status_bar') ?? false;
     _solidHomeFolders = p.getBool('solid_home_folders') ?? false;
     _homeLookDrawerFolders = p.getBool('home_look_drawer_folders') ?? true;
-    _drawerCols = p.getInt('drawer_cols') ?? 4;
+    _drawerCols = (p.getInt('drawer_cols') ?? 4).clamp(
+      GridLimits.minDrawerCols,
+      GridLimits.maxDrawerCols,
+    );
+    _showHomeLabels = p.getBool('show_home_labels') ?? true;
+    _showDrawerLabels = p.getBool('show_drawer_labels') ?? true;
+    _showDockLabels = p.getBool('show_dock_labels') ?? false;
+    _pageIndicator = PageIndicatorStyle.fromName(p.getString('page_indicator'));
+    _loopPages = p.getBool('loop_pages') ?? false;
     _lockLayout = p.getBool('lock_layout') ?? false;
     _showBadges = p.getBool('show_badges') ?? false;
     _drawerAutoSearch = p.getBool('drawer_auto_search') ?? false;
@@ -337,9 +356,46 @@ class LauncherSettings extends ChangeNotifier {
   }
 
   Future<void> setDrawerCols(int v) async {
+    v = v.clamp(GridLimits.minDrawerCols, GridLimits.maxDrawerCols);
+    if (v == _drawerCols) return;
     _drawerCols = v;
     notifyListeners();
     await _prefs?.setInt('drawer_cols', v);
+  }
+
+  Future<void> setShowHomeLabels(bool v) async {
+    if (v == _showHomeLabels) return;
+    _showHomeLabels = v;
+    notifyListeners();
+    await _prefs?.setBool('show_home_labels', v);
+  }
+
+  Future<void> setShowDrawerLabels(bool v) async {
+    if (v == _showDrawerLabels) return;
+    _showDrawerLabels = v;
+    notifyListeners();
+    await _prefs?.setBool('show_drawer_labels', v);
+  }
+
+  Future<void> setShowDockLabels(bool v) async {
+    if (v == _showDockLabels) return;
+    _showDockLabels = v;
+    notifyListeners();
+    await _prefs?.setBool('show_dock_labels', v);
+  }
+
+  Future<void> setPageIndicator(PageIndicatorStyle v) async {
+    if (v == _pageIndicator) return;
+    _pageIndicator = v;
+    notifyListeners();
+    await _prefs?.setString('page_indicator', v.name);
+  }
+
+  Future<void> setLoopPages(bool v) async {
+    if (v == _loopPages) return;
+    _loopPages = v;
+    notifyListeners();
+    await _prefs?.setBool('loop_pages', v);
   }
 
   Future<void> setDoubleTapLock(bool v) async {
