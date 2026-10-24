@@ -375,6 +375,14 @@ class _AppearancePage extends StatelessWidget {
           value: s.darkHomeText,
           onChanged: s.setDarkHomeText,
         ),
+        _switchRow(
+          t,
+          title: 'Hide status bar',
+          subtitle:
+              'Hide the clock, battery and signal icons on the home screen',
+          value: s.hideStatusBar,
+          onChanged: s.setHideStatusBar,
+        ),
         _subHeader(t, 'FOLDERS'),
         _switchRow(
           t,
