@@ -21,6 +21,7 @@ class LauncherSettings extends ChangeNotifier {
   bool _showBadges = false;
   bool _drawerAutoSearch = false;
   bool _swipeUpHome = false;
+  bool _doubleTapLock = false;
   bool _swipeUpSearch = false;
   HomeGesture _swipeLeft = const HomeGesture();
   HomeGesture _swipeRight = const HomeGesture();
@@ -62,6 +63,7 @@ class LauncherSettings extends ChangeNotifier {
   bool get showBadges => _showBadges;
   bool get drawerAutoSearch => _drawerAutoSearch;
   bool get swipeUpHome => _swipeUpHome;
+  bool get doubleTapLock => _doubleTapLock;
   bool get swipeUpSearch => _swipeUpSearch;
   HomeGesture get swipeLeft => _swipeLeft;
   HomeGesture get swipeRight => _swipeRight;
@@ -131,6 +133,7 @@ class LauncherSettings extends ChangeNotifier {
     _showBadges = p.getBool('show_badges') ?? false;
     _drawerAutoSearch = p.getBool('drawer_auto_search') ?? false;
     _swipeUpHome = p.getBool('swipe_up_home') ?? false;
+    _doubleTapLock = p.getBool('double_tap_lock') ?? false;
     _swipeUpSearch = p.getBool('swipe_up_search') ?? false;
     if (_swipeUpHome && _swipeUpSearch) {
       _swipeUpSearch = false;
@@ -320,6 +323,13 @@ class LauncherSettings extends ChangeNotifier {
     _drawerCols = v;
     notifyListeners();
     await _prefs?.setInt('drawer_cols', v);
+  }
+
+  Future<void> setDoubleTapLock(bool v) async {
+    if (v == _doubleTapLock) return;
+    _doubleTapLock = v;
+    notifyListeners();
+    await _prefs?.setBool('double_tap_lock', v);
   }
 
   Future<void> setLockLayout(bool v) async {
