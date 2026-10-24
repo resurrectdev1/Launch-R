@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/shell_controller.dart';
+import 'package:launch_r/services/home_gestures.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/app_icon.dart';
@@ -234,13 +235,21 @@ class _LauncherCellState extends State<LauncherCell> {
         final widgetDrag = candidate.any((c) => c?.item is WidgetItem);
         final active =
             candidate.isNotEmpty && _hover == Hover.none && !widgetDrag;
-        return Stack(
+        final stack = Stack(
           clipBehavior: Clip.none,
           children: [
             _slot(visible: gridOn, active: active),
             if (item != null && item is! WidgetItem && item is! WidgetCover)
               Positioned.fill(child: _tile(context, item)),
           ],
+        );
+        if (item != null || widget.zone == Zone.drawer) return stack;
+        return Listener(
+          behavior: HitTestBehavior.translucent,
+          onPointerDown: (e) => HomeDoubleTap.down(e.position),
+          onPointerUp: (e) => HomeDoubleTap.handleUp(context, e.position),
+          onPointerCancel: (_) => HomeDoubleTap.cancel(),
+          child: stack,
         );
       },
     );
