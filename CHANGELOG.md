@@ -12,6 +12,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+* Hide status bar option (Settings -> Appearance). Hides the clock, battery and signal icons while Launch-R is on screen. Off by default. Swipe down from the top edge to peek at it or pull the notification shade.
 * Double tap to lock (Settings -> Gestures). Double tap an empty spot on the home screen or dock to turn the screen off. Off by default. Uses the Launch-R accessibility service (the same one as Recent apps; it still can’t read your screen) and needs Android 9 or newer.
 * Indication for left and right gestures: while you pull past the first or last home page, a pill with the gesture’s icon slides in from that edge and fills with your accent color when you’ve pulled far enough to trigger it (with a small tick). Nothing shows if that side is set to “Nothing”.
 * Gesture sensitivity slider in Settings -> Gestures (50%–150%). Higher means a shorter, lighter swipe triggers the home screen gestures; lower means you need to swipe further or faster.
