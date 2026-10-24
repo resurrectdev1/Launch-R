@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:launch_r/models/launcher_models.dart';
+import 'package:launch_r/models/layout_models.dart';
 import 'package:launch_r/services/fuzzy_search.dart';
 import 'package:launch_r/services/icon_cache.dart';
 import 'package:launch_r/services/launcher_channel.dart';
@@ -1288,6 +1289,8 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void setHomeGrid(int cols, int rows) {
+    cols = cols.clamp(GridLimits.minHomeCols, GridLimits.maxHomeCols);
+    rows = rows.clamp(GridLimits.minHomeRows, GridLimits.maxHomeRows);
     if (cols == _homeCols && rows == _homeRows) return;
     final widgets = <WidgetItem>[
       for (final p in _home) ...p.whereType<WidgetItem>(),
