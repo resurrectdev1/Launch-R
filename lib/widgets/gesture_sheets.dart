@@ -38,20 +38,25 @@ Future<LauncherApp?> showAppPicker(BuildContext context) {
   );
 }
 
-Future<void> _explainRecentsAccess(BuildContext context) {
+Future<void> explainAccessibilityAccess(
+  BuildContext context, {
+  required String title,
+  required String doWhat,
+  required String usedFor,
+}) {
   final t = LaunchRTheme.of(context);
   return showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(
       backgroundColor: t.menuBg,
       title: Text(
-        'Allow recent apps',
+        title,
         style: TextStyle(color: t.drawerText, fontWeight: FontWeight.w700),
       ),
       content: Text(
-        'Android only lets a launcher open the recent apps screen through an '
+        'Android only lets a launcher $doWhat through an '
         'accessibility service. Turn on “Launch-R” in the list that opens. '
-        'It is only used to open recents; it can’t read your screen.\n\n'
+        'It is only used to $usedFor; it can’t read your screen.\n\n'
         'If the switch is greyed out, open Launch-R’s App info, tap ⋮ and '
         'choose “Allow restricted settings”, then try again.',
         style: TextStyle(color: t.drawerTextMuted, height: 1.35),
@@ -74,6 +79,14 @@ Future<void> _explainRecentsAccess(BuildContext context) {
     ),
   );
 }
+
+Future<void> _explainRecentsAccess(BuildContext context) =>
+    explainAccessibilityAccess(
+      context,
+      title: 'Allow recent apps',
+      doWhat: 'open the recent apps screen',
+      usedFor: 'open recents',
+    );
 
 class _SheetFrame extends StatelessWidget {
   const _SheetFrame({
