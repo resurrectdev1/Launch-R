@@ -25,6 +25,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 * The Icon size, Text size, and Gesture sensitivity sliders no longer shift when the reset button appears. Each row is now a fixed height with space always reserved for the button.
+* The About row in Launcher settings now lines up with the category icons above it instead of sitting slightly to the left.
 
 ---
 
