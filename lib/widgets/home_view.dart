@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
+import 'package:launch_r/models/layout_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/providers/shell_controller.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/edge_flipper.dart';
+import 'package:launch_r/widgets/home_page_controller.dart';
 import 'package:launch_r/widgets/home_edge_swipe.dart';
 import 'package:launch_r/widgets/keep_alive.dart';
 import 'package:launch_r/widgets/launcher_cell.dart';
@@ -17,36 +19,82 @@ import 'package:launch_r/widgets/page_dots.dart';
 import 'package:launch_r/widgets/page_haptics.dart';
 import 'package:launch_r/widgets/home_widget_frame.dart';
 
-class HomeView extends StatelessWidget {
+class HomeView extends StatefulWidget {
   const HomeView({super.key, required this.controller});
-  final PageController controller;
+  final HomePageController controller;
+
+  @override
+  State<HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> {
+  bool _loopBuilt = false;
+  bool _switching = false;
+
+  HomePageController get _c => widget.controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final settings = context.read<LauncherSettings>();
+    final model = context.read<LauncherModel>();
+    _loopBuilt = settings.loopPages && model.home.length > 1;
+    _c.configure(count: model.home.length, loop: _loopBuilt);
+    if (_loopBuilt) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _c.recenter();
+      });
+    }
+  }
 
   void _prev() {
-    if (!controller.hasClients) return;
-    if ((controller.page ?? 0).round() <= 0) return;
+    final c = _c;
+    if (!c.hasClients) return;
+    if (!c.loop && c.logicalPage <= 0) return;
     unawaited(HapticFeedback.selectionClick());
-    unawaited(
-      controller.previousPage(duration: Motion.slow, curve: Motion.standard),
-    );
+    unawaited(c.previousPage(duration: Motion.slow, curve: Motion.standard));
   }
 
   void _next(LauncherModel model) {
-    if (!controller.hasClients) return;
-    final cur = controller.page?.round() ?? 0;
+    final c = _c;
+    if (!c.hasClients) return;
+    final cur = c.logicalPage;
     void go() {
+      if (!c.hasClients) return;
       unawaited(HapticFeedback.selectionClick());
-      unawaited(
-        controller.nextPage(duration: Motion.slow, curve: Motion.standard),
-      );
+      unawaited(c.nextPage(duration: Motion.slow, curve: Motion.standard));
     }
 
     if (cur >= model.home.length - 1) {
       if (model.addHomePage()) {
         WidgetsBinding.instance.addPostFrameCallback((_) => go());
+      } else if (c.loop) {
+        go();
       }
     } else {
       go();
     }
+  }
+
+  void _switchLoop(bool to) {
+    _switching = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (to) {
+        setState(() => _loopBuilt = true);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _c.recenter();
+          setState(() => _switching = false);
+        });
+      } else {
+        _c.settleToLogical();
+        setState(() {
+          _loopBuilt = false;
+          _switching = false;
+        });
+      }
+    });
   }
 
   @override
@@ -57,6 +105,10 @@ class HomeView extends StatelessWidget {
     final navBottom = MediaQuery.viewPaddingOf(context).bottom;
     final dark = settings.darkHomeText;
     final t = LaunchRTheme.of(context);
+
+    final wantLoop = settings.loopPages && model.home.length > 1;
+    _c.configure(count: model.home.length, loop: _loopBuilt);
+    if (wantLoop != _loopBuilt && !_switching) _switchLoop(wantLoop);
 
     final style = CellStyle(
       label: dark ? const Color(0xFF111111) : Colors.white,
@@ -69,6 +121,7 @@ class HomeView extends StatelessWidget {
       folderBase: settings.solidHomeFolders ? t.popupBg : null,
     );
     final dotColor = dark ? const Color(0xFF111111) : Colors.white;
+    final indicator = settings.pageIndicator;
 
     return Stack(
       children: [
@@ -79,24 +132,35 @@ class HomeView extends StatelessWidget {
               child: PageHaptics(
                 child: HomeEdgeSwipe(
                   child: PageView.builder(
-                    controller: controller,
+                    controller: _c,
                     physics: const AlwaysScrollableScrollPhysics(),
-                    itemCount: model.home.length,
-                    itemBuilder: (context, p) => PageKeepAlive(
-                      child: _HomePage(page: p, style: style),
-                    ),
+                    itemCount: _loopBuilt ? null : model.home.length,
+                    itemBuilder: (context, v) {
+                      final page = _HomePage(
+                        page: _c.logicalOf(v),
+                        style: style,
+                      );
+                      if (!_loopBuilt) return PageKeepAlive(child: page);
+                      return Selector<ShellController, bool>(
+                        selector: (_, s) => s.drag != null,
+                        builder: (_, dragging, child) =>
+                            PageKeepAlive(keep: dragging, child: child!),
+                        child: page,
+                      );
+                    },
                   ),
                 ),
               ),
             ),
             SizedBox(
-              height: 26,
+              height: indicator == PageIndicatorStyle.hidden ? 8 : 26,
               child: Center(
                 child: PageDots(
-                  controller: controller,
+                  controller: _c,
                   count: model.home.length,
                   color: dotColor,
                   defaultIndex: model.defaultPage,
+                  style: indicator,
                 ),
               ),
             ),
@@ -172,7 +236,7 @@ class _HomePage extends StatelessWidget {
             24.0,
             math.min(
               math.min(cw * 0.6, 58.0) * settings.iconScale,
-              math.min(cw * 0.9, ch - 30),
+              math.min(cw * 0.9, ch - (settings.showHomeLabels ? 30 : 14)),
             ),
           );
           return Stack(
@@ -276,6 +340,7 @@ class _HomePage extends StatelessWidget {
       width: width,
       style: style,
       locked: settings.lockLayout,
+      showLabel: settings.showHomeLabels,
       dot:
           index % model.homeCols < model.homeCols - 1 &&
           index ~/ model.homeCols < model.homeRows - 1,
@@ -450,16 +515,20 @@ class _Dock extends StatelessWidget {
     final model = context.watch<LauncherModel>();
     final settings = context.watch<LauncherSettings>();
     final dock = model.dock;
+    final labels = settings.showDockLabels;
     return SizedBox(
-      height: 84,
+      height: labels ? 96 : 84,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6),
         child: LayoutBuilder(
           builder: (context, c) {
             final cw = c.maxWidth / dock.length;
             final iconSize = math.min(
-              math.min(cw * 0.6, 58.0) * settings.iconScale,
-              math.min(cw * 0.9, 76.0),
+              math.min(
+                math.min(cw * 0.6, 58.0) * settings.iconScale,
+                math.min(cw * 0.9, 76.0),
+              ),
+              labels ? 56.0 : 76.0,
             );
             return Row(
               children: [
@@ -478,7 +547,7 @@ class _Dock extends StatelessWidget {
                       width: cw,
                       style: style,
                       locked: settings.lockLayout,
-                      showLabel: false,
+                      showLabel: labels,
                       canDrop: (d) => d.item is! WidgetItem,
                       onDrop: (d, h) => _announce(
                         context,
