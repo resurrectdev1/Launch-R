@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:launch_r/widgets/home_page_controller.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/providers/shell_controller.dart';
@@ -27,7 +28,7 @@ class LauncherShell extends StatefulWidget {
 class _LauncherShellState extends State<LauncherShell>
     with SingleTickerProviderStateMixin {
   late final ShellController _shell = ShellController(vsync: this);
-  final _homePages = PageController();
+  final _homePages = HomePageController();
   late final Listenable _drawerLayer = Listenable.merge([
     _shell.drawer,
     _shell,
@@ -102,9 +103,9 @@ class _LauncherShellState extends State<LauncherShell>
       _shell.closeDrawer();
     } else {
       final target = context.read<LauncherModel>().defaultPage;
-      if (_homePages.hasClients && (_homePages.page?.round() ?? 0) != target) {
+      if (_homePages.hasClients && _homePages.logicalPage != target) {
         unawaited(
-          _homePages.animateToPage(
+          _homePages.goToLogical(
             target,
             duration: Motion.slow,
             curve: Motion.standard,
@@ -221,7 +222,9 @@ class _LauncherShellState extends State<LauncherShell>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         final page = context.read<LauncherModel>().defaultPage;
-        if (page > 0 && _homePages.hasClients) _homePages.jumpToPage(page);
+        if (page > 0 && _homePages.hasClients) {
+          _homePages.jumpToLogical(page);
+        }
       });
     }
 
