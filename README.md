@@ -42,7 +42,7 @@ Tired of the same old ctrl c & ctrl v Android home launchers? So am I and thus I
 
 🔔 **Icon Badges:** Optional notification badges on your app icons, off by default until you choose to enable them.
 
-👆 **Swipe Gestures:** Assign actions to home screen swipes, like opening an app, recent apps or the notification panel.
+👆 **Swipe Gestures:** Assign actions to home screen swipes, like opening an app, recent apps or the notification panel, plus an optional double tap on an empty spot to lock your screen.
 
 ⚡ **Shortcuts:** Long-press an app for its shortcuts, and pin "Add to Home screen" shortcuts right on your home screen. *(Default launcher only.)*
 
