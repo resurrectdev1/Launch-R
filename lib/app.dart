@@ -1,5 +1,6 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
@@ -14,6 +15,21 @@ class LaunchRApp extends StatefulWidget {
 }
 
 class _LaunchRAppState extends State<LaunchRApp> with WidgetsBindingObserver {
+  bool _statusBarHidden = false;
+
+  void _applyStatusBar(bool hide) {
+    _statusBarHidden = hide;
+    SystemChrome.setEnabledSystemUIMode(
+      hide ? SystemUiMode.manual : SystemUiMode.edgeToEdge,
+      overlays: hide ? const [SystemUiOverlay.bottom] : null,
+    );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _applyStatusBar(_statusBarHidden);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -77,6 +93,12 @@ class _LaunchRAppState extends State<LaunchRApp> with WidgetsBindingObserver {
                           ?.primary ??
                       settings.accent
                 : settings.accent;
+            if (settings.hideStatusBar != _statusBarHidden) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                _applyStatusBar(settings.hideStatusBar);
+              });
+            }
             final themed = settings.themedIcons
                 ? LaunchRTheme.forMode(
                     settings.appearance,
