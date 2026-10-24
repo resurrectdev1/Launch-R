@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/gesture_models.dart';
 import 'package:launch_r/models/launcher_models.dart';
+import 'package:launch_r/models/layout_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/services/launcher_channel.dart';
@@ -535,45 +537,71 @@ class _LayoutPage extends StatelessWidget {
     final t = LaunchRTheme.of(context);
     final s = context.watch<LauncherSettings>();
     final model = context.watch<LauncherModel>();
-    final grid = '${model.homeCols}x${model.homeRows}';
 
     return _SettingsPage(
       title: 'Layout',
       children: [
-        _subHeader(t, 'GRID'),
+        _subHeader(t, 'HOME GRID'),
+        const _HomeGridEditor(),
+        _subHeader(t, 'APPS SCREEN'),
+        _StepperRow(
+          label: 'Columns',
+          value: s.drawerCols,
+          min: GridLimits.minDrawerCols,
+          max: GridLimits.maxDrawerCols,
+          onChanged: s.setDrawerCols,
+        ),
+        _subHeader(t, 'LABELS'),
+        _switchRow(
+          t,
+          title: 'Home screen labels',
+          subtitle: 'Show app names under icons on the home screen',
+          value: s.showHomeLabels,
+          onChanged: s.setShowHomeLabels,
+        ),
+        _switchRow(
+          t,
+          title: 'Apps screen labels',
+          subtitle: 'Show app names under icons in the apps screen',
+          value: s.showDrawerLabels,
+          onChanged: s.setShowDrawerLabels,
+        ),
+        _switchRow(
+          t,
+          title: 'Dock labels',
+          subtitle: 'Show app names under the dock icons',
+          value: s.showDockLabels,
+          onChanged: s.setShowDockLabels,
+        ),
+        _subHeader(t, 'PAGES'),
         Padding(
-          padding: _rowPadding,
+          padding: const EdgeInsets.fromLTRB(24, 6, 24, 0),
+          child: Text(
+            'Page indicator',
+            style: TextStyle(color: t.drawerText, fontSize: 16),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 4),
           child: Wrap(
             spacing: 8,
             children: [
-              for (final g in const [
-                [4, 5],
-                [4, 6],
-                [5, 5],
-                [5, 6],
-              ])
+              for (final style in PageIndicatorStyle.values)
                 ChoiceChip(
-                  label: Text('Home ${g[0]}×${g[1]}'),
-                  selected: grid == '${g[0]}x${g[1]}',
-                  onSelected: (_) => model.setHomeGrid(g[0], g[1]),
+                  label: Text(style.label),
+                  selected: s.pageIndicator == style,
+                  onSelected: (_) => s.setPageIndicator(style),
                 ),
             ],
           ),
         ),
-        const SizedBox(height: 8),
-        Padding(
-          padding: _rowPadding,
-          child: Wrap(
-            spacing: 8,
-            children: [
-              for (final c in const [4, 5])
-                ChoiceChip(
-                  label: Text('Apps screen $c columns'),
-                  selected: s.drawerCols == c,
-                  onSelected: (_) => s.setDrawerCols(c),
-                ),
-            ],
-          ),
+        _hint(t, 'Tap the dots or line on the home screen to jump to a page.'),
+        _switchRow(
+          t,
+          title: 'Loop pages',
+          subtitle: 'Swiping past the last page wraps around to the first',
+          value: s.loopPages,
+          onChanged: s.setLoopPages,
         ),
         _subHeader(t, 'BEHAVIOR'),
         _switchRow(
@@ -604,6 +632,253 @@ class _LayoutPage extends StatelessWidget {
       ],
     );
   }
+}
+
+class _StepperRow extends StatelessWidget {
+  const _StepperRow({
+    required this.label,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+  });
+
+  final String label;
+  final int value;
+  final int min;
+  final int max;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 2, 12, 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(color: t.drawerText, fontSize: 16),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Decrease $label',
+            icon: const Icon(Icons.remove_circle_outline_rounded),
+            color: t.drawerText,
+            disabledColor: t.drawerTextMuted.withValues(alpha: 0.4),
+            onPressed: value > min
+                ? () {
+                    unawaited(HapticFeedback.selectionClick());
+                    onChanged(value - 1);
+                  }
+                : null,
+          ),
+          SizedBox(
+            width: 28,
+            child: Text(
+              '$value',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: t.drawerText,
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Increase $label',
+            icon: const Icon(Icons.add_circle_outline_rounded),
+            color: t.drawerText,
+            disabledColor: t.drawerTextMuted.withValues(alpha: 0.4),
+            onPressed: value < max
+                ? () {
+                    unawaited(HapticFeedback.selectionClick());
+                    onChanged(value + 1);
+                  }
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeGridEditor extends StatefulWidget {
+  const _HomeGridEditor();
+
+  @override
+  State<_HomeGridEditor> createState() => _HomeGridEditorState();
+}
+
+class _HomeGridEditorState extends State<_HomeGridEditor> {
+  late int _cols;
+  late int _rows;
+
+  @override
+  void initState() {
+    super.initState();
+    final model = context.read<LauncherModel>();
+    _cols = model.homeCols;
+    _rows = model.homeRows;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    final model = context.watch<LauncherModel>();
+    final changed = _cols != model.homeCols || _rows != model.homeRows;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 0, 0),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 64,
+                height: 110,
+                child: CustomPaint(
+                  painter: _GridPreviewPainter(
+                    cols: _cols,
+                    rows: _rows,
+                    color: t.accent,
+                    outline: t.drawerTextMuted,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  children: [
+                    _StepperRow(
+                      label: 'Columns',
+                      value: _cols,
+                      min: GridLimits.minHomeCols,
+                      max: GridLimits.maxHomeCols,
+                      onChanged: (v) => setState(() => _cols = v),
+                    ),
+                    _StepperRow(
+                      label: 'Rows',
+                      value: _rows,
+                      min: GridLimits.minHomeRows,
+                      max: GridLimits.maxHomeRows,
+                      onChanged: (v) => setState(() => _rows = v),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  changed
+                      ? 'Apply to rearrange your icons into $_cols×$_rows'
+                      : 'Current grid: ${model.homeCols}×${model.homeRows}',
+                  style: TextStyle(
+                    color: t.drawerTextMuted,
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+              FilledButton(
+                onPressed: changed
+                    ? () {
+                        unawaited(HapticFeedback.mediumImpact());
+                        model.setHomeGrid(_cols, _rows);
+                      }
+                    : null,
+                child: const Text('Apply'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+      ],
+    );
+  }
+}
+
+class _GridPreviewPainter extends CustomPainter {
+  _GridPreviewPainter({
+    required this.cols,
+    required this.rows,
+    required this.color,
+    required this.outline,
+  });
+
+  final int cols;
+  final int rows;
+  final Color color;
+  final Color outline;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final frame = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      const Radius.circular(10),
+    );
+    canvas.drawRRect(
+      frame,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..color = outline.withValues(alpha: 0.6),
+    );
+
+    const pad = 6.0;
+    final dockH = size.height * 0.12;
+    final gridW = size.width - pad * 2;
+    final gridH = size.height - pad * 2 - dockH - 4;
+    final cw = gridW / cols;
+    final ch = gridH / rows;
+    final dot = math.min(cw, ch) * 0.62;
+    final fill = Paint()..color = color.withValues(alpha: 0.85);
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        final cx = pad + cw * (c + 0.5);
+        final cy = pad + ch * (r + 0.5);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(center: Offset(cx, cy), width: dot, height: dot),
+            Radius.circular(dot * 0.3),
+          ),
+          fill,
+        );
+      }
+    }
+    final dockY = size.height - pad - dockH / 2;
+    final dockDot = math.min(gridW / cols * 0.62, dockH * 0.8);
+    final dockFill = Paint()..color = color.withValues(alpha: 0.5);
+    for (var c = 0; c < cols; c++) {
+      final cx = pad + cw * (c + 0.5);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: Offset(cx, dockY),
+            width: dockDot,
+            height: dockDot,
+          ),
+          Radius.circular(dockDot * 0.3),
+        ),
+        dockFill,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GridPreviewPainter old) =>
+      old.cols != cols ||
+      old.rows != rows ||
+      old.color != color ||
+      old.outline != outline;
 }
 
 class _IconsPage extends StatelessWidget {
