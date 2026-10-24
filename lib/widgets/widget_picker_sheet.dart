@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:launch_r/widgets/home_page_controller.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/services/launcher_channel.dart';
@@ -11,7 +12,7 @@ import 'package:launch_r/theme/launch_r_theme.dart';
 void showWidgetPicker(
   BuildContext context, {
   required int page,
-  required PageController homePages,
+  required HomePageController homePages,
 }) {
   showModalBottomSheet<void>(
     context: context,
@@ -24,7 +25,7 @@ void showWidgetPicker(
 class _PickerSheet extends StatefulWidget {
   const _PickerSheet({required this.page, required this.homePages});
   final int page;
-  final PageController homePages;
+  final HomePageController homePages;
 
   @override
   State<_PickerSheet> createState() => _PickerSheetState();
@@ -94,7 +95,7 @@ class _PickerSheetState extends State<_PickerSheet> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (c.hasClients) {
             unawaited(
-              c.animateToPage(
+              c.goToLogical(
                 r.page,
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeOutCubic,
