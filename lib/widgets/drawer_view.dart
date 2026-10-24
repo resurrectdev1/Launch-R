@@ -243,7 +243,10 @@ class _DrawerViewState extends State<DrawerView> {
         final pages = math.max(1, (n / perPage).ceil());
         _pageCount = pages;
         final cw = (c.maxWidth - 16) / cols;
-        final iconSize = math.min(cw * 0.62, 60.0);
+        final iconSize = math.min(
+          math.min(cw * 0.62, 60.0) * settings.iconScale,
+          cw * 0.9,
+        );
 
         Widget cell(int idx) {
           final item = idx < n ? items[idx] : null;
@@ -446,7 +449,10 @@ class _DrawerViewState extends State<DrawerView> {
       child: LayoutBuilder(
         builder: (context, c) {
           final cw = (c.maxWidth - 16) / cols;
-          final iconSize = math.min(cw * 0.62, 60.0);
+          final iconSize = math.min(
+            math.min(cw * 0.62, 60.0) * settings.iconScale,
+            cw * 0.9,
+          );
           return SingleChildScrollView(
             padding: const EdgeInsets.only(bottom: 12),
             child: Column(
@@ -572,7 +578,10 @@ class _DrawerViewState extends State<DrawerView> {
     return LayoutBuilder(
       builder: (context, c) {
         final cw = (c.maxWidth - 16) / cols;
-        final iconSize = math.min(cw * 0.62, 60.0);
+        final iconSize = math.min(
+          math.min(cw * 0.62, 60.0) * settings.iconScale,
+          cw * 0.9,
+        );
         return GridView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
