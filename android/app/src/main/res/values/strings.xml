@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="accessibility_service_description">Lets Launch-R open the recent apps screen when you use the Recent apps swipe gesture. It does not read or collect anything on your screen.</string>
+    <string name="accessibility_service_description">Lets Launch-R open the recent apps screen and lock your screen when you use the Recent apps swipe gesture or double tap to lock. It does not read or collect anything on your screen.</string>
 </resources>
