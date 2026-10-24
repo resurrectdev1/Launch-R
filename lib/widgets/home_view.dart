@@ -168,7 +168,13 @@ class _HomePage extends StatelessWidget {
         builder: (context, c) {
           final cw = c.maxWidth / cols;
           final ch = c.maxHeight / rows;
-          final iconSize = math.min(cw * 0.6, 58.0);
+          final iconSize = math.max(
+            24.0,
+            math.min(
+              math.min(cw * 0.6, 58.0) * settings.iconScale,
+              math.min(cw * 0.9, ch - 30),
+            ),
+          );
           return Stack(
             children: [
               Positioned.fill(
@@ -451,7 +457,10 @@ class _Dock extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, c) {
             final cw = c.maxWidth / dock.length;
-            final iconSize = math.min(cw * 0.6, 58.0);
+            final iconSize = math.min(
+              math.min(cw * 0.6, 58.0) * settings.iconScale,
+              math.min(cw * 0.9, 76.0),
+            );
             return Row(
               children: [
                 for (var i = 0; i < dock.length; i++)
