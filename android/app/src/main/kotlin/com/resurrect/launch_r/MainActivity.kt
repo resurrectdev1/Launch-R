@@ -457,6 +457,8 @@ class MainActivity : FlutterActivity() {
 
             "openRecents" -> result.success(LaunchRAccessibilityService.openRecents())
 
+            "lockScreen" -> result.success(LaunchRAccessibilityService.lockScreen())
+
             "hasRecentsAccess" -> {
                 val flat = Settings.Secure.getString(
                     contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
