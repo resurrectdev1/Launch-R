@@ -265,10 +265,20 @@ class _SettingsSheet extends StatelessWidget {
           onTap: () => _openPage(context, const _SystemPage()),
         ),
         const SizedBox(height: 4),
-        _tile(
-          t,
-          icon: Icons.info_outline_rounded,
-          title: 'About',
+        ListTile(
+          contentPadding: _rowPadding,
+          leading: SizedBox(
+            width: 40,
+            height: 40,
+            child: Center(
+              child: Icon(
+                Icons.info_outline_rounded,
+                color: t.drawerText,
+                size: 22,
+              ),
+            ),
+          ),
+          title: Text('About', style: TextStyle(color: t.drawerText)),
           onTap: () => showLaunchRAbout(context),
         ),
       ],
