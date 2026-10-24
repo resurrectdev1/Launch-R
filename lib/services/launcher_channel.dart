@@ -213,6 +213,9 @@ class LauncherChannel {
   Future<bool> openRecents() async =>
       await _safe(() => _ch.invokeMethod<bool>('openRecents')) ?? false;
 
+  Future<bool> lockScreen() async =>
+      await _safe(() => _ch.invokeMethod<bool>('lockScreen')) ?? false;
+
   Future<bool> hasRecentsAccess() async =>
       await _safe(() => _ch.invokeMethod<bool>('hasRecentsAccess')) ?? false;
 
