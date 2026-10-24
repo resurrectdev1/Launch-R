@@ -32,6 +32,7 @@ class LauncherSettings extends ChangeNotifier {
   bool _showClearButton = true;
   bool _drawerSuggestions = true;
   double _textScale = 1.0;
+  double _iconScale = 1.0;
   String? _iconPack;
   String? _iconPackLabel;
   bool _boldText = false;
@@ -77,6 +78,7 @@ class LauncherSettings extends ChangeNotifier {
   bool get showClearButton => _showClearButton;
   bool get drawerSuggestions => _drawerSuggestions;
   double get textScale => _textScale;
+  double get iconScale => _iconScale;
   String? get iconPack => _iconPack;
   String? get iconPackLabel => _iconPackLabel;
   bool get boldText => _boldText;
@@ -104,6 +106,8 @@ class LauncherSettings extends ChangeNotifier {
   static const double maxGestureSensitivity = 1.5;
   static const double minTextScale = 0.85;
   static const double maxTextScale = 1.3;
+  static const double minIconScale = 0.7;
+  static const double maxIconScale = 1.15;
   IconShape get iconShape => _iconShape;
   bool get ownBackground => _ownBackground;
   String? get backgroundPath => _backgroundPath;
@@ -155,6 +159,9 @@ class LauncherSettings extends ChangeNotifier {
     _themedIcons = p.getBool('themed_icons') ?? false;
     _textScale = (p.getDouble('text_scale') ?? 1.0)
         .clamp(minTextScale, maxTextScale)
+        .toDouble();
+    _iconScale = (p.getDouble('icon_scale') ?? 1.0)
+        .clamp(minIconScale, maxIconScale)
         .toDouble();
     _boldText = p.getBool('bold_text') ?? false;
     _iconPack = p.getString('icon_pack');
@@ -472,6 +479,14 @@ class LauncherSettings extends ChangeNotifier {
     _textScale = next;
     notifyListeners();
     await _prefs?.setDouble('text_scale', next);
+  }
+
+  Future<void> setIconScale(double v) async {
+    final next = v.clamp(minIconScale, maxIconScale).toDouble();
+    if (next == _iconScale) return;
+    _iconScale = next;
+    notifyListeners();
+    await _prefs?.setDouble('icon_scale', next);
   }
 
   Future<void> setBoldText(bool v) async {
