@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:launch_r/widgets/home_page_controller.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
@@ -16,7 +17,7 @@ import 'package:launch_r/widgets/widget_picker_sheet.dart';
 
 class HomeMenu extends StatelessWidget {
   const HomeMenu({super.key, required this.homePages});
-  final PageController homePages;
+  final HomePageController homePages;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +35,7 @@ class HomeMenu extends StatelessWidget {
 
 class _MenuOverlay extends StatefulWidget {
   const _MenuOverlay({super.key, required this.homePages});
-  final PageController homePages;
+  final HomePageController homePages;
 
   @override
   State<_MenuOverlay> createState() => _MenuOverlayState();
@@ -54,7 +55,7 @@ class _MenuOverlayState extends State<_MenuOverlay> {
     if (_cardsCtl != null) return;
     final w = MediaQuery.sizeOf(context).width;
     final home = widget.homePages;
-    _current = home.hasClients ? (home.page?.round() ?? 0) : 0;
+    _current = home.hasClients ? home.logicalPage : 0;
     _cardsCtl = PageController(
       initialPage: _current,
       viewportFraction: (w * _cardFrac + _gap) / w,
@@ -72,7 +73,7 @@ class _MenuOverlayState extends State<_MenuOverlay> {
     context.read<ShellController>().closeMenu();
     if (home.hasClients) {
       unawaited(
-        home.animateToPage(i, duration: Motion.slow, curve: Motion.standard),
+        home.goToLogical(i, duration: Motion.slow, curve: Motion.standard),
       );
     }
   }
@@ -106,12 +107,12 @@ class _MenuOverlayState extends State<_MenuOverlay> {
       );
       if (ok != true || !mounted) return;
     }
-    final cur = home.hasClients ? (home.page?.round() ?? 0) : 0;
+    final cur = home.hasClients ? home.logicalPage : 0;
     if (!model.removeHomePage(index)) return;
     final target = math.min(cur > index ? cur - 1 : cur, model.home.length - 1);
     setState(() => _current = target);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (home.hasClients) home.jumpToPage(target);
+      if (home.hasClients) home.jumpToLogical(target);
     });
   }
 
@@ -122,7 +123,7 @@ class _MenuOverlayState extends State<_MenuOverlay> {
 
   void _widgets() {
     final home = widget.homePages;
-    final page = home.hasClients ? (home.page?.round() ?? 0) : _current;
+    final page = home.hasClients ? home.logicalPage : _current;
     context.read<ShellController>().closeMenu();
     showWidgetPicker(context, page: page, homePages: home);
   }
