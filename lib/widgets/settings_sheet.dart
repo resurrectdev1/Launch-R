@@ -461,26 +461,36 @@ class _TextPage extends StatelessWidget {
         ),
         Padding(
           padding: _rowPadding,
-          child: Row(
-            children: [
-              Expanded(
-                child: Text('Text size', style: TextStyle(color: t.drawerText)),
-              ),
-              Text(
-                '${(s.textScale * 100).round()}%',
-                style: TextStyle(color: t.drawerTextMuted),
-              ),
-              if ((s.textScale - 1.0).abs() > 0.001)
-                IconButton(
-                  tooltip: 'Reset text size',
-                  visualDensity: VisualDensity.compact,
-                  icon: Icon(
-                    Icons.restart_alt_rounded,
-                    color: t.drawerTextMuted,
+          child: SizedBox(
+            height: 40,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Text size',
+                    style: TextStyle(color: t.drawerText),
                   ),
-                  onPressed: () => s.setTextScale(1.0),
                 ),
-            ],
+                Text(
+                  '${(s.textScale * 100).round()}%',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                SizedBox(
+                  width: 40,
+                  child: (s.textScale - 1.0).abs() > 0.001
+                      ? IconButton(
+                          tooltip: 'Reset text size',
+                          visualDensity: VisualDensity.compact,
+                          icon: Icon(
+                            Icons.restart_alt_rounded,
+                            color: t.drawerTextMuted,
+                          ),
+                          onPressed: () => s.setTextScale(1.0),
+                        )
+                      : null,
+                ),
+              ],
+            ),
           ),
         ),
         Slider(
@@ -626,6 +636,52 @@ class _IconsPage extends StatelessWidget {
                 ),
             ],
           ),
+        ),
+        Padding(
+          padding: _rowPadding,
+          child: SizedBox(
+            height: 40,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Icon size',
+                    style: TextStyle(color: t.drawerText),
+                  ),
+                ),
+                Text(
+                  '${(s.iconScale * 100).round()}%',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                SizedBox(
+                  width: 40,
+                  child: (s.iconScale - 1.0).abs() > 0.001
+                      ? IconButton(
+                          tooltip: 'Reset icon size',
+                          visualDensity: VisualDensity.compact,
+                          icon: Icon(
+                            Icons.restart_alt_rounded,
+                            color: t.drawerTextMuted,
+                          ),
+                          onPressed: () => s.setIconScale(1.0),
+                        )
+                      : null,
+                ),
+              ],
+            ),
+          ),
+        ),
+        Slider(
+          value: s.iconScale,
+          min: LauncherSettings.minIconScale,
+          max: LauncherSettings.maxIconScale,
+          divisions: 9,
+          activeColor: t.accent,
+          label: '${(s.iconScale * 100).round()}%',
+          onChanged: (v) {
+            HapticFeedback.selectionClick();
+            unawaited(s.setIconScale(v));
+          },
         ),
         _switchRow(
           t,
@@ -781,29 +837,36 @@ class _GesturesPage extends StatelessWidget {
         ),
         Padding(
           padding: _rowPadding,
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Gesture sensitivity',
-                  style: TextStyle(color: t.drawerText),
-                ),
-              ),
-              Text(
-                '${(s.gestureSensitivity * 100).round()}%',
-                style: TextStyle(color: t.drawerTextMuted),
-              ),
-              if ((s.gestureSensitivity - 1.0).abs() > 0.001)
-                IconButton(
-                  tooltip: 'Reset sensitivity',
-                  visualDensity: VisualDensity.compact,
-                  icon: Icon(
-                    Icons.restart_alt_rounded,
-                    color: t.drawerTextMuted,
+          child: SizedBox(
+            height: 40,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Gesture sensitivity',
+                    style: TextStyle(color: t.drawerText),
                   ),
-                  onPressed: () => s.setGestureSensitivity(1.0),
                 ),
-            ],
+                Text(
+                  '${(s.gestureSensitivity * 100).round()}%',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+                SizedBox(
+                  width: 40,
+                  child: (s.gestureSensitivity - 1.0).abs() > 0.001
+                      ? IconButton(
+                          tooltip: 'Reset sensitivity',
+                          visualDensity: VisualDensity.compact,
+                          icon: Icon(
+                            Icons.restart_alt_rounded,
+                            color: t.drawerTextMuted,
+                          ),
+                          onPressed: () => s.setGestureSensitivity(1.0),
+                        )
+                      : null,
+                ),
+              ],
+            ),
           ),
         ),
         Slider(
