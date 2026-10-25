@@ -1,16 +1,27 @@
 import 'package:flutter/animation.dart';
 
 abstract final class Motion {
-  static const Duration fast = Duration(milliseconds: 140);
 
-  static const Duration base = Duration(milliseconds: 220);
+  static bool reduced = false;
 
-  static const Duration slow = Duration(milliseconds: 300);
+  static Duration _d(int ms) =>
+      reduced ? Duration.zero : Duration(milliseconds: ms);
 
-  static const Duration drawerClose = Duration(milliseconds: 200);
+  static Duration scale(Duration d) => reduced ? Duration.zero : d;
 
-  static const Duration emphasized = Duration(milliseconds: 380);
-  static const Duration emphasizedReverse = Duration(milliseconds: 250);
+  static Duration get fast => _d(140);
+
+  static Duration get base => _d(220);
+
+  static Duration get slow => _d(300);
+
+  static Duration get drawerClose => _d(200);
+
+  static Duration get emphasized => _d(380);
+  static Duration get emphasizedReverse => _d(250);
+
+  static AnimationStyle? get routeStyle =>
+      reduced ? AnimationStyle.noAnimation : null;
 
   static const Curve standard = Curves.easeOutCubic;
 
