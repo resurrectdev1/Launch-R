@@ -28,6 +28,7 @@ String hexOfColor(Color c) =>
 Future<bool> showAccentPicker(BuildContext context) async {
   final changed = await showModalBottomSheet<bool>(
     context: context,
+    sheetAnimationStyle: Motion.routeStyle,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) => const _AccentSheet(),
