@@ -45,11 +45,7 @@ class FolderPopup extends StatefulWidget {
 
 class _FolderPopupState extends State<FolderPopup>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _anim = AnimationController(
-    vsync: this,
-    duration: Motion.emphasized,
-    reverseDuration: Motion.emphasizedReverse,
-  );
+  late final AnimationController _anim = AnimationController(vsync: this);
   late final Animation<double> _t = CurvedAnimation(
     parent: _anim,
     curve: Motion.emphasizedCurve,
@@ -72,6 +68,8 @@ class _FolderPopupState extends State<FolderPopup>
     if (open && !_open) {
       _open = true;
       _closing = false;
+      _anim.duration = Motion.emphasized;
+      _anim.reverseDuration = Motion.emphasizedReverse;
       unawaited(_anim.forward(from: 0));
     } else if (!open && _open) {
       _open = false;
@@ -159,7 +157,7 @@ class _FolderPopupState extends State<FolderPopup>
                       color: Color.fromRGBO(14, 14, 20, 0.55 * v),
                     );
                     final sigma = 13.0 * v;
-                    if (sigma > 0.1) {
+                    if (sigma > 0.1 && !Motion.reduced) {
                       fill = BackdropFilter(
                         filter: ui.ImageFilter.blur(
                           sigmaX: sigma,
