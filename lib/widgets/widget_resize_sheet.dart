@@ -3,10 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/theme/motion.dart';
 
 void showWidgetResizeSheet(BuildContext context, int wid) {
   showModalBottomSheet<void>(
     context: context,
+    sheetAnimationStyle: Motion.routeStyle,
     backgroundColor: Colors.transparent,
     builder: (_) => _ResizeSheet(wid: wid),
   );
