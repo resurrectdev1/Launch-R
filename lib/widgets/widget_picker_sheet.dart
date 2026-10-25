@@ -8,6 +8,7 @@ import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/theme/motion.dart';
 
 void showWidgetPicker(
   BuildContext context, {
@@ -16,6 +17,7 @@ void showWidgetPicker(
 }) {
   showModalBottomSheet<void>(
     context: context,
+    sheetAnimationStyle: Motion.routeStyle,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) => _PickerSheet(page: page, homePages: homePages),
@@ -97,7 +99,7 @@ class _PickerSheetState extends State<_PickerSheet> {
             unawaited(
               c.goToLogical(
                 r.page,
-                duration: const Duration(milliseconds: 300),
+                duration: Motion.scale(const Duration(milliseconds: 300)),
                 curve: Curves.easeOutCubic,
               ),
             );
