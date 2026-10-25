@@ -25,6 +25,7 @@ const _palette = <Color>[
 void showFolderColorPicker(BuildContext context, Zone zone, String fid) {
   showModalBottomSheet<void>(
     context: context,
+    sheetAnimationStyle: Motion.routeStyle,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) => _FolderColorSheet(zone: zone, fid: fid),
