@@ -985,6 +985,7 @@ class _HomeGridEditorState extends State<_HomeGridEditor> {
   Widget build(BuildContext context) {
     final t = LaunchRTheme.of(context);
     final model = context.watch<LauncherModel>();
+    final settings = context.watch<LauncherSettings>();
     final changed = _cols != model.homeCols || _rows != model.homeRows;
 
     final plan = changed ? model.planHomeGrid(_cols, _rows) : null;
@@ -1072,6 +1073,8 @@ class _HomeGridEditorState extends State<_HomeGridEditor> {
                       rows: changed ? _rows : model.homeRows,
                       highlightIds: marked,
                       highlightColor: t.accent,
+                      showLabels: settings.showHomeLabels,
+                      showDockLabels: settings.showDockLabels,
                     ),
                   ),
                 ),
