@@ -56,6 +56,8 @@ class DrawerView extends StatefulWidget {
 
 enum _ReloadPhase { loading, done, failed }
 
+enum _Overlay { none, panel, results }
+
 class _DrawerViewState extends State<DrawerView> {
   final _pages = PageController();
   final _search = TextEditingController();
@@ -189,6 +191,12 @@ class _DrawerViewState extends State<DrawerView> {
         ? history.recentSearches.take(5).toList()
         : const <String>[];
     final showPanel = suggested.isNotEmpty || recents.isNotEmpty;
+    final overlay = searching
+        ? _Overlay.results
+        : showPanel
+        ? _Overlay.panel
+        : _Overlay.none;
+    final overlayActive = overlay != _Overlay.none;
 
     return Stack(
       fit: StackFit.expand,
@@ -204,21 +212,57 @@ class _DrawerViewState extends State<DrawerView> {
             ),
             const SizedBox(height: 14),
             Expanded(
-              child: searching
-                  ? _results(t)
-                  : showPanel
-                  ? _panel(t, suggested, recents)
-                  : AnimatedOpacity(
-                      opacity: _reloading ? 0.35 : 1,
-                      duration: Motion.base,
-                      curve: Motion.standard,
-                      child: _grid(t),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(bottom: navBottom),
+                    child: IgnorePointer(
+                      ignoring: overlayActive,
+                      child: ExcludeSemantics(
+                        excluding: overlayActive,
+                        child: AnimatedOpacity(
+                          opacity: overlayActive ? 0 : (_reloading ? 0.35 : 1),
+                          duration: overlayActive ? Motion.fast : Motion.base,
+                          curve: overlayActive ? Motion.exit : Motion.standard,
+                          child: _grid(t),
+                        ),
+                      ),
                     ),
-            ),
-            SizedBox(
-              height: (searching || showPanel)
-                  ? math.max(insets, navBottom)
-                  : navBottom,
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(
+                      bottom: math.max(insets, navBottom),
+                    ),
+                    child: AnimatedSwitcher(
+                      duration: Motion.base,
+                      reverseDuration: Motion.fast,
+                      switchInCurve: Motion.standard,
+                      switchOutCurve: Motion.exit,
+                      layoutBuilder: (current, previous) => Stack(
+                        fit: StackFit.expand,
+                        alignment: Alignment.topCenter,
+                        children: [...previous, ?current],
+                      ),
+                      transitionBuilder: (child, anim) =>
+                          FadeTransition(opacity: anim, child: child),
+                      child: switch (overlay) {
+                        _Overlay.results => KeyedSubtree(
+                          key: const ValueKey('results'),
+                          child: _results(t),
+                        ),
+                        _Overlay.panel => KeyedSubtree(
+                          key: const ValueKey('panel'),
+                          child: _panel(t, suggested, recents),
+                        ),
+                        _Overlay.none => const SizedBox.shrink(
+                          key: ValueKey('none'),
+                        ),
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -466,32 +510,29 @@ class _DrawerViewState extends State<DrawerView> {
     );
     final cols = settings.drawerCols;
 
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: Motion.base,
-      curve: Motion.standard,
-      builder: (context, v, child) => Opacity(opacity: v, child: child),
-      child: LayoutBuilder(
-        builder: (context, c) {
-          final cw = (c.maxWidth - 16) / cols;
-          final iconSize = drawerIconSize(cw, settings.iconScale);
-          return SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (suggested.isNotEmpty) ...[
-                  _sectionHeader(t, 'Suggested'),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Row(
-                      children: [
-                        for (var i = 0; i < cols; i++)
-                          SizedBox(
-                            width: cw,
-                            height: _rowPitchFor(settings.showDrawerLabels),
-                            child: i < suggested.length
-                                ? Builder(
+    return LayoutBuilder(
+      builder: (context, c) {
+        final cw = (c.maxWidth - 16) / cols;
+        final iconSize = drawerIconSize(cw, settings.iconScale);
+        return SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (suggested.isNotEmpty) ...[
+                _Reveal(begin: 0, child: _sectionHeader(t, 'Suggested')),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    children: [
+                      for (var i = 0; i < cols; i++)
+                        SizedBox(
+                          width: cw,
+                          height: _rowPitchFor(settings.showDrawerLabels),
+                          child: i < suggested.length
+                              ? _Reveal(
+                                  begin: 0.06 * (i + 1),
+                                  child: Builder(
                                     builder: (cellContext) {
                                       final app = suggested[i];
                                       final item = AppItem(app.package);
@@ -523,54 +564,61 @@ class _DrawerViewState extends State<DrawerView> {
                                         ),
                                       );
                                     },
-                                  )
-                                : null,
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-                if (recents.isNotEmpty) ...[
-                  _sectionHeader(
-                    t,
-                    'Recent searches',
-                    trailing: TextButton(
-                      onPressed: history.clearSearches,
-                      style: TextButton.styleFrom(
-                        minimumSize: Size.zero,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                                  ),
+                                )
+                              : null,
                         ),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        'Clear',
-                        style: TextStyle(
-                          color: t.accent,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final q in recents)
-                          _searchChip(t, history, q, c.maxWidth - 40),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ],
-            ),
-          );
-        },
-      ),
+              if (recents.isNotEmpty)
+                _Reveal(
+                  begin: suggested.isNotEmpty ? 0.3 : 0,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionHeader(
+                        t,
+                        'Recent searches',
+                        trailing: TextButton(
+                          onPressed: history.clearSearches,
+                          style: TextButton.styleFrom(
+                            minimumSize: Size.zero,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Clear',
+                            style: TextStyle(
+                              color: t.accent,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final q in recents)
+                              _searchChip(t, history, q, c.maxWidth - 40),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -642,6 +690,30 @@ class _DrawerViewState extends State<DrawerView> {
           },
         );
       },
+    );
+  }
+}
+
+class _Reveal extends StatelessWidget {
+  const _Reveal({required this.begin, required this.child});
+
+  final double begin;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Motion.slow,
+      curve: Interval(begin.clamp(0.0, 0.9), 1, curve: Motion.standard),
+      builder: (context, v, child) => Opacity(
+        opacity: v,
+        child: Transform.translate(
+          offset: Offset(0, (1 - v) * 14),
+          child: child,
+        ),
+      ),
+      child: child,
     );
   }
 }
