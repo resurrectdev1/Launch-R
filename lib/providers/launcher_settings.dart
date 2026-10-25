@@ -26,6 +26,7 @@ class LauncherSettings extends ChangeNotifier {
   bool _showDockLabels = false;
   PageIndicatorStyle _pageIndicator = PageIndicatorStyle.dots;
   bool _loopPages = false;
+  bool _loopDrawerPages = false;
   bool _showBadges = false;
   bool _reduceAnimations = false;
   bool _drawerAutoSearch = false;
@@ -76,6 +77,7 @@ class LauncherSettings extends ChangeNotifier {
   bool get showDockLabels => _showDockLabels;
   PageIndicatorStyle get pageIndicator => _pageIndicator;
   bool get loopPages => _loopPages;
+  bool get loopDrawerPages => _loopDrawerPages;
   bool get showBadges => _showBadges;
   bool get reduceAnimations => _reduceAnimations;
   bool get drawerAutoSearch => _drawerAutoSearch;
@@ -158,6 +160,7 @@ class LauncherSettings extends ChangeNotifier {
     _showDockLabels = p.getBool('show_dock_labels') ?? false;
     _pageIndicator = PageIndicatorStyle.fromName(p.getString('page_indicator'));
     _loopPages = p.getBool('loop_pages') ?? false;
+    _loopDrawerPages = p.getBool('loop_drawer_pages') ?? false;
     _lockLayout = p.getBool('lock_layout') ?? false;
     _showBadges = p.getBool('show_badges') ?? false;
     _reduceAnimations = p.getBool('reduce_animations') ?? false;
@@ -401,6 +404,13 @@ class LauncherSettings extends ChangeNotifier {
     _loopPages = v;
     notifyListeners();
     await _prefs?.setBool('loop_pages', v);
+  }
+
+  Future<void> setLoopDrawerPages(bool v) async {
+    if (v == _loopDrawerPages) return;
+    _loopDrawerPages = v;
+    notifyListeners();
+    await _prefs?.setBool('loop_drawer_pages', v);
   }
 
   Future<void> setDoubleTapLock(bool v) async {
