@@ -12,6 +12,8 @@ class HomePagePreview extends StatelessWidget {
     required this.rows,
     this.highlightIds = const {},
     this.highlightColor = const Color(0xFFFFFFFF),
+    this.showLabels = false,
+    this.showDockLabels = false,
   });
 
   final List<LItem?> items;
@@ -21,7 +23,36 @@ class HomePagePreview extends StatelessWidget {
   final Set<String> highlightIds;
   final Color highlightColor;
 
+  final bool showLabels;
+
+  final bool showDockLabels;
+
   static const _dockGap = 6.0;
+  static const _barGap = 2.5;
+
+  static double _barFrac(int i) => 0.5 + ((i * 37) % 4) * 0.1;
+
+  static double _barHeight(double cellH) =>
+      math.max(2.5, math.min(4.0, cellH * 0.07));
+
+  static Widget _bar(double cellW, double h, int i) => Container(
+    width: cellW * 0.8 * _barFrac(i),
+    height: h,
+    decoration: BoxDecoration(
+      color: const Color(0x8CFFFFFF),
+      borderRadius: BorderRadius.circular(h),
+    ),
+  );
+
+  static Widget _withLabel(Widget icon, double cellW, double barH, int i) =>
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          icon,
+          const SizedBox(height: _barGap),
+          _bar(cellW, barH, i),
+        ],
+      );
 
   static Widget mini(LItem? it, double s) => switch (it) {
     null => const SizedBox.shrink(),
@@ -64,10 +95,17 @@ class HomePagePreview extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, c) {
         final cw = c.maxWidth / cols;
-        final dockH = math.min(cw * 0.95, c.maxHeight * 0.2);
+        final dockH = showDockLabels
+            ? math.min(cw * 1.1, c.maxHeight * 0.23)
+            : math.min(cw * 0.95, c.maxHeight * 0.2);
         final gridH = math.max(0.0, c.maxHeight - dockH - _dockGap);
         final ch = gridH / rows;
-        final s = math.min(cw, ch) * 0.64;
+        final barH = _barHeight(ch);
+        final labelRoom = showLabels ? barH + _barGap : 0.0;
+        final s = math.min(
+          math.min(cw, ch) * 0.64,
+          math.max(4.0, (ch - labelRoom) * 0.86),
+        );
 
         final cells = <Widget>[];
         final n = math.min(items.length, cols * rows);
@@ -98,7 +136,11 @@ class HomePagePreview extends StatelessWidget {
                 top: row * ch,
                 width: cw,
                 height: ch,
-                child: Center(child: _marked(it, s)),
+                child: Center(
+                  child: showLabels
+                      ? _withLabel(_marked(it, s), cw, barH, i)
+                      : _marked(it, s),
+                ),
               ),
             );
           }
@@ -116,7 +158,16 @@ class HomePagePreview extends StatelessWidget {
               items: dock,
               cols: cols,
               height: dockH,
-              iconSize: math.min(s, dockH * 0.8),
+              iconSize: showDockLabels
+                  ? math.min(
+                      s,
+                      math.max(
+                        4.0,
+                        (dockH - _barHeight(dockH) - _barGap) * 0.72,
+                      ),
+                    )
+                  : math.min(s, dockH * 0.8),
+              showLabels: showDockLabels,
             ),
           ],
         );
@@ -195,12 +246,14 @@ class _DockStrip extends StatelessWidget {
     required this.cols,
     required this.height,
     required this.iconSize,
+    required this.showLabels,
   });
 
   final List<LItem?> items;
   final int cols;
   final double height;
   final double iconSize;
+  final bool showLabels;
 
   @override
   Widget build(BuildContext context) {
@@ -213,15 +266,22 @@ class _DockStrip extends StatelessWidget {
       child: Row(
         children: [
           for (var i = 0; i < cols; i++)
-            Expanded(
-              child: Center(
-                child: HomePagePreview.mini(
-                  i < items.length ? items[i] : null,
-                  iconSize,
-                ),
-              ),
-            ),
+            Expanded(child: Center(child: _slot(i, context))),
         ],
+      ),
+    );
+  }
+
+  Widget _slot(int i, BuildContext context) {
+    final it = i < items.length ? items[i] : null;
+    final icon = HomePagePreview.mini(it, iconSize);
+    if (!showLabels || it == null || it is WidgetItem) return icon;
+    return LayoutBuilder(
+      builder: (context, c) => HomePagePreview._withLabel(
+        icon,
+        c.maxWidth,
+        HomePagePreview._barHeight(height),
+        i,
       ),
     );
   }
