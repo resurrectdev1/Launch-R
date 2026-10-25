@@ -14,6 +14,7 @@ import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/app_icon.dart';
 import 'package:launch_r/widgets/edge_flipper.dart';
+import 'package:launch_r/widgets/home_page_controller.dart';
 import 'package:launch_r/widgets/item_actions.dart';
 import 'package:launch_r/widgets/keep_alive.dart';
 import 'package:launch_r/widgets/launcher_cell.dart';
@@ -59,10 +60,12 @@ enum _ReloadPhase { loading, done, failed }
 enum _Overlay { none, panel, results }
 
 class _DrawerViewState extends State<DrawerView> {
-  final _pages = PageController();
+  final _pages = HomePageController();
   final _search = TextEditingController();
   final _focus = FocusNode();
   int _pageCount = 1;
+  bool _loopBuilt = false;
+  bool _switching = false;
   bool _autoFocused = false;
 
   @override
@@ -137,20 +140,40 @@ class _DrawerViewState extends State<DrawerView> {
   }
 
   void _prev() {
-    if (_pages.hasClients) {
-      if ((_pages.page ?? 0).round() <= 0) return;
-      unawaited(HapticFeedback.selectionClick());
-      unawaited(
-        _pages.previousPage(duration: Motion.slow, curve: Motion.standard),
-      );
-    }
+    if (!_pages.hasClients) return;
+    if (!_pages.loop && _pages.logicalPage <= 0) return;
+    unawaited(HapticFeedback.selectionClick());
+    unawaited(
+      _pages.previousPage(duration: Motion.slow, curve: Motion.standard),
+    );
   }
 
   void _next() {
     if (!_pages.hasClients) return;
-    if ((_pages.page?.round() ?? 0) >= _pageCount - 1) return;
+    if (!_pages.loop && _pages.logicalPage >= _pageCount - 1) return;
     unawaited(HapticFeedback.selectionClick());
     unawaited(_pages.nextPage(duration: Motion.slow, curve: Motion.standard));
+  }
+
+  void _switchLoop(bool to) {
+    _switching = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (to) {
+        setState(() => _loopBuilt = true);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _pages.recenter();
+          setState(() => _switching = false);
+        });
+      } else {
+        _pages.settleToLogical();
+        setState(() {
+          _loopBuilt = false;
+          _switching = false;
+        });
+      }
+    });
   }
 
   void _drop(DragData d, Hover h, LItem? target, int index) {
@@ -312,6 +335,9 @@ class _DrawerViewState extends State<DrawerView> {
         final n = items.length;
         final pages = math.max(1, (n / perPage).ceil());
         _pageCount = pages;
+        final wantLoop = settings.loopDrawerPages && pages > 1;
+        _pages.configure(count: pages, loop: _loopBuilt);
+        if (wantLoop != _loopBuilt && !_switching) _switchLoop(wantLoop);
         final cw = (c.maxWidth - 16) / cols;
         final iconSize = drawerIconSize(cw, settings.iconScale);
 
@@ -345,9 +371,10 @@ class _DrawerViewState extends State<DrawerView> {
                 children: [
                   PageView.builder(
                     controller: _pages,
-                    itemCount: pages,
-                    itemBuilder: (context, p) => PageKeepAlive(
-                      child: Padding(
+                    itemCount: _loopBuilt ? null : pages,
+                    itemBuilder: (context, v) {
+                      final p = _pages.logicalOf(v);
+                      final page = Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Column(
                           children: [
@@ -366,8 +393,15 @@ class _DrawerViewState extends State<DrawerView> {
                               ),
                           ],
                         ),
-                      ),
-                    ),
+                      );
+                      if (!_loopBuilt) return PageKeepAlive(child: page);
+                      return Selector<ShellController, bool>(
+                        selector: (_, s) => s.drag != null,
+                        builder: (_, dragging, child) =>
+                            PageKeepAlive(keep: dragging, child: child!),
+                        child: page,
+                      );
+                    },
                   ),
                   Positioned.fill(
                     child: EdgeFlipper(onPrev: _prev, onNext: _next),
