@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -11,11 +10,13 @@ import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/icon_shapes.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/about_sheet.dart';
 import 'package:launch_r/widgets/accent_picker_sheet.dart';
 import 'package:launch_r/widgets/font_sheet.dart';
 import 'package:launch_r/widgets/gesture_sheets.dart';
 import 'package:launch_r/widgets/hidden_apps_sheet.dart';
+import 'package:launch_r/widgets/home_preview.dart';
 import 'package:launch_r/widgets/icon_pack_sheet.dart';
 import 'package:launch_r/widgets/tag_manager_sheet.dart';
 
@@ -712,8 +713,12 @@ class _HomeGridEditor extends StatefulWidget {
 }
 
 class _HomeGridEditorState extends State<_HomeGridEditor> {
+  static const _warn = Color(0xFFFFB74D);
+
   late int _cols;
   late int _rows;
+  final _pages = PageController();
+  int _page = 0;
 
   @override
   void initState() {
@@ -724,75 +729,187 @@ class _HomeGridEditorState extends State<_HomeGridEditor> {
   }
 
   @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
+
+  void _setGrid({int? cols, int? rows}) {
+    setState(() {
+      _cols = cols ?? _cols;
+      _rows = rows ?? _rows;
+    });
+  }
+
+  String _plural(int n, String one, [String? many]) =>
+      '$n ${n == 1 ? one : (many ?? '${one}s')}';
+
+  @override
   Widget build(BuildContext context) {
     final t = LaunchRTheme.of(context);
     final model = context.watch<LauncherModel>();
     final changed = _cols != model.homeCols || _rows != model.homeRows;
 
+    final plan = changed ? model.planHomeGrid(_cols, _rows) : null;
+    final pages = plan?.pages ?? model.home;
+    final dock = plan?.dock ?? model.dock;
+    final marked = plan?.movedIds ?? const <String>{};
+    final lost = plan?.lostWidgets.length ?? 0;
+    final resized = plan?.resizedWidgets ?? 0;
+    final current = _page.clamp(0, pages.length - 1).toInt();
+
+    final screen = MediaQuery.sizeOf(context);
+    final aspect = (screen.width / screen.height).clamp(0.4, 0.6).toDouble();
+    final previewH = (screen.height * 0.38).clamp(240.0, 360.0).toDouble();
+    final previewW = previewH * aspect;
+
+    final notes = <(String, Color)>[
+      if (!changed)
+        (
+          'Current grid: ${model.homeCols}×${model.homeRows}'
+              ' · ${_plural(model.home.length, 'page')}',
+          t.drawerTextMuted,
+        )
+      else ...[
+        (
+          '${_plural(model.home.length, 'page')} → ${pages.length}',
+          t.drawerTextMuted,
+        ),
+        if (marked.isNotEmpty)
+          (
+            '${_plural(marked.length, 'item')} outlined will move to another page',
+            t.accentText,
+          ),
+        if (resized > 0)
+          (
+            '${_plural(resized, 'widget')} will shrink to fit',
+            t.drawerTextMuted,
+          ),
+        if (lost > 0)
+          ('${_plural(lost, 'widget')} won’t fit and will be removed', _warn),
+      ],
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 8, 0, 0),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 64,
-                height: 110,
-                child: CustomPaint(
-                  painter: _GridPreviewPainter(
-                    cols: _cols,
-                    rows: _rows,
-                    color: t.accent,
-                    outline: t.drawerTextMuted,
+        const SizedBox(height: 8),
+        Center(
+          child: Container(
+            width: previewW + 16,
+            height: previewH + 16,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF15171B),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: changed
+                    ? t.accent
+                    : t.drawerTextMuted.withValues(alpha: 0.5),
+                width: changed ? 2 : 1.5,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: PageView.builder(
+                controller: _pages,
+                itemCount: pages.length,
+                onPageChanged: (i) => setState(() => _page = i),
+                itemBuilder: (context, i) => Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
+                  child: AnimatedSwitcher(
+                    duration: Motion.base,
+                    switchInCurve: Motion.standard,
+                    transitionBuilder: (child, anim) => FadeTransition(
+                      opacity: anim,
+                      child: ScaleTransition(
+                        scale: Tween(begin: 0.96, end: 1.0).animate(anim),
+                        child: child,
+                      ),
+                    ),
+                    child: HomePagePreview(
+                      key: ValueKey('$_cols×$_rows:$i:$changed'),
+                      items: pages[i],
+                      dock: dock,
+                      cols: changed ? _cols : model.homeCols,
+                      rows: changed ? _rows : model.homeRows,
+                      highlightIds: marked,
+                      highlightColor: t.accent,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  children: [
-                    _StepperRow(
-                      label: 'Columns',
-                      value: _cols,
-                      min: GridLimits.minHomeCols,
-                      max: GridLimits.maxHomeCols,
-                      onChanged: (v) => setState(() => _cols = v),
-                    ),
-                    _StepperRow(
-                      label: 'Rows',
-                      value: _rows,
-                      min: GridLimits.minHomeRows,
-                      max: GridLimits.maxHomeRows,
-                      onChanged: (v) => setState(() => _rows = v),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
+        ),
+        const SizedBox(height: 8),
+        if (pages.length > 1)
+          Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < pages.length; i++)
+                  AnimatedContainer(
+                    duration: Motion.fast,
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    width: i == current ? 14 : 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: i == current
+                          ? t.accent
+                          : t.drawerTextMuted.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 4),
+        _StepperRow(
+          label: 'Columns',
+          value: _cols,
+          min: GridLimits.minHomeCols,
+          max: GridLimits.maxHomeCols,
+          onChanged: (v) => _setGrid(cols: v),
+        ),
+        _StepperRow(
+          label: 'Rows',
+          value: _rows,
+          min: GridLimits.minHomeRows,
+          max: GridLimits.maxHomeRows,
+          onChanged: (v) => _setGrid(rows: v),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 4, 24, 0),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
-                child: Text(
-                  changed
-                      ? 'Apply to rearrange your icons into $_cols×$_rows'
-                      : 'Current grid: ${model.homeCols}×${model.homeRows}',
-                  style: TextStyle(
-                    color: t.drawerTextMuted,
-                    fontSize: 12,
-                    height: 1.35,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final (text, color) in notes)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Text(
+                          text,
+                          style: TextStyle(
+                            color: color,
+                            fontSize: 12.5,
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
+              const SizedBox(width: 12),
               FilledButton(
                 onPressed: changed
                     ? () {
                         unawaited(HapticFeedback.mediumImpact());
                         model.setHomeGrid(_cols, _rows);
+                        setState(() => _page = 0);
                       }
                     : null,
                 child: const Text('Apply'),
@@ -804,81 +921,6 @@ class _HomeGridEditorState extends State<_HomeGridEditor> {
       ],
     );
   }
-}
-
-class _GridPreviewPainter extends CustomPainter {
-  _GridPreviewPainter({
-    required this.cols,
-    required this.rows,
-    required this.color,
-    required this.outline,
-  });
-
-  final int cols;
-  final int rows;
-  final Color color;
-  final Color outline;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final frame = RRect.fromRectAndRadius(
-      Offset.zero & size,
-      const Radius.circular(10),
-    );
-    canvas.drawRRect(
-      frame,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
-        ..color = outline.withValues(alpha: 0.6),
-    );
-
-    const pad = 6.0;
-    final dockH = size.height * 0.12;
-    final gridW = size.width - pad * 2;
-    final gridH = size.height - pad * 2 - dockH - 4;
-    final cw = gridW / cols;
-    final ch = gridH / rows;
-    final dot = math.min(cw, ch) * 0.62;
-    final fill = Paint()..color = color.withValues(alpha: 0.85);
-    for (var r = 0; r < rows; r++) {
-      for (var c = 0; c < cols; c++) {
-        final cx = pad + cw * (c + 0.5);
-        final cy = pad + ch * (r + 0.5);
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromCenter(center: Offset(cx, cy), width: dot, height: dot),
-            Radius.circular(dot * 0.3),
-          ),
-          fill,
-        );
-      }
-    }
-    final dockY = size.height - pad - dockH / 2;
-    final dockDot = math.min(gridW / cols * 0.62, dockH * 0.8);
-    final dockFill = Paint()..color = color.withValues(alpha: 0.5);
-    for (var c = 0; c < cols; c++) {
-      final cx = pad + cw * (c + 0.5);
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromCenter(
-            center: Offset(cx, dockY),
-            width: dockDot,
-            height: dockDot,
-          ),
-          Radius.circular(dockDot * 0.3),
-        ),
-        dockFill,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_GridPreviewPainter old) =>
-      old.cols != cols ||
-      old.rows != rows ||
-      old.color != color ||
-      old.outline != outline;
 }
 
 class _IconsPage extends StatelessWidget {
