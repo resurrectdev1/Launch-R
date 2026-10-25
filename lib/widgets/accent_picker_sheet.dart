@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
+import 'package:launch_r/widgets/launch_r_sheet.dart';
 
 const _presets = <Color>[
   LaunchRTheme.defaultAccent,
@@ -105,197 +106,163 @@ class _AccentSheetState extends State<_AccentSheet> {
     final hasCustom = context.watch<LauncherSettings>().customAccent != null;
     final onColor = LaunchRTheme.onColor(_color);
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.9,
-        ),
-        decoration: BoxDecoration(
-          color: t.menuBg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 10, 24, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: t.drawerTextMuted,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Accent color',
-                  style: TextStyle(
-                    color: t.drawerText,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Used for highlights, drop targets and switches',
-                  style: TextStyle(color: t.drawerTextMuted, fontSize: 14),
-                ),
-                const SizedBox(height: 22),
-                Text(
-                  'Preset colors',
-                  style: TextStyle(
-                    color: t.drawerTextMuted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 14,
-                  runSpacing: 14,
-                  children: [
-                    for (final c in _presets)
-                      _Swatch(
-                        color: c,
-                        selected: c == _color,
-                        ring: t.drawerText,
-                        onTap: () => _pick(c),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 22),
-                Text(
-                  'Custom hex code',
-                  style: TextStyle(
-                    color: t.drawerTextMuted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _hex,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp('[0-9a-fA-F]'),
-                          ),
-                          LengthLimitingTextInputFormatter(6),
-                          TextInputFormatter.withFunction(
-                            (old, v) => v.copyWith(text: v.text.toUpperCase()),
-                          ),
-                        ],
-                        textCapitalization: TextCapitalization.characters,
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        textInputAction: TextInputAction.done,
-                        style: TextStyle(
-                          color: t.drawerText,
-                          fontSize: 16,
-                          letterSpacing: 1.2,
-                        ),
-                        cursorColor: _color,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          filled: true,
-                          fillColor: t.searchBg,
-                          labelText: 'Hex code',
-                          labelStyle: TextStyle(color: t.drawerTextMuted),
-                          floatingLabelStyle: TextStyle(color: _color),
-                          prefixIcon: Icon(
-                            Icons.palette_outlined,
-                            size: 18,
-                            color: t.drawerTextMuted,
-                          ),
-                          prefixText: '#',
-                          prefixStyle: TextStyle(
-                            color: t.drawerTextMuted,
-                            fontSize: 16,
-                          ),
-                          hintText: 'F26A27',
-                          hintStyle: TextStyle(color: t.drawerTextMuted),
-                          errorText: _showError ? 'Invalid hex' : null,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                          border: _fieldBorder,
-                          enabledBorder: _fieldBorder,
-                          focusedBorder: _fieldBorder,
-                          errorBorder: _fieldBorder,
-                          focusedErrorBorder: _fieldBorder,
-                        ),
-                        onChanged: _onHex,
-                        onSubmitted: _onHex,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    AnimatedContainer(
-                      duration: Motion.fast,
-                      curve: Motion.standard,
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _color,
-                        border: Border.all(
-                          color: t.drawerTextMuted.withValues(alpha: 0.4),
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _color.withValues(alpha: 0.4),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 22),
-                FilledButton(
-                  onPressed: _complete ? _apply : null,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _color,
-                    foregroundColor: onColor,
-                    disabledBackgroundColor: t.searchBg,
-                    minimumSize: const Size.fromHeight(52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
-                    'Apply accent',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-                if (hasCustom)
-                  Center(
-                    child: TextButton(
-                      onPressed: _reset,
-                      child: Text(
-                        'Reset to orange',
-                        style: TextStyle(color: t.drawerTextMuted),
-                      ),
-                    ),
-                  ),
-              ],
+    return LaunchRSheet(
+      title: 'Accent color',
+      size: SheetSize.tall,
+      scrollable: true,
+      keyboardAware: true,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Used for highlights, drop targets and switches',
+            style: TextStyle(color: t.drawerTextMuted, fontSize: 14),
+          ),
+          const SizedBox(height: 22),
+          Text(
+            'Preset colors',
+            style: TextStyle(
+              color: t.drawerTextMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.0,
             ),
           ),
-        ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 14,
+            runSpacing: 14,
+            children: [
+              for (final c in _presets)
+                _Swatch(
+                  color: c,
+                  selected: c == _color,
+                  ring: t.drawerText,
+                  onTap: () => _pick(c),
+                ),
+            ],
+          ),
+          const SizedBox(height: 22),
+          Text(
+            'Custom hex code',
+            style: TextStyle(
+              color: t.drawerTextMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.0,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _hex,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp('[0-9a-fA-F]')),
+                    LengthLimitingTextInputFormatter(6),
+                    TextInputFormatter.withFunction(
+                      (old, v) => v.copyWith(text: v.text.toUpperCase()),
+                    ),
+                  ],
+                  textCapitalization: TextCapitalization.characters,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  textInputAction: TextInputAction.done,
+                  style: TextStyle(
+                    color: t.drawerText,
+                    fontSize: 16,
+                    letterSpacing: 1.2,
+                  ),
+                  cursorColor: _color,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    filled: true,
+                    fillColor: t.searchBg,
+                    labelText: 'Hex code',
+                    labelStyle: TextStyle(color: t.drawerTextMuted),
+                    floatingLabelStyle: TextStyle(color: _color),
+                    prefixIcon: Icon(
+                      Icons.palette_outlined,
+                      size: 18,
+                      color: t.drawerTextMuted,
+                    ),
+                    prefixText: '#',
+                    prefixStyle: TextStyle(
+                      color: t.drawerTextMuted,
+                      fontSize: 16,
+                    ),
+                    hintText: 'F26A27',
+                    hintStyle: TextStyle(color: t.drawerTextMuted),
+                    errorText: _showError ? 'Invalid hex' : null,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    border: _fieldBorder,
+                    enabledBorder: _fieldBorder,
+                    focusedBorder: _fieldBorder,
+                    errorBorder: _fieldBorder,
+                    focusedErrorBorder: _fieldBorder,
+                  ),
+                  onChanged: _onHex,
+                  onSubmitted: _onHex,
+                ),
+              ),
+              const SizedBox(width: 14),
+              AnimatedContainer(
+                duration: Motion.fast,
+                curve: Motion.standard,
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _color,
+                  border: Border.all(
+                    color: t.drawerTextMuted.withValues(alpha: 0.4),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _color.withValues(alpha: 0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+          FilledButton(
+            onPressed: _complete ? _apply : null,
+            style: FilledButton.styleFrom(
+              backgroundColor: _color,
+              foregroundColor: onColor,
+              disabledBackgroundColor: t.searchBg,
+              minimumSize: const Size.fromHeight(52),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: const Text(
+              'Apply accent',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          if (hasCustom)
+            Center(
+              child: TextButton(
+                onPressed: _reset,
+                child: Text(
+                  'Reset to orange',
+                  style: TextStyle(color: t.drawerTextMuted),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
