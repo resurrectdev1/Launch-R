@@ -566,6 +566,11 @@ class _LayoutPage extends StatelessWidget {
       children: [
         _subHeader(t, 'HOME GRID'),
         const _HomeGridEditor(),
+        _hint(
+          t,
+          'Icon size and shape are in Icons. '
+          'Folder colors are in Appearance.',
+        ),
         _subHeader(t, 'LABELS'),
         _switchRow(
           t,
@@ -605,8 +610,8 @@ class _LayoutPage extends StatelessWidget {
         ),
         _hint(
           t,
-          'Tap the dots or line to jump to a page. '
-          'The style is also used in the app drawer.',
+          'Home screen only. Tap the dots or line to jump to a page. '
+          'The app drawer has its own option in App drawer.',
         ),
         _switchRow(
           t,
@@ -670,6 +675,12 @@ class _DrawerPage extends StatelessWidget {
           max: GridLimits.maxDrawerCols,
           onChanged: s.setDrawerCols,
         ),
+        _hint(
+          t,
+          'Icon size and shape are in Icons. '
+          'Folder colors are in Appearance.',
+        ),
+        _subHeader(t, 'LABELS'),
         _switchRow(
           t,
           title: 'App labels',
@@ -677,12 +688,33 @@ class _DrawerPage extends StatelessWidget {
           value: s.showDrawerLabels,
           onChanged: s.setShowDrawerLabels,
         ),
+        _subHeader(t, 'PAGES'),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 6, 24, 0),
+          child: Text(
+            'Page indicator',
+            style: TextStyle(color: t.drawerText, fontSize: 16),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 4),
+          child: Wrap(
+            spacing: 8,
+            children: [
+              for (final style in PageIndicatorStyle.values)
+                ChoiceChip(
+                  label: Text(style.label),
+                  selected: s.drawerPageIndicator == style,
+                  onSelected: (_) => s.setDrawerPageIndicator(style),
+                ),
+            ],
+          ),
+        ),
         _hint(
           t,
-          'Icon size and shape are in Icons. Page dots are in Layout. '
-          'Folder colors are in Appearance.',
+          'App drawer only. Doesn’t affect the home screen, which has '
+          'its own option in Layout.',
         ),
-        _subHeader(t, 'PAGES'),
         _switchRow(
           t,
           title: 'Loop app drawer pages',
@@ -781,7 +813,7 @@ class _DrawerPreviewCard extends StatelessWidget {
       topInset: device.padding.top,
       bottomInset: device.viewPadding.bottom,
       labels: s.showDrawerLabels,
-      indicator: s.pageIndicator,
+      indicator: s.drawerPageIndicator,
     );
     final cols = s.drawerCols;
     final items = model.drawerSlots;
@@ -825,7 +857,7 @@ class _DrawerPreviewCard extends StatelessWidget {
                 bottomInset: device.viewPadding.bottom,
                 showLabels: s.showDrawerLabels,
                 iconScale: s.iconScale,
-                indicator: s.pageIndicator,
+                indicator: s.drawerPageIndicator,
                 showVoice: s.showVoiceButton,
                 folderBg: folderBg,
                 folderBase: homeLook ? null : t.popupBg,
