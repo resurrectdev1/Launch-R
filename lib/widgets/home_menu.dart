@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:launch_r/widgets/page_haptics.dart';
 import 'package:launch_r/widgets/home_page_controller.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
@@ -71,6 +72,7 @@ class _MenuOverlayState extends State<_MenuOverlay> {
   void _openPage(int i) {
     final home = widget.homePages;
     context.read<ShellController>().closeMenu();
+    unawaited(HapticFeedback.selectionClick());
     if (home.hasClients) {
       unawaited(
         home.goToLogical(i, duration: Motion.slow, curve: Motion.standard),
@@ -110,6 +112,7 @@ class _MenuOverlayState extends State<_MenuOverlay> {
     }
     final cur = home.hasClients ? home.logicalPage : 0;
     if (!model.removeHomePage(index)) return;
+    unawaited(HapticFeedback.mediumImpact());
     final target = math.min(cur > index ? cur - 1 : cur, model.home.length - 1);
     setState(() => _current = target);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -182,7 +185,8 @@ class _MenuOverlayState extends State<_MenuOverlay> {
                           Transform.scale(scale: v, child: child),
                       child: SizedBox(
                         height: carouselH,
-                        child: PageView.builder(
+                        child: PageHaptics(
+                          child: PageView.builder(
                           controller: _cardsCtl,
                           clipBehavior: Clip.none,
                           itemCount: pages + (showAdd ? 1 : 0),
@@ -247,6 +251,7 @@ class _MenuOverlayState extends State<_MenuOverlay> {
                               ),
                             );
                           },
+                        ),
                         ),
                       ),
                     ),
