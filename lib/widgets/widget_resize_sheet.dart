@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
@@ -60,7 +62,10 @@ class _Body extends StatelessWidget {
     }
 
     void set(int c, int r) {
-      if (!model.resizeWidget(w.wid, c, r)) {
+      if (model.resizeWidget(w.wid, c, r)) {
+        unawaited(HapticFeedback.selectionClick());
+      } else {
+        unawaited(HapticFeedback.heavyImpact());
         ScaffoldMessenger.maybeOf(context)?.showSnackBar(
           const SnackBar(
             content: Text('Not enough room to resize here'),
@@ -123,7 +128,10 @@ class _Body extends StatelessWidget {
           alignment: Alignment.centerRight,
           child: TextButton(
             style: TextButton.styleFrom(foregroundColor: t.accentText),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              unawaited(HapticFeedback.lightImpact());
+              Navigator.of(context).pop();
+            },
             child: const Text('Done'),
           ),
         ),
