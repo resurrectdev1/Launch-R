@@ -27,13 +27,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 * Everything that only affects the app drawer now lives in its own settings page: columns, labels, remember app positions (plus a Tidy up apps button), search on open, suggestions, voice and clear buttons, and the swipe up again options. “Apps screen” is now called “App drawer” everywhere.
 * Settings sheet rehaul: Launcher settings is now a short list of categories (Appearance, Text, Layout, Icons, Search, Gestures, System) and tapping one opens a sheet with just those settings. Swipe down or tap the back arrow to return to the list.
+* Smoother app drawer search transition: when you tap the search bar, the app grid now fades out as the suggestions and recent searches fade in, instead of the grid vanishing instantly. Suggested apps and recent searches also glide in one after another.
+* The drawer's search results now fade in and out over the grid in the same way.
 * Sheet heights, title spacing and keyboard behavior is now consistent throughout the app.
 * Removed about 190 lines of duplicate code
+
 
 ### Fixed
 
 * The Icon size, Text size, and Gesture sensitivity sliders no longer shift when the reset button appears. Each row is now a fixed height with space always reserved for the button.
 * The About row in Launcher settings now lines up with the category icons above it instead of sitting slightly to the left.
+* The app drawer now stays on the page you were viewing after you search or dismiss the keyboard, instead of jumping back to the first page.
+* The app grid no longer re-lays itself out while the keyboard slides up, which removes a small flicker behind the suggestions.
 
 ---
 
