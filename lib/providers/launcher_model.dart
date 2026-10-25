@@ -1292,38 +1292,157 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     cols = cols.clamp(GridLimits.minHomeCols, GridLimits.maxHomeCols);
     rows = rows.clamp(GridLimits.minHomeRows, GridLimits.maxHomeRows);
     if (cols == _homeCols && rows == _homeRows) return;
+    final plan = _reflow(_home, _dock, cols, rows);
+    _homeCols = cols;
+    _homeRows = rows;
+    _dock = plan.dock;
+    _home = plan.pages;
+    for (final w in plan.lostWidgets) {
+      _releaseWidget(w);
+    }
+    _clampPages();
+    _commit();
+  }
+
+  GridPlan planHomeGrid(int cols, int rows) => _reflow(
+    _home,
+    _dock,
+    cols.clamp(GridLimits.minHomeCols, GridLimits.maxHomeCols),
+    rows.clamp(GridLimits.minHomeRows, GridLimits.maxHomeRows),
+  );
+
+  static bool _slotsFree(
+    List<LItem?> page,
+    int cols,
+    int rows,
+    int index,
+    int spanC,
+    int spanR,
+  ) {
+    final r0 = index ~/ cols;
+    final c0 = index % cols;
+    if (spanC < 1 || spanR < 1) return false;
+    if (c0 + spanC > cols || r0 + spanR > rows) return false;
+    for (var r = r0; r < r0 + spanR; r++) {
+      for (var c = c0; c < c0 + spanC; c++) {
+        final i = r * cols + c;
+        if (i >= page.length || page[i] != null) return false;
+      }
+    }
+    return true;
+  }
+
+  static GridPlan _reflow(
+    List<List<LItem?>> home,
+    List<LItem?> dock,
+    int cols,
+    int rows,
+  ) {
     final widgets = <WidgetItem>[
-      for (final p in _home) ...p.whereType<WidgetItem>(),
+      for (final p in home) ...p.whereType<WidgetItem>(),
     ];
     final flat = <LItem>[
-      for (final p in _home)
+      for (final p in home)
         ...p.whereType<LItem>().where(
           (e) => e is! WidgetItem && e is! WidgetCover,
         ),
     ];
-    final dockItems = _dock.whereType<LItem>().toList();
+    final dockItems = dock.whereType<LItem>().toList();
 
-    _homeCols = cols;
-    _homeRows = rows;
+    final oldPage = <String, int>{};
+    for (var p = 0; p < home.length; p++) {
+      for (final it in home[p]) {
+        if (it != null && it is! WidgetCover) oldPage[it.id] = p;
+      }
+    }
+    for (final it in dockItems) {
+      oldPage[it.id] = -1;
+    }
 
     final newDock = List<LItem?>.filled(cols, null);
     for (var i = 0; i < math.min(cols, dockItems.length); i++) {
       newDock[i] = dockItems[i];
     }
     if (dockItems.length > cols) flat.addAll(dockItems.skip(cols));
-    _dock = newDock;
 
     final per = cols * rows;
-    _home = [];
+    List<LItem?> blank() => List<LItem?>.filled(per, null);
+    final pages = <List<LItem?>>[];
     for (var i = 0; i < flat.length; i += per) {
-      _home.add(_normalizePage(flat.skip(i).take(per)));
+      final page = blank();
+      var k = 0;
+      for (final it in flat.skip(i).take(per)) {
+        page[k++] = it;
+      }
+      pages.add(page);
     }
-    if (_home.isEmpty) _home.add(_blankPage());
+    if (pages.isEmpty) pages.add(blank());
+
+    final lost = <WidgetItem>[];
+    var resized = 0;
+    final widgetPage = <String, int>{};
     for (final w in widgets) {
-      _placeWidgetAnywhere(w);
+      final c = math.min(w.cols, cols);
+      final r = math.min(w.rows, rows);
+      final fit = (c == w.cols && r == w.rows)
+          ? w
+          : w.copyWith(cols: c, rows: r);
+      int? spotPage;
+      var spotIndex = 0;
+      search:
+      for (var p = 0; p < pages.length; p++) {
+        for (var i = 0; i < pages[p].length; i++) {
+          if (_slotsFree(pages[p], cols, rows, i, c, r)) {
+            spotPage = p;
+            spotIndex = i;
+            break search;
+          }
+        }
+      }
+      if (spotPage == null && pages.length < maxHomePages) {
+        pages.add(blank());
+        spotPage = pages.length - 1;
+        spotIndex = 0;
+      }
+      if (spotPage == null) {
+        lost.add(w);
+        continue;
+      }
+      if (!identical(fit, w)) resized++;
+      final r0 = spotIndex ~/ cols;
+      final c0 = spotIndex % cols;
+      final cover = WidgetCover(w.wid);
+      for (var rr = r0; rr < r0 + r; rr++) {
+        for (var cc = c0; cc < c0 + c; cc++) {
+          pages[spotPage][rr * cols + cc] = (rr == r0 && cc == c0)
+              ? fit
+              : cover;
+        }
+      }
+      widgetPage[w.id] = spotPage;
     }
-    _clampPages();
-    _commit();
+
+    final moved = <String>{};
+    for (var p = 0; p < pages.length; p++) {
+      for (final it in pages[p]) {
+        if (it == null || it is WidgetCover) continue;
+        if (it is WidgetItem) continue;
+        if (oldPage[it.id] != p) moved.add(it.id);
+      }
+    }
+    widgetPage.forEach((id, p) {
+      if (oldPage[id] != p) moved.add(id);
+    });
+
+    return GridPlan(
+      cols: cols,
+      rows: rows,
+      pages: pages,
+      dock: newDock,
+      movedIds: moved,
+      resizedWidgets: resized,
+      lostWidgets: lost,
+    );
   }
 
   WidgetItem? widgetById(int wid) {
