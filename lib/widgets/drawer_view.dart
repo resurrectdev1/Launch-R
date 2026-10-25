@@ -21,7 +21,29 @@ import 'package:launch_r/widgets/page_dots.dart';
 import 'package:launch_r/widgets/press_scale.dart';
 import 'package:launch_r/widgets/settings_sheet.dart';
 
-double _rowPitchFor(bool labels) => labels ? 106.0 : 84.0;
+double _rowPitchFor(bool labels) => drawerRowPitch(labels);
+
+double drawerRowPitch(bool labels) => labels ? 106.0 : 84.0;
+
+double drawerDotsHeight(PageIndicatorStyle style) =>
+    style == PageIndicatorStyle.hidden ? 8.0 : 26.0;
+
+double drawerIconSize(double cellWidth, double iconScale) =>
+    math.min(math.min(cellWidth * 0.62, 60.0) * iconScale, cellWidth * 0.9);
+
+int drawerRowsForScreen({
+  required double screenHeight,
+  required double topInset,
+  required double bottomInset,
+  required bool labels,
+  required PageIndicatorStyle indicator,
+}) {
+  final body = screenHeight - (topInset + drawerTopChrome) - bottomInset;
+  final gridH = body - drawerDotsHeight(indicator);
+  return math.max(3, (gridH / drawerRowPitch(labels)).floor());
+}
+
+const double drawerTopChrome = 12 + 52 + 14;
 
 class DrawerView extends StatefulWidget {
   const DrawerView({super.key, required this.drawer});
@@ -235,24 +257,19 @@ class _DrawerViewState extends State<DrawerView> {
 
     return LayoutBuilder(
       builder: (context, c) {
-        final dotsH = settings.pageIndicator == PageIndicatorStyle.hidden
-            ? 8.0
-            : 26.0;
+        final dotsH = drawerDotsHeight(settings.pageIndicator);
         final gridH = c.maxHeight - dotsH;
         final cols = settings.drawerCols;
         final rows = math.max(
           3,
-          (gridH / _rowPitchFor(settings.showDrawerLabels)).floor(),
+          (gridH / drawerRowPitch(settings.showDrawerLabels)).floor(),
         );
         final perPage = cols * rows;
         final n = items.length;
         final pages = math.max(1, (n / perPage).ceil());
         _pageCount = pages;
         final cw = (c.maxWidth - 16) / cols;
-        final iconSize = math.min(
-          math.min(cw * 0.62, 60.0) * settings.iconScale,
-          cw * 0.9,
-        );
+        final iconSize = drawerIconSize(cw, settings.iconScale);
 
         Widget cell(int idx) {
           final item = idx < n ? items[idx] : null;
@@ -457,10 +474,7 @@ class _DrawerViewState extends State<DrawerView> {
       child: LayoutBuilder(
         builder: (context, c) {
           final cw = (c.maxWidth - 16) / cols;
-          final iconSize = math.min(
-            math.min(cw * 0.62, 60.0) * settings.iconScale,
-            cw * 0.9,
-          );
+          final iconSize = drawerIconSize(cw, settings.iconScale);
           return SingleChildScrollView(
             padding: const EdgeInsets.only(bottom: 12),
             child: Column(
@@ -588,10 +602,7 @@ class _DrawerViewState extends State<DrawerView> {
     return LayoutBuilder(
       builder: (context, c) {
         final cw = (c.maxWidth - 16) / cols;
-        final iconSize = math.min(
-          math.min(cw * 0.62, 60.0) * settings.iconScale,
-          cw * 0.9,
-        );
+        final iconSize = drawerIconSize(cw, settings.iconScale);
         return GridView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -857,6 +868,7 @@ class _SearchPill extends StatelessWidget {
             ),
             onSelected: (v) {
               if (v == 'settings') showLaunchRSettings(context);
+              if (v == 'drawer') showLaunchRDrawerSettings(context);
               if (v == 'wallpaper') {
                 unawaited(LauncherChannel.instance.openWallpaperPicker());
               }
@@ -868,6 +880,13 @@ class _SearchPill extends StatelessWidget {
                 value: 'settings',
                 child: Text(
                   'Launcher settings',
+                  style: TextStyle(color: t.drawerText),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'drawer',
+                child: Text(
+                  'App drawer settings',
                   style: TextStyle(color: t.drawerText),
                 ),
               ),
