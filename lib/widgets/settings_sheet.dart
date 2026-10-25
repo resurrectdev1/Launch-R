@@ -961,7 +961,7 @@ class _HomeGridEditorState extends State<_HomeGridEditor> {
         )
       else ...[
         (
-          '${_plural(model.home.length, 'page')} → ${pages.length}',
+          '${_plural(model.home.length, 'page')} -> ${pages.length}',
           t.drawerTextMuted,
         ),
         if (marked.isNotEmpty)
