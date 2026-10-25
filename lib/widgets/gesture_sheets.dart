@@ -9,6 +9,7 @@ import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/widgets/app_icon.dart';
+import 'package:launch_r/widgets/launch_r_sheet.dart';
 
 IconData gestureIcon(GestureAction a) => switch (a) {
   GestureAction.none => Icons.block_rounded,
@@ -88,64 +89,6 @@ Future<void> _explainRecentsAccess(BuildContext context) =>
       usedFor: 'open recents',
     );
 
-class _SheetFrame extends StatelessWidget {
-  const _SheetFrame({
-    required this.title,
-    required this.child,
-    this.heightFactor = 0.7,
-  });
-
-  final String title;
-  final Widget child;
-  final double heightFactor;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = LaunchRTheme.of(context);
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * heightFactor,
-      ),
-      decoration: BoxDecoration(
-        color: t.menuBg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 10),
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: t.drawerTextMuted,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-              child: Text(
-                title,
-                style: TextStyle(
-                  color: t.drawerText,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            Flexible(child: child),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _GestureSheet extends StatelessWidget {
   const _GestureSheet({required this.side});
 
@@ -182,9 +125,9 @@ class _GestureSheet extends StatelessWidget {
     final t = LaunchRTheme.of(context);
     final current = context.watch<LauncherSettings>().gestureFor(side);
 
-    return _SheetFrame(
+    return LaunchRSheet(
       title: side.label,
-      heightFactor: 0.8,
+      size: SheetSize.standard,
       child: ListView(
         shrinkWrap: true,
         padding: const EdgeInsets.only(bottom: 12),
@@ -247,9 +190,9 @@ class _AppPickerSheetState extends State<_AppPickerSheet> {
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: _SheetFrame(
+      child: LaunchRSheet(
         title: 'Choose an app',
-        heightFactor: 0.85,
+        size: SheetSize.tall,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
