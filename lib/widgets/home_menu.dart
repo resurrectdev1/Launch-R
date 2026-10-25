@@ -103,6 +103,7 @@ class _MenuOverlayState extends State<_MenuOverlay> {
     if (!model.homePageIsEmpty(index)) {
       final ok = await showDialog<bool>(
         context: context,
+        animationStyle: Motion.routeStyle,
         builder: (_) => const _ConfirmRemove(),
       );
       if (ok != true || !mounted) return;
