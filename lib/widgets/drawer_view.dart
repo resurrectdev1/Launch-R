@@ -19,6 +19,7 @@ import 'package:launch_r/widgets/item_actions.dart';
 import 'package:launch_r/widgets/keep_alive.dart';
 import 'package:launch_r/widgets/launcher_cell.dart';
 import 'package:launch_r/widgets/page_dots.dart';
+import 'package:launch_r/widgets/page_haptics.dart';
 import 'package:launch_r/widgets/press_scale.dart';
 import 'package:launch_r/widgets/settings_sheet.dart';
 
@@ -369,39 +370,41 @@ class _DrawerViewState extends State<DrawerView> {
               height: gridH,
               child: Stack(
                 children: [
-                  PageView.builder(
-                    controller: _pages,
-                    itemCount: _loopBuilt ? null : pages,
-                    itemBuilder: (context, v) {
-                      final p = _pages.logicalOf(v);
-                      final page = Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Column(
-                          children: [
-                            for (var r = 0; r < rows; r++)
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    for (var col = 0; col < cols; col++)
-                                      Expanded(
-                                        child: cell(
-                                          p * perPage + r * cols + col,
+                  PageHaptics(
+                    child: PageView.builder(
+                      controller: _pages,
+                      itemCount: _loopBuilt ? null : pages,
+                      itemBuilder: (context, v) {
+                        final p = _pages.logicalOf(v);
+                        final page = Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Column(
+                            children: [
+                              for (var r = 0; r < rows; r++)
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      for (var col = 0; col < cols; col++)
+                                        Expanded(
+                                          child: cell(
+                                            p * perPage + r * cols + col,
+                                          ),
                                         ),
-                                      ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                          ],
-                        ),
-                      );
-                      if (!_loopBuilt) return PageKeepAlive(child: page);
-                      return Selector<ShellController, bool>(
-                        selector: (_, s) => s.drag != null,
-                        builder: (_, dragging, child) =>
-                            PageKeepAlive(keep: dragging, child: child!),
-                        child: page,
-                      );
-                    },
+                            ],
+                          ),
+                        );
+                        if (!_loopBuilt) return PageKeepAlive(child: page);
+                        return Selector<ShellController, bool>(
+                          selector: (_, s) => s.drag != null,
+                          builder: (_, dragging, child) =>
+                              PageKeepAlive(keep: dragging, child: child!),
+                          child: page,
+                        );
+                      },
+                    ),
                   ),
                   Positioned.fill(
                     child: EdgeFlipper(onPrev: _prev, onNext: _next),
