@@ -4,10 +4,12 @@ import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/widgets/app_icon.dart';
 import 'package:launch_r/widgets/launch_r_sheet.dart';
+import 'package:launch_r/theme/motion.dart';
 
 void showHiddenApps(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,
+    sheetAnimationStyle: Motion.routeStyle,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) => const _HiddenAppsSheet(),
