@@ -13,6 +13,8 @@ import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/about_sheet.dart';
 import 'package:launch_r/widgets/accent_picker_sheet.dart';
+import 'package:launch_r/widgets/drawer_preview.dart';
+import 'package:launch_r/widgets/drawer_view.dart';
 import 'package:launch_r/widgets/font_sheet.dart';
 import 'package:launch_r/widgets/gesture_sheets.dart';
 import 'package:launch_r/widgets/hidden_apps_sheet.dart';
@@ -26,6 +28,15 @@ void showLaunchRSettings(BuildContext context) {
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) => const _SettingsSheet(),
+  );
+}
+
+void showLaunchRDrawerSettings(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => const _DrawerPage(),
   );
 }
 
@@ -236,13 +247,21 @@ class _SettingsSheet extends StatelessWidget {
           onTap: () => _openPage(context, const _TextPage()),
         ),
         category(
-          icon: Icons.grid_view_rounded,
+          icon: Icons.space_dashboard_outlined,
           title: 'Layout',
-          subtitle: 'Home $grid · Apps screen ${s.drawerCols} columns',
+          subtitle: 'Home $grid · labels, pages, lock',
           onTap: () => _openPage(context, const _LayoutPage()),
         ),
         category(
-          icon: Icons.apps_rounded,
+          icon: Icons.keyboard_double_arrow_up_rounded,
+          title: 'App drawer',
+          subtitle:
+              '${s.drawerCols} columns · '
+              '${s.showDrawerLabels ? 'labels on' : 'labels off'} · search, swipes',
+          onTap: () => _openPage(context, const _DrawerPage()),
+        ),
+        category(
+          icon: Icons.interests_outlined,
           title: 'Icons',
           subtitle: s.iconPack == null
               ? '${s.iconShape.label} · System default'
@@ -252,13 +271,13 @@ class _SettingsSheet extends StatelessWidget {
         category(
           icon: Icons.search_rounded,
           title: 'Search',
-          subtitle: 'Fuzzy search, suggestions, tags',
+          subtitle: 'Fuzzy search, hidden app search, tags',
           onTap: () => _openPage(context, const _SearchPage()),
         ),
         category(
           icon: Icons.swipe_rounded,
           title: 'Gestures',
-          subtitle: 'Home screen and app drawer swipes',
+          subtitle: 'Home screen swipes and double tap',
           onTap: () => _openPage(context, const _GesturesPage()),
         ),
         category(
@@ -544,14 +563,6 @@ class _LayoutPage extends StatelessWidget {
       children: [
         _subHeader(t, 'HOME GRID'),
         const _HomeGridEditor(),
-        _subHeader(t, 'APPS SCREEN'),
-        _StepperRow(
-          label: 'Columns',
-          value: s.drawerCols,
-          min: GridLimits.minDrawerCols,
-          max: GridLimits.maxDrawerCols,
-          onChanged: s.setDrawerCols,
-        ),
         _subHeader(t, 'LABELS'),
         _switchRow(
           t,
@@ -559,13 +570,6 @@ class _LayoutPage extends StatelessWidget {
           subtitle: 'Show app names under icons on the home screen',
           value: s.showHomeLabels,
           onChanged: s.setShowHomeLabels,
-        ),
-        _switchRow(
-          t,
-          title: 'Apps screen labels',
-          subtitle: 'Show app names under icons in the apps screen',
-          value: s.showDrawerLabels,
-          onChanged: s.setShowDrawerLabels,
         ),
         _switchRow(
           t,
@@ -596,7 +600,11 @@ class _LayoutPage extends StatelessWidget {
             ],
           ),
         ),
-        _hint(t, 'Tap the dots or line on the home screen to jump to a page.'),
+        _hint(
+          t,
+          'Tap the dots or line to jump to a page. '
+          'The style is also used in the app drawer.',
+        ),
         _switchRow(
           t,
           title: 'Loop pages',
@@ -608,27 +616,208 @@ class _LayoutPage extends StatelessWidget {
         _switchRow(
           t,
           title: 'Lock layout',
-          subtitle: 'Prevent dragging and rearranging',
+          subtitle:
+              'Prevent dragging and rearranging on the home screen and '
+              'in the app drawer',
           value: s.lockLayout,
           onChanged: s.setLockLayout,
-        ),
-        _switchRow(
-          t,
-          title: 'Remember app positions',
-          subtitle: model.drawerFree
-              ? 'Apps screen keeps empty spots where you leave them'
-              : 'Apps always fill in from the start',
-          value: model.drawerFree,
-          onChanged: model.setDrawerFree,
         ),
         _switchRow(
           t,
           title: 'Add new apps to home',
           subtitle: model.autoAddNew
               ? 'Newly installed apps are placed on your home screen'
-              : 'New apps only appear in the apps screen',
+              : 'New apps only appear in the app drawer',
           value: model.autoAddNew,
           onChanged: model.setAutoAddNew,
+        ),
+      ],
+    );
+  }
+}
+
+class _DrawerPage extends StatelessWidget {
+  const _DrawerPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    final s = context.watch<LauncherSettings>();
+    final model = context.watch<LauncherModel>();
+
+    return _SettingsPage(
+      title: 'App drawer',
+      children: [
+        const _DrawerPreviewCard(),
+        _subHeader(t, 'GRID'),
+        _StepperRow(
+          label: 'Columns',
+          value: s.drawerCols,
+          min: GridLimits.minDrawerCols,
+          max: GridLimits.maxDrawerCols,
+          onChanged: s.setDrawerCols,
+        ),
+        _switchRow(
+          t,
+          title: 'App labels',
+          subtitle: 'Show app names under icons in the app drawer',
+          value: s.showDrawerLabels,
+          onChanged: s.setShowDrawerLabels,
+        ),
+        _hint(
+          t,
+          'Icon size and shape are in Icons. Page dots are in Layout. '
+          'Folder colors are in Appearance.',
+        ),
+        _subHeader(t, 'ORGANIZING'),
+        _switchRow(
+          t,
+          title: 'Remember app positions',
+          subtitle: model.drawerFree
+              ? 'The app drawer keeps empty spots where you leave them'
+              : 'Apps always fill in from the start',
+          value: model.drawerFree,
+          onChanged: model.setDrawerFree,
+        ),
+        if (model.drawerHasGaps)
+          _tile(
+            t,
+            icon: Icons.auto_fix_high_rounded,
+            title: 'Tidy up apps',
+            subtitle: 'Close the empty spots in the app drawer',
+            onTap: model.tidyDrawer,
+          ),
+        _subHeader(t, 'SEARCH BAR'),
+        _switchRow(
+          t,
+          title: 'Search on open',
+          subtitle: 'Opens the keyboard when the app drawer opens',
+          value: s.drawerAutoSearch,
+          onChanged: s.setDrawerAutoSearch,
+        ),
+        _switchRow(
+          t,
+          title: 'Suggestions & recent searches',
+          subtitle: s.drawerSuggestions
+              ? 'Shows your usual apps and past searches when you tap the search bar'
+              : 'Search bar stays empty until you type',
+          value: s.drawerSuggestions,
+          onChanged: s.setDrawerSuggestions,
+        ),
+        _switchRow(
+          t,
+          title: 'Voice search button',
+          subtitle: 'Shows a mic in the search bar',
+          value: s.showVoiceButton,
+          onChanged: s.setShowVoiceButton,
+        ),
+        _switchRow(
+          t,
+          title: 'Clear button',
+          subtitle: 'Shows an ✕ in the search bar once you type',
+          value: s.showClearButton,
+          onChanged: s.setShowClearButton,
+        ),
+        _hint(t, 'Fuzzy search and tags are in Search.'),
+        _subHeader(t, 'SWIPES'),
+        _switchRow(
+          t,
+          title: 'Swipe up again to go home',
+          subtitle:
+              'Swiping up on the open app drawer closes it and returns to the home screen',
+          value: s.swipeUpHome,
+          onChanged: s.setSwipeUpHome,
+        ),
+        _switchRow(
+          t,
+          title: 'Swipe up again to search',
+          subtitle:
+              'Swiping up on the open app drawer opens the keyboard so you can search',
+          value: s.swipeUpSearch,
+          onChanged: s.setSwipeUpSearch,
+        ),
+      ],
+    );
+  }
+}
+
+class _DrawerPreviewCard extends StatelessWidget {
+  const _DrawerPreviewCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    final s = context.watch<LauncherSettings>();
+    final model = context.watch<LauncherModel>();
+
+    final device = MediaQueryData.fromView(View.of(context));
+    final screen = device.size;
+    final rows = drawerRowsForScreen(
+      screenHeight: screen.height,
+      topInset: device.padding.top,
+      bottomInset: device.viewPadding.bottom,
+      labels: s.showDrawerLabels,
+      indicator: s.pageIndicator,
+    );
+    final cols = s.drawerCols;
+    final items = model.drawerSlots;
+    final perPage = cols * rows;
+    final pages = items.isEmpty ? 1 : (items.length / perPage).ceil();
+
+    final aspect = (screen.width / screen.height).clamp(0.4, 0.6).toDouble();
+    final previewH = (screen.height * 0.38).clamp(240.0, 360.0).toDouble();
+    final previewW = previewH * aspect;
+
+    final homeLook = s.homeLookDrawerFolders && !s.solidHomeFolders;
+    final folderBg = homeLook
+        ? (s.darkHomeText ? const Color(0x33000000) : const Color(0x59FFFFFF))
+        : t.folderPanelBg;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        Center(
+          child: Container(
+            width: previewW + 16,
+            height: previewH + 16,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF15171B),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: t.drawerTextMuted.withValues(alpha: 0.5),
+                width: 1.5,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: DrawerPagePreview(
+                items: items,
+                cols: cols,
+                rows: rows,
+                deviceWidth: screen.width,
+                topInset: device.padding.top,
+                bottomInset: device.viewPadding.bottom,
+                showLabels: s.showDrawerLabels,
+                iconScale: s.iconScale,
+                indicator: s.pageIndicator,
+                showVoice: s.showVoiceButton,
+                folderBg: folderBg,
+                folderBase: homeLook ? null : t.popupBg,
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+          child: Center(
+            child: Text(
+              '$cols columns × $rows rows · '
+              '$pages ${pages == 1 ? 'page' : 'pages'}',
+              style: TextStyle(color: t.drawerTextMuted, fontSize: 12.5),
+            ),
+          ),
         ),
       ],
     );
@@ -1059,36 +1248,6 @@ class _SearchPage extends StatelessWidget {
           value: s.fuzzySearch,
           onChanged: s.setFuzzySearch,
         ),
-        _switchRow(
-          t,
-          title: 'Suggestions & recent searches',
-          subtitle: s.drawerSuggestions
-              ? 'Shows your usual apps and past searches when you tap the search bar'
-              : 'Search bar stays empty until you type',
-          value: s.drawerSuggestions,
-          onChanged: s.setDrawerSuggestions,
-        ),
-        _switchRow(
-          t,
-          title: 'Search on open',
-          subtitle: 'Opens the keyboard when the app drawer opens',
-          value: s.drawerAutoSearch,
-          onChanged: s.setDrawerAutoSearch,
-        ),
-        _switchRow(
-          t,
-          title: 'Voice search button',
-          subtitle: 'Shows a mic in the search bar',
-          value: s.showVoiceButton,
-          onChanged: s.setShowVoiceButton,
-        ),
-        _switchRow(
-          t,
-          title: 'Clear button',
-          subtitle: 'Shows an ✕ in the search bar once you type',
-          value: s.showClearButton,
-          onChanged: s.setShowClearButton,
-        ),
         _hint(
           t,
           'Tip: start a search with "${LauncherModel.hiddenSearchPrefix}" '
@@ -1214,21 +1373,17 @@ class _GesturesPage extends StatelessWidget {
           'Lower means you need to swipe further or faster.',
         ),
         _subHeader(t, 'APP DRAWER'),
-        _switchRow(
+        _tile(
           t,
-          title: 'Swipe up again to go home',
-          subtitle:
-              'Swiping up on the open app drawer closes it and returns to the home screen',
-          value: s.swipeUpHome,
-          onChanged: s.setSwipeUpHome,
-        ),
-        _switchRow(
-          t,
-          title: 'Swipe up again to search',
-          subtitle:
-              'Swiping up on the open app drawer opens the keyboard so you can search',
-          value: s.swipeUpSearch,
-          onChanged: s.setSwipeUpSearch,
+          icon: Icons.swipe_vertical_rounded,
+          title: 'Swipes in the app drawer',
+          subtitle: s.swipeUpHome
+              ? 'Swipe up again goes home'
+              : s.swipeUpSearch
+              ? 'Swipe up again opens search'
+              : 'Off',
+          chevron: true,
+          onTap: () => _openPage(context, const _DrawerPage()),
         ),
       ],
     );
