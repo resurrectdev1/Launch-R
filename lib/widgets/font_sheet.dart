@@ -6,6 +6,7 @@ import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/app_fonts.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/widgets/launch_r_sheet.dart';
 
 void showFontPicker(BuildContext context) {
   showModalBottomSheet<void>(
@@ -82,113 +83,73 @@ class _FontSheetState extends State<_FontSheet> {
       },
     );
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.8,
-      ),
-      decoration: BoxDecoration(
-        color: t.menuBg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 10),
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: t.drawerTextMuted,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+    return LaunchRSheet(
+      title: 'Font',
+      size: SheetSize.standard,
+      child: ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.only(bottom: 12),
+        children: [
+          option(
+            title: 'System default',
+            family: 'Roboto',
+            selected: s.fontId == null,
+            onTap: () => unawaited(s.setFont(null)),
+          ),
+          for (final f in AppFont.bundled)
+            option(
+              title: f.label,
+              family: f.family,
+              selected: s.fontId == f.id,
+              onTap: () => unawaited(s.setFont(f.id)),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-              child: Text(
-                'Font',
-                style: TextStyle(
-                  color: t.drawerText,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                padding: const EdgeInsets.only(bottom: 12),
+          if (s.hasCustomFont)
+            option(
+              title: s.customFontLabel ?? 'Custom font',
+              family: s.fontId == AppFont.customId ? s.fontFamily : null,
+              selected: s.fontId == AppFont.customId,
+              onTap: () => unawaited(s.setFont(AppFont.customId)),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  option(
-                    title: 'System default',
-                    family: 'Roboto',
-                    selected: s.fontId == null,
-                    onTap: () => unawaited(s.setFont(null)),
+                  IconButton(
+                    tooltip: 'Remove imported font',
+                    visualDensity: VisualDensity.compact,
+                    icon: Icon(
+                      Icons.delete_outline_rounded,
+                      color: t.drawerTextMuted,
+                    ),
+                    onPressed: () => unawaited(s.removeCustomFont()),
                   ),
-                  for (final f in AppFont.bundled)
-                    option(
-                      title: f.label,
-                      family: f.family,
-                      selected: s.fontId == f.id,
-                      onTap: () => unawaited(s.setFont(f.id)),
-                    ),
-                  if (s.hasCustomFont)
-                    option(
-                      title: s.customFontLabel ?? 'Custom font',
-                      family: s.fontId == AppFont.customId
-                          ? s.fontFamily
-                          : null,
-                      selected: s.fontId == AppFont.customId,
-                      onTap: () => unawaited(s.setFont(AppFont.customId)),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            tooltip: 'Remove imported font',
-                            visualDensity: VisualDensity.compact,
-                            icon: Icon(
-                              Icons.delete_outline_rounded,
-                              color: t.drawerTextMuted,
-                            ),
-                            onPressed: () => unawaited(s.removeCustomFont()),
-                          ),
-                          radio(s.fontId == AppFont.customId),
-                        ],
-                      ),
-                    ),
-                  ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                    leading: _busy
-                        ? SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: t.accent,
-                            ),
-                          )
-                        : Icon(Icons.upload_file_rounded, color: t.drawerText),
-                    title: Text(
-                      s.hasCustomFont
-                          ? 'Import a different font'
-                          : 'Import your own font',
-                      style: TextStyle(color: t.drawerText),
-                    ),
-                    subtitle: Text(
-                      'Choose a .ttf or .otf file from your device',
-                      style: TextStyle(color: t.drawerTextMuted),
-                    ),
-                    onTap: _busy ? null : _import,
-                  ),
+                  radio(s.fontId == AppFont.customId),
                 ],
               ),
             ),
-          ],
-        ),
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+            leading: _busy
+                ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: t.accent,
+                    ),
+                  )
+                : Icon(Icons.upload_file_rounded, color: t.drawerText),
+            title: Text(
+              s.hasCustomFont
+                  ? 'Import a different font'
+                  : 'Import your own font',
+              style: TextStyle(color: t.drawerText),
+            ),
+            subtitle: Text(
+              'Choose a .ttf or .otf file from your device',
+              style: TextStyle(color: t.drawerTextMuted),
+            ),
+            onTap: _busy ? null : _import,
+          ),
+        ],
       ),
     );
   }
