@@ -422,6 +422,7 @@ class _AppearancePage extends StatelessWidget {
                   if (changed && navigator.mounted) navigator.pop(true);
                 },
         ),
+        _subHeader(t, 'HOME SCREEN DISPLAY'),
         _switchRow(
           t,
           title: 'Dark home text',
