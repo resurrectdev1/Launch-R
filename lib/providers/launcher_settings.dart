@@ -25,6 +25,7 @@ class LauncherSettings extends ChangeNotifier {
   bool _showDrawerLabels = true;
   bool _showDockLabels = false;
   PageIndicatorStyle _pageIndicator = PageIndicatorStyle.dots;
+  PageIndicatorStyle _drawerPageIndicator = PageIndicatorStyle.dots;
   bool _loopPages = false;
   bool _loopDrawerPages = false;
   bool _showBadges = false;
@@ -76,6 +77,7 @@ class LauncherSettings extends ChangeNotifier {
   bool get showDrawerLabels => _showDrawerLabels;
   bool get showDockLabels => _showDockLabels;
   PageIndicatorStyle get pageIndicator => _pageIndicator;
+  PageIndicatorStyle get drawerPageIndicator => _drawerPageIndicator;
   bool get loopPages => _loopPages;
   bool get loopDrawerPages => _loopDrawerPages;
   bool get showBadges => _showBadges;
@@ -159,6 +161,9 @@ class LauncherSettings extends ChangeNotifier {
     _showDrawerLabels = p.getBool('show_drawer_labels') ?? true;
     _showDockLabels = p.getBool('show_dock_labels') ?? false;
     _pageIndicator = PageIndicatorStyle.fromName(p.getString('page_indicator'));
+    _drawerPageIndicator = PageIndicatorStyle.fromName(
+      p.getString('drawer_page_indicator') ?? p.getString('page_indicator'),
+    );
     _loopPages = p.getBool('loop_pages') ?? false;
     _loopDrawerPages = p.getBool('loop_drawer_pages') ?? false;
     _lockLayout = p.getBool('lock_layout') ?? false;
@@ -397,6 +402,13 @@ class LauncherSettings extends ChangeNotifier {
     _pageIndicator = v;
     notifyListeners();
     await _prefs?.setString('page_indicator', v.name);
+  }
+
+  Future<void> setDrawerPageIndicator(PageIndicatorStyle v) async {
+    if (v == _drawerPageIndicator) return;
+    _drawerPageIndicator = v;
+    notifyListeners();
+    await _prefs?.setString('drawer_page_indicator', v.name);
   }
 
   Future<void> setLoopPages(bool v) async {
