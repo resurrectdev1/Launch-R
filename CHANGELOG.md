@@ -14,15 +14,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 * Make Labels in layout settings appear on live preview (simmilar to how its done in app drawer live preview) (to be done)
 
-* Allow home screen dock to utilize reccent apps when empty and turned on in settings (to be done)
+* Allow home screen dock to utilize reccent apps when empty (option in settings default off) (to be done)
 
-* Add pages indicator setting to app drawer settings sheet aswell as layout settings sheet (to be done)
+* Add pages indicator setting to app drawer settings sheet (keept in layout settings sheet both; they share the setting) (to be done)
 
 * Add loop pages for app drawer aswell and epxlain it's only for app drawer use (to be done)
 
 * Change name of loop pages in layout settings sheet to explcitly state its only for home screen (to be done)
 
-* Option to hide action bar at top of screen when moving apps or folders in home menu (to be done)
+* Add option to hide action bar at top of screen when moving apps or folders in home menu (to be done)
 
 ---
 
