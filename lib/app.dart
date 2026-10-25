@@ -123,6 +123,8 @@ class _LaunchRAppState extends State<LaunchRApp> with WidgetsBindingObserver {
                       mq.textScaler.scale(1) * settings.textScale,
                     ),
                     boldText: mq.boldText || settings.boldText,
+                    disableAnimations:
+                        mq.disableAnimations || settings.reduceAnimations,
                   ),
                   child: child ?? const SizedBox.shrink(),
                 );
