@@ -13,6 +13,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 * Loop app drawer pages (Settings -> App drawer -> Pages): swiping past the last page of the app drawer wraps around to the first, and the other way round. Off by default. It only affects the app drawer; the home screen has its own option in Settings -> Layout.
+* Haptics when swiping through app drawer pages.
 
 
 ### Changed
