@@ -610,8 +610,10 @@ class _LayoutPage extends StatelessWidget {
         ),
         _switchRow(
           t,
-          title: 'Loop pages',
-          subtitle: 'Swiping past the last page wraps around to the first',
+          title: 'Loop home screen pages',
+          subtitle:
+              'Home screen only: swiping past the last home page wraps '
+              'around to the first. The app drawer has its own option',
           value: s.loopPages,
           onChanged: s.setLoopPages,
         ),
@@ -679,6 +681,17 @@ class _DrawerPage extends StatelessWidget {
           t,
           'Icon size and shape are in Icons. Page dots are in Layout. '
           'Folder colors are in Appearance.',
+        ),
+        _subHeader(t, 'PAGES'),
+        _switchRow(
+          t,
+          title: 'Loop app drawer pages',
+          subtitle:
+              'App drawer only: swiping past the last page wraps around '
+              'to the first. Doesn’t affect the home screen, which has its '
+              'own option in Layout',
+          value: s.loopDrawerPages,
+          onChanged: s.setLoopDrawerPages,
         ),
         _subHeader(t, 'ORGANIZING'),
         _switchRow(
