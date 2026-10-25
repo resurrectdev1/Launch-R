@@ -681,8 +681,8 @@ class _DrawerPage extends StatelessWidget {
     return _SettingsPage(
       title: 'App drawer',
       children: [
+        _subHeader(t, 'APP DRAWER GRID'),
         const _DrawerPreviewCard(),
-        _subHeader(t, 'GRID'),
         _StepperRow(
           label: 'Columns',
           value: s.drawerCols,
