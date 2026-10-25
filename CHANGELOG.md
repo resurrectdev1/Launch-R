@@ -10,6 +10,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+### Added
+
+* Loop app drawer pages (Settings -> App drawer -> Pages): swiping past the last page of the app drawer wraps around to the first, and the other way round. Off by default. It only affects the app drawer; the home screen has its own option in Settings -> Layout.
+
+### Changed
+
+* “Loop pages” in Settings -> Layout is now called “Loop home screen pages” and says that it only applies to the home screen.
+
 ### TO-DO
 
 * Make Labels in layout settings appear on live preview (simmilar to how its done in app drawer live preview) (to be done)
@@ -17,10 +25,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * Allow home screen dock to utilize reccent apps when empty (option in settings default off) (to be done)
 
 * Add pages indicator setting to app drawer settings sheet (keept in layout settings sheet both; they share the setting) (to be done)
-
-* Add loop pages for app drawer aswell and epxlain it's only for app drawer use (to be done)
-
-* Change name of loop pages in layout settings sheet to explcitly state its only for home screen (to be done)
 
 * Add option to hide action bar at top of screen when moving apps or folders in home menu (to be done)
 
