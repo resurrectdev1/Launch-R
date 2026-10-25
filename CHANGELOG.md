@@ -25,6 +25,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 * Settings sheet rehaul: Launcher settings is now a short list of categories (Appearance, Text, Layout, Icons, Search, Gestures, System) and tapping one opens a sheet with just those settings. Swipe down or tap the back arrow to return to the list.
+* Sheet heights, title spacing and keyboard behavior is now consistent throughout the app.
+* Removed about 190 lines of duplicate code
 
 ### Fixed
 
