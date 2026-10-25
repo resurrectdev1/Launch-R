@@ -19,6 +19,7 @@ class DrawerPagePreview extends StatefulWidget {
     required this.iconScale,
     required this.indicator,
     required this.showVoice,
+    this.loop = false,
     required this.folderBg,
     this.folderBase,
   });
@@ -35,6 +36,7 @@ class DrawerPagePreview extends StatefulWidget {
   final double iconScale;
   final PageIndicatorStyle indicator;
   final bool showVoice;
+  final bool loop;
 
   final Color folderBg;
   final Color? folderBase;
@@ -44,8 +46,25 @@ class DrawerPagePreview extends StatefulWidget {
 }
 
 class _DrawerPagePreviewState extends State<DrawerPagePreview> {
-  final _controller = PageController();
+  static const _loops = 1000;
+
+  PageController _controller = PageController();
   int _page = 0;
+  bool _looping = false;
+  int _count = 1;
+
+  void _sync(int pages) {
+    final looping = widget.loop && pages > 1;
+    if (looping == _looping && pages == _count) return;
+    _looping = looping;
+    _count = pages;
+    _page = _page.clamp(0, pages - 1).toInt();
+    final stale = _controller;
+    _controller = PageController(
+      initialPage: looping ? pages * _loops + _page : _page,
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => stale.dispose());
+  }
 
   @override
   void dispose() {
@@ -80,6 +99,8 @@ class _DrawerPagePreviewState extends State<DrawerPagePreview> {
     final rows = widget.rows;
     final perPage = cols * rows;
     final pages = math.max(1, (widget.items.length / perPage).ceil());
+    _sync(pages);
+    final looping = _looping;
     final page = _page.clamp(0, pages - 1).toInt();
 
     final surface = Color.alphaBlend(
@@ -140,27 +161,34 @@ class _DrawerPagePreviewState extends State<DrawerPagePreview> {
               SizedBox(
                 height: gridH,
                 child: PageView.builder(
+                  key: ValueKey('$looping:$pages'),
                   controller: _controller,
-                  itemCount: pages,
-                  onPageChanged: (i) => setState(() => _page = i),
-                  itemBuilder: (context, p) => Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8 * k),
-                    child: Column(
-                      children: [
-                        for (var r = 0; r < rows; r++)
-                          Expanded(
-                            child: Row(
-                              children: [
-                                for (var col = 0; col < cols; col++)
-                                  Expanded(
-                                    child: cell(p * perPage + r * cols + col),
-                                  ),
-                              ],
+                  itemCount: looping ? null : pages,
+                  onPageChanged: (v) =>
+                      setState(() => _page = looping ? v % pages : v),
+                  itemBuilder: (context, v) {
+                    final p = looping ? v % pages : v;
+                    return Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8 * k),
+                      child: Column(
+                        children: [
+                          for (var r = 0; r < rows; r++)
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  for (var col = 0; col < cols; col++)
+                                    Expanded(
+                                      child: cell(
+                                        p * perPage + r * cols + col,
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ),
-                          ),
-                      ],
-                    ),
-                  ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
               SizedBox(
