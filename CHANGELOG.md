@@ -13,6 +13,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 * Loop app drawer pages (Settings -> App drawer -> Pages): swiping past the last page of the app drawer wraps around to the first, and the other way round. Off by default. It only affects the app drawer; the home screen has its own option in Settings -> Layout.
+* “Reduce animations” moved from (Settings -> Layout) to (Settings -> System).
 * Haptics when swiping through app drawer pages.
 
 
@@ -28,8 +29,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * Allow home screen dock to utilize reccent apps when empty (option in settings default off) (to be done)
 
 * Add option to hide action bar at top of screen when moving apps or folders in home menu (to be done)
-
-* Move reduce animations toggle to system
 
 ---
 
