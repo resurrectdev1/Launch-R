@@ -324,7 +324,7 @@ class _DrawerViewState extends State<DrawerView> {
 
     return LayoutBuilder(
       builder: (context, c) {
-        final dotsH = drawerDotsHeight(settings.pageIndicator);
+        final dotsH = drawerDotsHeight(settings.drawerPageIndicator);
         final gridH = c.maxHeight - dotsH;
         final cols = settings.drawerCols;
         final rows = math.max(
@@ -416,7 +416,7 @@ class _DrawerViewState extends State<DrawerView> {
                   controller: _pages,
                   count: pages,
                   color: t.drawerText,
-                  style: settings.pageIndicator,
+                  style: settings.drawerPageIndicator,
                 ),
               ),
             ),
