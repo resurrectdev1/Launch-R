@@ -10,6 +10,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+---
+
+## [0.4.4] - 2026-10-25
+
 ### Added
 
 * Labels settings (Settings -> Layout): show or hide app names on the home screen, the apps screen and the dock separately. The dock labels are off by default, the other two are on.
