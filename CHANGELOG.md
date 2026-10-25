@@ -24,6 +24,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 * Add option to hide action bar at top of screen when moving apps or folders in home menu (to be done)
 
+* Move reduce animations toggle to system
+
 ---
 
 ## [0.4.4] - 2026-10-25
