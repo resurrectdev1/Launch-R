@@ -10,6 +10,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+### TO-DO
+
+* Allow home screen dock to utilize reccent apps when empty (option in settings default off) (to be done)
+* Add option to hide action bar at top of screen when moving apps or folders in home menu (to be done)
+
+---
+
+## [0.4.6] - 2026-10-25
+
 ### Added
 
 * Loop app drawer pages (Settings -> App drawer -> Pages): swiping past the last page of the app drawer wraps around to the first, and the other way round. Off by default. It only affects the app drawer; the home screen has its own option in Settings -> Layout.
@@ -22,13 +31,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 * Dark home text & Hide status bar have their own header now called "HOME SCREEN DISPLAY" (Their location is still in appearance under Colors).
+* App drawer settings (Settings -> App drawer): the grid section is now headed “APP DRAWER GRID” and sits above the live preview, with the Columns stepper directly under it. The separate “GRID” header is gone.
 * “Loop pages” in Settings -> Layout is now called “Loop home screen pages” and says that it only applies to the home screen.
 * App drawer and home menu have their own separate page indicators changed in thier respective settings (Layout for home menu & App drawer for app drawer).
-
-### TO-DO
-
-* Allow home screen dock to utilize reccent apps when empty (option in settings default off) (to be done)
-* Add option to hide action bar at top of screen when moving apps or folders in home menu (to be done)
 
 ---
 
