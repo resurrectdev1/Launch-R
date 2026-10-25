@@ -15,13 +15,14 @@ class OpenFolder {
 
 class ShellController extends ChangeNotifier {
   ShellController({required TickerProvider vsync})
-    : drawer = AnimationController(
-        vsync: vsync,
-        duration: Motion.slow,
-        reverseDuration: Motion.drawerClose,
-      );
+    : drawer = AnimationController(vsync: vsync);
 
   final AnimationController drawer;
+
+  void _syncDrawerDurations() {
+    drawer.duration = Motion.slow;
+    drawer.reverseDuration = Motion.drawerClose;
+  }
 
   final ValueNotifier<int> searchRequest = ValueNotifier<int>(0);
 
@@ -73,13 +74,17 @@ class ShellController extends ChangeNotifier {
 
   bool get drawerOpen => drawer.value > 0.5;
 
-  void openDrawer() => unawaited(drawer.animateTo(1, curve: Motion.standard));
+  void openDrawer() {
+    _syncDrawerDurations();
+    unawaited(drawer.animateTo(1, curve: Motion.standard));
+  }
 
   void openDrawerWithSearch() {
     if (drawer.value >= 0.99) {
       requestSearch();
       return;
     }
+    _syncDrawerDurations();
     unawaited(
       drawer.animateTo(1, curve: Motion.standard).whenComplete(() {
         if (drawer.value >= 0.99) requestSearch();
@@ -89,6 +94,7 @@ class ShellController extends ChangeNotifier {
 
   void closeDrawer() {
     FocusManager.instance.primaryFocus?.unfocus();
+    _syncDrawerDurations();
     unawaited(drawer.animateBack(0, curve: Motion.exit));
   }
 
