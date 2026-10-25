@@ -19,7 +19,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * Labels settings (Settings -> Layout): show or hide app names on the home screen, the apps screen and the dock separately. The dock labels are off by default, the other two are on.
 * Page indicator style (Settings -> Layout): dots, a line, or hidden. Tapping a dot or a line segment on the home screen (or apps screen) now jumps straight to that page.
 * Loop pages (Settings -> Layout): swiping past the last home page wraps around to the first, and the other way round. Off by default. While it is on, the pull-past-the-edge gestures don’t trigger because there is no edge.
-* Grid steppers (Settings -> Layout): pick 3–6 columns and 4–8 rows for the home grid with a live preview and an Apply button, and 3–6 columns for the apps screen.
+* Grid steppers (Settings -> Layout): pick 3–6 columns and 4–8 rows for the home grid with a live preview and an Apply button.
+* Reduce animations (Settings -> Layout): skips transitions for a snappier feel on slower devices. The app drawer, home pages, folders, icons, home widgets, sheets and dialogs switch instantly, and the folder background blur is turned off. Off by default. It’s saved between launches and applies right away.
 * Hide status bar option (Settings -> Appearance). Hides the clock, battery and signal icons while Launch-R is on screen. Off by default. Swipe down from the top edge to peek at it or pull the notification shade.
 * Icon size setting in Settings -> Icons, a slider from 70% to 115% in 5% steps (default 100%) with a reset button. It’s saved between launches.
 * Double tap to lock (Settings -> Gestures). Double tap an empty spot on the home screen or dock to turn the screen off. Off by default. Uses the Launch-R accessibility service (the same one as Recent apps; it still can’t read your screen) and needs Android 9 or newer.
