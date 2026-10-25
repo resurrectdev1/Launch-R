@@ -1,7 +1,6 @@
 import 'package:flutter/animation.dart';
 
 abstract final class Motion {
-
   static bool reduced = false;
 
   static Duration _d(int ms) =>
