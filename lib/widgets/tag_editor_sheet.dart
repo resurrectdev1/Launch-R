@@ -8,6 +8,7 @@ import 'package:launch_r/widgets/app_icon.dart';
 void showTagEditor(BuildContext context, String pkg) {
   showModalBottomSheet<void>(
     context: context,
+    sheetAnimationStyle: Motion.routeStyle,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) => _TagEditorSheet(pkg: pkg),
