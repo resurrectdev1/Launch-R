@@ -115,7 +115,10 @@ class _SettingsPage extends StatelessWidget {
                           Icons.arrow_back_rounded,
                           color: t.drawerText,
                         ),
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () {
+                          unawaited(HapticFeedback.selectionClick());
+                          Navigator.of(context).pop();
+                        },
                       ),
                       Expanded(child: titleText),
                     ],
@@ -167,7 +170,12 @@ Widget _switchRow(
   title: Text(title, style: TextStyle(color: t.drawerText)),
   subtitle: Text(subtitle, style: TextStyle(color: t.drawerTextMuted)),
   value: value,
-  onChanged: onChanged,
+  onChanged: onChanged == null
+      ? null
+      : (v) {
+          unawaited(HapticFeedback.selectionClick());
+          onChanged(v);
+        },
 );
 
 Widget _tile(
@@ -187,7 +195,12 @@ Widget _tile(
   trailing: chevron
       ? Icon(Icons.chevron_right_rounded, color: t.drawerTextMuted)
       : null,
-  onTap: onTap,
+  onTap: onTap == null
+      ? null
+      : () {
+          unawaited(HapticFeedback.selectionClick());
+          onTap();
+        },
 );
 
 class _SettingsSheet extends StatelessWidget {
@@ -221,7 +234,10 @@ class _SettingsSheet extends StatelessWidget {
       ),
       subtitle: Text(subtitle, style: TextStyle(color: t.drawerTextMuted)),
       trailing: Icon(Icons.chevron_right_rounded, color: t.drawerTextMuted),
-      onTap: onTap,
+      onTap: () {
+        unawaited(HapticFeedback.selectionClick());
+        unawaited(onTap());
+      },
     );
 
     final materialYou = s.materialYou && s.dynamicAvailable;
@@ -304,7 +320,10 @@ class _SettingsSheet extends StatelessWidget {
             ),
           ),
           title: Text('About', style: TextStyle(color: t.drawerText)),
-          onTap: () => showLaunchRAbout(context),
+          onTap: () {
+            unawaited(HapticFeedback.selectionClick());
+            showLaunchRAbout(context);
+          },
         ),
       ],
     );
@@ -356,7 +375,6 @@ class _AppearancePage extends StatelessWidget {
             subtitle: 'Use your wallpaper accent color',
             value: s.materialYou,
             onChanged: (v) {
-              HapticFeedback.selectionClick();
               unawaited(s.setMaterialYou(v));
             },
           ),
@@ -398,6 +416,7 @@ class _AppearancePage extends StatelessWidget {
           onTap: materialYou
               ? null
               : () async {
+                  unawaited(HapticFeedback.selectionClick());
                   final navigator = Navigator.of(context);
                   final changed = await showAccentPicker(context);
                   if (changed && navigator.mounted) navigator.pop(true);
@@ -520,7 +539,10 @@ class _TextPage extends StatelessWidget {
                             Icons.restart_alt_rounded,
                             color: t.drawerTextMuted,
                           ),
-                          onPressed: () => s.setTextScale(1.0),
+                          onPressed: () {
+                            unawaited(HapticFeedback.selectionClick());
+                            s.setTextScale(1.0);
+                          },
                         )
                       : null,
                 ),
@@ -1230,7 +1252,10 @@ class _IconsPage extends StatelessWidget {
                             Icons.restart_alt_rounded,
                             color: t.drawerTextMuted,
                           ),
-                          onPressed: () => s.setIconScale(1.0),
+                          onPressed: () {
+                            unawaited(HapticFeedback.selectionClick());
+                            s.setIconScale(1.0);
+                          },
                         )
                       : null,
                 ),
@@ -1398,7 +1423,10 @@ class _GesturesPage extends StatelessWidget {
                             Icons.restart_alt_rounded,
                             color: t.drawerTextMuted,
                           ),
-                          onPressed: () => s.setGestureSensitivity(1.0),
+                          onPressed: () {
+                            unawaited(HapticFeedback.selectionClick());
+                            s.setGestureSensitivity(1.0);
+                          },
                         )
                       : null,
                 ),
@@ -1509,7 +1537,10 @@ class _ShapeChoice extends StatelessWidget {
       label: '${shape.label} icons',
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: onTap,
+        onTap: () {
+          unawaited(HapticFeedback.selectionClick());
+          onTap();
+        },
         child: SizedBox(
           width: 56,
           child: Column(
