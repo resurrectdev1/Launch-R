@@ -10,6 +10,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+Make Labels in layout settings appear on live preview (to be done)
+
 ---
 
 ## [0.4.4] - 2026-10-25
