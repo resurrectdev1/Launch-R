@@ -9,6 +9,7 @@ import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/widgets/draggable_item.dart';
 import 'package:launch_r/widgets/item_actions.dart';
+import 'package:launch_r/theme/motion.dart';
 
 class HomeWidgetFrame extends StatelessWidget {
   const HomeWidgetFrame({
@@ -109,7 +110,7 @@ class _FadeIn extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 220),
+      duration: Motion.scale(const Duration(milliseconds: 220)),
       curve: Curves.easeOutCubic,
       builder: (context, t, child) => Opacity(
         opacity: t,
@@ -245,7 +246,7 @@ class _ResizeOverlayState extends State<_ResizeOverlay> {
       final dimmed = active && !mine;
       final long = mine ? _pillLong + 8 : _pillLong;
       final pill = AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
+        duration: Motion.scale(const Duration(milliseconds: 140)),
         curve: Curves.easeOutCubic,
         width: horizontalEdge ? _pillShort : long,
         height: horizontalEdge ? long : _pillShort,
@@ -271,7 +272,7 @@ class _ResizeOverlayState extends State<_ResizeOverlay> {
         height: horizontalEdge ? _hit * 1.4 : _hit,
         child: Center(
           child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 140),
+            duration: Motion.scale(const Duration(milliseconds: 140)),
             opacity: dimmed ? 0.35 : 1,
             child: pill,
           ),
@@ -302,12 +303,14 @@ class _ResizeOverlayState extends State<_ResizeOverlay> {
       clipBehavior: Clip.none,
       children: [
         AnimatedPositioned.fromRect(
-          duration: active ? const Duration(milliseconds: 110) : Duration.zero,
+          duration: active
+              ? Motion.scale(const Duration(milliseconds: 110))
+              : Duration.zero,
           curve: Curves.easeOutCubic,
           rect: rect,
           child: IgnorePointer(
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
+              duration: Motion.scale(const Duration(milliseconds: 160)),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(widget.radius),
                 color: active ? th.accent.withValues(alpha: 0.2) : null,
@@ -322,11 +325,11 @@ class _ResizeOverlayState extends State<_ResizeOverlay> {
               ),
               child: Center(
                 child: AnimatedScale(
-                  duration: const Duration(milliseconds: 140),
+                  duration: Motion.scale(const Duration(milliseconds: 140)),
                   curve: Curves.easeOutBack,
                   scale: active ? 1 : 0.8,
                   child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 140),
+                    duration: Motion.scale(const Duration(milliseconds: 140)),
                     opacity: active ? 1 : 0,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
