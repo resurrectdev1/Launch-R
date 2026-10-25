@@ -21,8 +21,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+* Dark home text & Hide status bar have their own header now called "HOME SCREEN DISPLAY" (Their location is still in appearance under Colors).
 * “Loop pages” in Settings -> Layout is now called “Loop home screen pages” and says that it only applies to the home screen.
-* App drawer and home menu have their own separate page indicators changed in thier respective settings (Layout for home menu & App drawer for app drawer). 
+* App drawer and home menu have their own separate page indicators changed in thier respective settings (Layout for home menu & App drawer for app drawer).
 
 ### TO-DO
 
