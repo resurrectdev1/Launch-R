@@ -23,7 +23,7 @@ class HomePagePreview extends StatelessWidget {
 
   static const _dockGap = 6.0;
 
-  static Widget _mini(LItem? it, double s) => switch (it) {
+  static Widget mini(LItem? it, double s) => switch (it) {
     null => const SizedBox.shrink(),
     AppItem(:final pkg) => AppIconImage(pkg: pkg, size: s),
     ShortcutItem(:final pkg, :final shortcutId) => AppIconImage(
@@ -45,7 +45,7 @@ class HomePagePreview extends StatelessWidget {
   };
 
   Widget _marked(LItem? it, double s) {
-    final icon = _mini(it, s);
+    final icon = mini(it, s);
     if (it == null || !highlightIds.contains(it.id)) return icon;
     return Container(
       width: s + 4,
@@ -215,7 +215,7 @@ class _DockStrip extends StatelessWidget {
           for (var i = 0; i < cols; i++)
             Expanded(
               child: Center(
-                child: HomePagePreview._mini(
+                child: HomePagePreview.mini(
                   i < items.length ? items[i] : null,
                   iconSize,
                 ),
