@@ -11,6 +11,7 @@ import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/widgets/folder_color_picker.dart';
 import 'package:launch_r/widgets/tag_editor_sheet.dart';
+import 'package:launch_r/theme/motion.dart';
 
 void launchFrom(BuildContext context, String pkg) {
   Rect? from;
@@ -153,7 +154,7 @@ class _ItemMenu extends StatelessWidget {
               delegate: _MenuLayout(anchor, pad),
               child: TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.9, end: 1.0),
-                duration: const Duration(milliseconds: 140),
+                duration: Motion.scale(const Duration(milliseconds: 140)),
                 curve: Curves.easeOutCubic,
                 builder: (context, v, child) => Opacity(
                   opacity: ((v - 0.9) / 0.1).clamp(0.0, 1.0).toDouble(),
