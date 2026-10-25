@@ -7,6 +7,7 @@ import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
 import 'package:launch_r/widgets/press_scale.dart';
+import 'package:launch_r/widgets/launch_r_sheet.dart';
 
 const _palette = <Color>[
   Color(0xCCFF5B5B),
@@ -146,127 +147,94 @@ class _FolderColorSheetState extends State<_FolderColorSheet> {
       );
     }
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: Container(
-        decoration: BoxDecoration(
-          color: t.menuBg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 10, 24, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: t.drawerTextMuted,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
+    return LaunchRSheet(
+      title: 'Folder color',
+      size: SheetSize.compact,
+      scrollable: true,
+      keyboardAware: true,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 14,
+            runSpacing: 14,
+            children: [
+              swatch(color: null, label: 'Default', selected: current == null),
+              for (final c in _palette)
+                swatch(
+                  color: c,
+                  label: 'Folder color',
+                  selected: current == c.toARGB32(),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'Folder color',
-                  style: TextStyle(
-                    color: t.drawerText,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Wrap(
-                  spacing: 14,
-                  runSpacing: 14,
-                  children: [
-                    swatch(
-                      color: null,
-                      label: 'Default',
-                      selected: current == null,
-                    ),
-                    for (final c in _palette)
-                      swatch(
-                        color: c,
-                        label: 'Folder color',
-                        selected: current == c.toARGB32(),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 22),
-                Text(
-                  'Custom color',
-                  style: TextStyle(
-                    color: t.drawerTextMuted,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: customColor ?? t.folderBgDrawer,
-                        border: Border.all(
-                          color: custom ? t.accent : t.drawerTextMuted,
-                          width: custom ? 3 : 1,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: TextField(
-                        controller: _hex,
-                        inputFormatters: [_HexFormatter()],
-                        textCapitalization: TextCapitalization.characters,
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        textInputAction: TextInputAction.done,
-                        style: TextStyle(
-                          color: t.drawerText,
-                          fontSize: 16,
-                          letterSpacing: 1.2,
-                        ),
-                        cursorColor: t.accent,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          filled: true,
-                          fillColor: t.searchBg,
-                          prefixText: '#',
-                          prefixStyle: TextStyle(
-                            color: t.drawerTextMuted,
-                            fontSize: 16,
-                          ),
-                          hintText: '3E91FF',
-                          hintStyle: TextStyle(color: t.drawerTextMuted),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        onChanged: _applyHex,
-                        onSubmitted: _applyHex,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            ],
+          ),
+          const SizedBox(height: 22),
+          Text(
+            'Custom color',
+            style: TextStyle(
+              color: t.drawerTextMuted,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
             ),
           ),
-        ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: customColor ?? t.folderBgDrawer,
+                  border: Border.all(
+                    color: custom ? t.accent : t.drawerTextMuted,
+                    width: custom ? 3 : 1,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: TextField(
+                  controller: _hex,
+                  inputFormatters: [_HexFormatter()],
+                  textCapitalization: TextCapitalization.characters,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  textInputAction: TextInputAction.done,
+                  style: TextStyle(
+                    color: t.drawerText,
+                    fontSize: 16,
+                    letterSpacing: 1.2,
+                  ),
+                  cursorColor: t.accent,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    filled: true,
+                    fillColor: t.searchBg,
+                    prefixText: '#',
+                    prefixStyle: TextStyle(
+                      color: t.drawerTextMuted,
+                      fontSize: 16,
+                    ),
+                    hintText: '3E91FF',
+                    hintStyle: TextStyle(color: t.drawerTextMuted),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onChanged: _applyHex,
+                  onSubmitted: _applyHex,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
