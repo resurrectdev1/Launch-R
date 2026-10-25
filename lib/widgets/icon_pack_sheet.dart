@@ -8,10 +8,12 @@ import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/widgets/app_icon.dart';
 import 'package:launch_r/widgets/launch_r_sheet.dart';
+import 'package:launch_r/theme/motion.dart';
 
 void showIconPackPicker(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,
+    sheetAnimationStyle: Motion.routeStyle,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) => const _IconPackSheet(),
