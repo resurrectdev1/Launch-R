@@ -3,7 +3,6 @@ import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
 
 enum SheetSize {
-
   compact(0.7),
 
   standard(0.8),
