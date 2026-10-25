@@ -156,6 +156,7 @@ class _ResizeOverlayState extends State<_ResizeOverlay> {
       : widget.cellHeight;
 
   void _start(WidgetEdge e) {
+    unawaited(HapticFeedback.mediumImpact());
     _dx = 0;
     _dy = 0;
     setState(() {
@@ -201,6 +202,7 @@ class _ResizeOverlayState extends State<_ResizeOverlay> {
   void _end() {
     final t = _target;
     if (t != null) {
+      unawaited(HapticFeedback.lightImpact());
       context.read<LauncherModel>().applyWidgetResize(
         widget.item.wid,
         t.index,
