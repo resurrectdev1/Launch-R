@@ -286,7 +286,7 @@ class _SettingsSheet extends StatelessWidget {
         category(
           icon: Icons.tune_rounded,
           title: 'System',
-          subtitle: 'Hidden apps, wallpaper, default home app',
+          subtitle: 'Hidden apps, wallpaper, default home app, animations',
           onTap: () => _openPage(context, const _SystemPage()),
         ),
         const SizedBox(height: 4),
@@ -623,14 +623,6 @@ class _LayoutPage extends StatelessWidget {
           onChanged: s.setLoopPages,
         ),
         _subHeader(t, 'BEHAVIOR'),
-        _switchRow(
-          t,
-          title: 'Reduce animations',
-          subtitle:
-              'Skip transitions and the folder blur. Helps on slower devices',
-          value: s.reduceAnimations,
-          onChanged: s.setReduceAnimations,
-        ),
         _switchRow(
           t,
           title: 'Lock layout',
@@ -1452,6 +1444,7 @@ class _SystemPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = LaunchRTheme.of(context);
+    final s = context.watch<LauncherSettings>();
     final model = context.watch<LauncherModel>();
     final ch = LauncherChannel.instance;
 
@@ -1478,6 +1471,15 @@ class _SystemPage extends StatelessWidget {
           icon: Icons.home_rounded,
           title: 'Default home app',
           onTap: ch.openHomeSettings,
+        ),
+        _subHeader(t, 'PERFORMANCE'),
+        _switchRow(
+          t,
+          title: 'Reduce animations',
+          subtitle:
+              'Skip transitions and the folder blur. Helps on slower devices',
+          value: s.reduceAnimations,
+          onChanged: s.setReduceAnimations,
         ),
       ],
     );
