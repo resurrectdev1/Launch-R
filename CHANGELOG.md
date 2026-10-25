@@ -15,6 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * Loop app drawer pages (Settings -> App drawer -> Pages): swiping past the last page of the app drawer wraps around to the first, and the other way round. Off by default. It only affects the app drawer; the home screen has its own option in Settings -> Layout.
 * The live preview in (Settings -> Layout) now shows labels. Turning “Home screen labels” or “Dock labels” on or off updates the preview straight away, using the same placeholder bars as the app drawer preview.
 * “Reduce animations” moved from (Settings -> Layout) to (Settings -> System).
+* Haptics when you tap things in Settings: category rows, switches, option rows, back buttons, reset buttons and icon shape choices.
 * Haptics when swiping through app drawer pages.
 
 
