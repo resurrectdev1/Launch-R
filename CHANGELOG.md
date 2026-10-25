@@ -12,7 +12,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### TO-DO
 
-* Make Labels in layout settings appear on live preview (to be done)
+* Make Labels in layout settings appear on live preview (simmilar to how its done in app drawer live preview) (to be done)
 
 * Allow home screen dock to utilize reccent apps when empty and turned on in settings (to be done)
 
