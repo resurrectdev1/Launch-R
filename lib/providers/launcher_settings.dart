@@ -7,6 +7,7 @@ import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/services/font_service.dart';
 import 'package:launch_r/theme/app_fonts.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
+import 'package:launch_r/theme/motion.dart';
 
 class LauncherSettings extends ChangeNotifier {
   SharedPreferences? _prefs;
@@ -26,6 +27,7 @@ class LauncherSettings extends ChangeNotifier {
   PageIndicatorStyle _pageIndicator = PageIndicatorStyle.dots;
   bool _loopPages = false;
   bool _showBadges = false;
+  bool _reduceAnimations = false;
   bool _drawerAutoSearch = false;
   bool _swipeUpHome = false;
   bool _doubleTapLock = false;
@@ -75,6 +77,7 @@ class LauncherSettings extends ChangeNotifier {
   PageIndicatorStyle get pageIndicator => _pageIndicator;
   bool get loopPages => _loopPages;
   bool get showBadges => _showBadges;
+  bool get reduceAnimations => _reduceAnimations;
   bool get drawerAutoSearch => _drawerAutoSearch;
   bool get swipeUpHome => _swipeUpHome;
   bool get doubleTapLock => _doubleTapLock;
@@ -157,6 +160,8 @@ class LauncherSettings extends ChangeNotifier {
     _loopPages = p.getBool('loop_pages') ?? false;
     _lockLayout = p.getBool('lock_layout') ?? false;
     _showBadges = p.getBool('show_badges') ?? false;
+    _reduceAnimations = p.getBool('reduce_animations') ?? false;
+    Motion.reduced = _reduceAnimations;
     _drawerAutoSearch = p.getBool('drawer_auto_search') ?? false;
     _swipeUpHome = p.getBool('swipe_up_home') ?? false;
     _doubleTapLock = p.getBool('double_tap_lock') ?? false;
@@ -415,6 +420,14 @@ class LauncherSettings extends ChangeNotifier {
     _showBadges = v;
     notifyListeners();
     await _prefs?.setBool('show_badges', v);
+  }
+
+  Future<void> setReduceAnimations(bool v) async {
+    if (v == _reduceAnimations) return;
+    _reduceAnimations = v;
+    Motion.reduced = v;
+    notifyListeners();
+    await _prefs?.setBool('reduce_animations', v);
   }
 
   Future<void> setDrawerAutoSearch(bool v) async {
