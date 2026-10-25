@@ -9,6 +9,7 @@ import 'package:launch_r/widgets/app_icon.dart';
 void showTagManager(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,
+    sheetAnimationStyle: Motion.routeStyle,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) => const _TagManagerSheet(),
@@ -109,6 +110,7 @@ class _TagList extends StatelessWidget {
                 onPressed: () async {
                   final name = await showDialog<String>(
                     context: context,
+                    animationStyle: Motion.routeStyle,
                     builder: (_) => _NameDialog(
                       title: 'New tag',
                       confirm: 'Create',
@@ -196,6 +198,7 @@ class _TagDetailState extends State<_TagDetail> {
   Future<void> _rename(LauncherModel model, LaunchRTheme t) async {
     final name = await showDialog<String>(
       context: context,
+      animationStyle: Motion.routeStyle,
       builder: (_) => _NameDialog(
         title: 'Rename tag',
         confirm: 'Rename',
@@ -214,6 +217,7 @@ class _TagDetailState extends State<_TagDetail> {
     final count = model.appCountForTag(widget.tag);
     final ok = await showDialog<bool>(
       context: context,
+      animationStyle: Motion.routeStyle,
       builder: (ctx) => AlertDialog(
         backgroundColor: t.menuBg,
         title: Text('Delete tag?', style: TextStyle(color: t.drawerText)),
