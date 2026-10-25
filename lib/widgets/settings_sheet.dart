@@ -874,6 +874,7 @@ class _DrawerPreviewCard extends StatelessWidget {
                 iconScale: s.iconScale,
                 indicator: s.drawerPageIndicator,
                 showVoice: s.showVoiceButton,
+                loop: s.loopDrawerPages,
                 folderBg: folderBg,
                 folderBase: homeLook ? null : t.popupBg,
               ),
@@ -977,21 +978,12 @@ class _HomeGridEditorState extends State<_HomeGridEditor> {
 
   late int _cols;
   late int _rows;
-  final _pages = PageController();
-  int _page = 0;
-
   @override
   void initState() {
     super.initState();
     final model = context.read<LauncherModel>();
     _cols = model.homeCols;
     _rows = model.homeRows;
-  }
-
-  @override
-  void dispose() {
-    _pages.dispose();
-    super.dispose();
   }
 
   void _setGrid({int? cols, int? rows}) {
@@ -1017,7 +1009,6 @@ class _HomeGridEditorState extends State<_HomeGridEditor> {
     final marked = plan?.movedIds ?? const <String>{};
     final lost = plan?.lostWidgets.length ?? 0;
     final resized = plan?.resizedWidgets ?? 0;
-    final current = _page.clamp(0, pages.length - 1).toInt();
 
     final screen = MediaQuery.sizeOf(context);
     final aspect = (screen.width / screen.height).clamp(0.4, 0.6).toDouble();
@@ -1072,61 +1063,26 @@ class _HomeGridEditorState extends State<_HomeGridEditor> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(18),
-              child: PageView.builder(
-                controller: _pages,
-                itemCount: pages.length,
-                onPageChanged: (i) => setState(() => _page = i),
-                itemBuilder: (context, i) => Padding(
-                  padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
-                  child: AnimatedSwitcher(
-                    duration: Motion.base,
-                    switchInCurve: Motion.standard,
-                    transitionBuilder: (child, anim) => FadeTransition(
-                      opacity: anim,
-                      child: ScaleTransition(
-                        scale: Tween(begin: 0.96, end: 1.0).animate(anim),
-                        child: child,
-                      ),
-                    ),
-                    child: HomePagePreview(
-                      key: ValueKey('$_cols×$_rows:$i:$changed'),
-                      items: pages[i],
-                      dock: dock,
-                      cols: changed ? _cols : model.homeCols,
-                      rows: changed ? _rows : model.homeRows,
-                      highlightIds: marked,
-                      highlightColor: t.accent,
-                      showLabels: settings.showHomeLabels,
-                      showDockLabels: settings.showDockLabels,
-                    ),
-                  ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
+                child: HomePagesPreview(
+                  pages: pages,
+                  dock: dock,
+                  cols: changed ? _cols : model.homeCols,
+                  rows: changed ? _rows : model.homeRows,
+                  highlightIds: marked,
+                  highlightColor: t.accent,
+                  showLabels: settings.showHomeLabels,
+                  showDockLabels: settings.showDockLabels,
+                  indicator: settings.pageIndicator,
+                  loop: settings.loopPages,
+                  defaultPage: model.defaultPage,
+                  animationTag: '$changed',
                 ),
               ),
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        if (pages.length > 1)
-          Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (var i = 0; i < pages.length; i++)
-                  AnimatedContainer(
-                    duration: Motion.fast,
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: i == current ? 14 : 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: i == current
-                          ? t.accent
-                          : t.drawerTextMuted.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-              ],
-            ),
-          ),
         const SizedBox(height: 4),
         _StepperRow(
           label: 'Columns',
@@ -1172,7 +1128,6 @@ class _HomeGridEditorState extends State<_HomeGridEditor> {
                     ? () {
                         unawaited(HapticFeedback.mediumImpact());
                         model.setHomeGrid(_cols, _rows);
-                        setState(() => _page = 0);
                       }
                     : null,
                 child: const Text('Apply'),
