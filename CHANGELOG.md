@@ -16,6 +16,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * Add option to hide action bar at top of screen when moving apps or folders in home menu. (to be done)
 * Add Haptics to home screen editor. (to be done)
 * Add ability to add shortcuts to app drawer and folders. (to be done)
+* Make homescreen live preview in layout settings show swiping pages visbible like app drawer live preview (to be done)
 * Update screenshots and upload demo video or gif. (to be done)
 * Prevent Material you in White theme to changing the color. darker (to be done)
 
