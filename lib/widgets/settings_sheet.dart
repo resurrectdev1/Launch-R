@@ -25,6 +25,7 @@ import 'package:launch_r/widgets/tag_manager_sheet.dart';
 void showLaunchRSettings(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,
+    sheetAnimationStyle: Motion.routeStyle,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) => const _SettingsSheet(),
@@ -34,6 +35,7 @@ void showLaunchRSettings(BuildContext context) {
 void showLaunchRDrawerSettings(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,
+    sheetAnimationStyle: Motion.routeStyle,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) => const _DrawerPage(),
@@ -43,6 +45,7 @@ void showLaunchRDrawerSettings(BuildContext context) {
 Future<bool?> _openPage(BuildContext context, Widget page) {
   return showModalBottomSheet<bool>(
     context: context,
+    sheetAnimationStyle: Motion.routeStyle,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) => page,
@@ -613,6 +616,14 @@ class _LayoutPage extends StatelessWidget {
           onChanged: s.setLoopPages,
         ),
         _subHeader(t, 'BEHAVIOR'),
+        _switchRow(
+          t,
+          title: 'Reduce animations',
+          subtitle:
+              'Skip transitions and the folder blur. Helps on slower devices',
+          value: s.reduceAnimations,
+          onChanged: s.setReduceAnimations,
+        ),
         _switchRow(
           t,
           title: 'Lock layout',
