@@ -435,9 +435,7 @@ class _PreviewDots extends StatelessWidget {
 
         return Row(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            for (var i = 0; i < count; i++) _mark(i, near(i)),
-          ],
+          children: [for (var i = 0; i < count; i++) _mark(i, near(i))],
         );
       },
     );
