@@ -212,6 +212,9 @@ class LauncherChannel {
   Future<void> openHomeSettings() =>
       _safe(() => _ch.invokeMethod<void>('openHomeSettings'));
 
+  Future<void> restartApp() =>
+      _safe(() => _ch.invokeMethod<void>('restartApp'));
+
   Future<void> openWallpaperPicker() =>
       _safe(() => _ch.invokeMethod<void>('openWallpaperPicker'));
 
