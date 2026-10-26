@@ -62,6 +62,9 @@ class MainActivity : FlutterActivity() {
     private var pendingFont: MethodChannel.Result? = null
     private var pendingBackground: MethodChannel.Result? = null
     private var pendingVoice: MethodChannel.Result? = null
+    private var pendingBackupSave: MethodChannel.Result? = null
+    private var pendingBackupContent: String? = null
+    private var pendingBackupPick: MethodChannel.Result? = null
 
     @Volatile private var pendingPin: LauncherApps.PinItemRequest? = null
 
@@ -83,6 +86,9 @@ class MainActivity : FlutterActivity() {
         private const val REQ_PICK_BACKGROUND = 7004
         private const val REQ_RECONFIGURE_WIDGET = 7005
         private const val REQ_VOICE_SEARCH = 7006
+        private const val REQ_SAVE_BACKUP = 7007
+        private const val REQ_PICK_BACKUP = 7008
+        private const val MAX_BACKUP_BYTES = 2 * 1024 * 1024
         private const val MAX_FONT_BYTES = 25L * 1024 * 1024
         private const val MAX_SHORTCUTS = 4
     }
@@ -176,6 +182,14 @@ class MainActivity : FlutterActivity() {
             }
             REQ_PICK_BACKGROUND -> {
                 finishBackgroundPick(if (resultCode == RESULT_OK) data?.data else null)
+                return
+            }
+            REQ_SAVE_BACKUP -> {
+                finishBackupSave(if (resultCode == RESULT_OK) data?.data else null)
+                return
+            }
+            REQ_PICK_BACKUP -> {
+                finishBackupPick(if (resultCode == RESULT_OK) data?.data else null)
                 return
             }
             REQ_VOICE_SEARCH -> {
@@ -485,6 +499,8 @@ class MainActivity : FlutterActivity() {
 
             "pickFont" -> pickFont(result)
             "pickBackground" -> pickBackground(result)
+            "saveBackup" -> saveBackup(call, result)
+            "pickBackup" -> pickBackup(result)
 
             "openHomeSettings" -> {
                 try {
@@ -640,6 +656,109 @@ class MainActivity : FlutterActivity() {
         } catch (_: Exception) {
             pendingFont = null
             result.success(null)
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun saveBackup(call: MethodCall, result: MethodChannel.Result) {
+        val content = call.argument<String>("content")
+        if (content == null) {
+            result.error("backup_save_failed", "Nothing to save", null)
+            return
+        }
+        if (pendingBackupSave != null) {
+            result.success(false)
+            return
+        }
+        val name = call.argument<String>("name") ?: "launch-r-backup.json"
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/json"
+            putExtra(Intent.EXTRA_TITLE, name)
+        }
+        pendingBackupSave = result
+        pendingBackupContent = content
+        try {
+            startActivityForResult(intent, REQ_SAVE_BACKUP)
+        } catch (_: Exception) {
+            pendingBackupSave = null
+            pendingBackupContent = null
+            result.error("backup_save_failed", "No file picker available", null)
+        }
+    }
+
+    private fun finishBackupSave(uri: Uri?) {
+        val result = pendingBackupSave ?: return
+        val content = pendingBackupContent
+        pendingBackupSave = null
+        pendingBackupContent = null
+        if (uri == null || content == null) {
+            result.success(false)
+            return
+        }
+        io.execute {
+            try {
+                val out = contentResolver.openOutputStream(uri, "wt")
+                    ?: throw IOException("Couldn't open the file")
+                out.use { it.write(content.toByteArray(Charsets.UTF_8)) }
+                runOnUiThread { result.success(true) }
+            } catch (e: Exception) {
+                runOnUiThread { result.error("backup_save_failed", e.message, null) }
+            }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun pickBackup(result: MethodChannel.Result) {
+        if (pendingBackupPick != null) {
+            result.success(null)
+            return
+        }
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+            putExtra(
+                Intent.EXTRA_MIME_TYPES,
+                arrayOf("application/json", "text/plain", "application/octet-stream"),
+            )
+        }
+        pendingBackupPick = result
+        try {
+            startActivityForResult(intent, REQ_PICK_BACKUP)
+        } catch (_: Exception) {
+            pendingBackupPick = null
+            result.error("backup_read_failed", "No file picker available", null)
+        }
+    }
+
+    private fun finishBackupPick(uri: Uri?) {
+        val result = pendingBackupPick ?: return
+        pendingBackupPick = null
+        if (uri == null) {
+            result.success(null)
+            return
+        }
+        io.execute {
+            try {
+                val input = contentResolver.openInputStream(uri)
+                    ?: throw IOException("Couldn't open the file")
+                val bytes = input.use { src ->
+                    val buf = ByteArrayOutputStream()
+                    val chunk = ByteArray(16 * 1024)
+                    while (true) {
+                        val n = src.read(chunk)
+                        if (n < 0) break
+                        if (buf.size() + n > MAX_BACKUP_BYTES) {
+                            throw IOException("That file is too large to be a Launch-R backup")
+                        }
+                        buf.write(chunk, 0, n)
+                    }
+                    buf.toByteArray()
+                }
+                runOnUiThread { result.success(String(bytes, Charsets.UTF_8)) }
+            } catch (e: Exception) {
+                runOnUiThread { result.error("backup_read_failed", e.message, null) }
+            }
         }
     }
 
