@@ -20,6 +20,20 @@ enum IconShape {
   );
 }
 
+enum HoldAnimation {
+  sway('Sway'),
+  wiggle('Wiggle'),
+  pulse('Pulse'),
+  bounce('Bounce'),
+  tilt('Tilt');
+
+  const HoldAnimation(this.label);
+  final String label;
+
+  static HoldAnimation fromName(String? name) => HoldAnimation.values
+      .firstWhere((a) => a.name == name, orElse: () => HoldAnimation.sway);
+}
+
 class ThemedIconStyle {
   const ThemedIconStyle({required this.bg, required this.fg});
   final int bg;
