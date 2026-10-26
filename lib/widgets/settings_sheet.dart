@@ -1537,6 +1537,29 @@ class _SystemPage extends StatelessWidget {
           value: s.reduceAnimations,
           onChanged: s.setReduceAnimations,
         ),
+        _switchRow(
+          t,
+          title: 'Legacy renderer',
+          subtitle:
+              'Turns off Flutter’s Impeller renderer. Try this if animations '
+              'stutter, especially with widgets. Needs a restart',
+          value: s.legacyRenderer,
+          onChanged: (v) {
+            unawaited(s.setLegacyRenderer(v));
+            final messenger = ScaffoldMessenger.of(context);
+            messenger
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(
+                  content: const Text('Restart Launch-R to apply this'),
+                  action: SnackBarAction(
+                    label: 'Restart',
+                    onPressed: () => unawaited(ch.restartApp()),
+                  ),
+                ),
+              );
+          },
+        ),
       ],
     );
   }
