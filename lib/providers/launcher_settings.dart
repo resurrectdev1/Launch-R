@@ -66,8 +66,7 @@ class LauncherSettings extends ChangeNotifier {
 
   bool get dynamicAvailable => _dynamicLight != null || _dynamicDark != null;
 
-  Color? get dynamicAccent =>
-      (_dynamicDark ?? _dynamicLight)?.primary;
+  Color? get dynamicAccent => (_dynamicDark ?? _dynamicLight)?.primary;
   bool get darkHomeText => _darkHomeText;
   bool get hideStatusBar => _hideStatusBar;
   bool get solidHomeFolders => _solidHomeFolders;
