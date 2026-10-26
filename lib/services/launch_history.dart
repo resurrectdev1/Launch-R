@@ -24,6 +24,8 @@ class LaunchHistory extends ChangeNotifier {
 
   List<String> get recentSearches => List.unmodifiable(_searches);
 
+  bool get isEmpty => _entries.isEmpty && _searches.isEmpty;
+
   Future<void> init() async {
     final p = _prefs = await SharedPreferences.getInstance();
     try {
@@ -106,6 +108,18 @@ class LaunchHistory extends ChangeNotifier {
     _searches.clear();
     notifyListeners();
     _saveSearches();
+  }
+
+  void clearAll() {
+    if (isEmpty) return;
+    _entries.clear();
+    _searches.clear();
+    notifyListeners();
+    final p = _prefs;
+    if (p != null) {
+      unawaited(p.remove(_kLaunches));
+      unawaited(p.remove(_kSearches));
+    }
   }
 
   void _saveLaunches() {
