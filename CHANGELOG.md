@@ -17,6 +17,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * Option to search for apps by package name / app id.
 * Option to clear suggested apps and search history in search settings.
 
+### Changed
+
+* Prevent Material you in White Minimal theme to changing the material you accent color darker.
+
 ### TO-DO
 
 * Allow home screen dock to utilize reccent apps when empty (option in settings default off). (to be done)
@@ -24,7 +28,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * Add ability to add shortcuts to app drawer and folders. (to be done)
 * Add backup and restore feature. (to be done)
 * Update screenshots and upload demo video or gif. (to be done)
-* Prevent Material you in White theme to changing the color. darker (to be done)
 
 ---
 
