@@ -187,71 +187,72 @@ class _MenuOverlayState extends State<_MenuOverlay> {
                         height: carouselH,
                         child: PageHaptics(
                           child: PageView.builder(
-                          controller: _cardsCtl,
-                          clipBehavior: Clip.none,
-                          itemCount: pages + (showAdd ? 1 : 0),
-                          itemBuilder: (context, i) {
-                            if (i >= pages) {
+                            controller: _cardsCtl,
+                            clipBehavior: Clip.none,
+                            itemCount: pages + (showAdd ? 1 : 0),
+                            itemBuilder: (context, i) {
+                              if (i >= pages) {
+                                return Align(
+                                  alignment: Alignment.topCenter,
+                                  child: _AddCard(
+                                    width: cardW,
+                                    height: cardH,
+                                    onTap: _addPage,
+                                  ),
+                                );
+                              }
                               return Align(
                                 alignment: Alignment.topCenter,
-                                child: _AddCard(
+                                child: SizedBox(
                                   width: cardW,
-                                  height: cardH,
-                                  onTap: _addPage,
+                                  child: Column(
+                                    children: [
+                                      _PageCard(
+                                        height: cardH,
+                                        items: model.home[i],
+                                        dock: model.dock,
+                                        cols: model.homeCols,
+                                        rows: model.homeRows,
+                                        index: i,
+                                        total: pages,
+                                        isDefault: i == model.defaultPage,
+                                        current: i == _current,
+                                        onTap: () => _openPage(i),
+                                      ),
+                                      if (!locked) ...[
+                                        const SizedBox(height: 16),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            _CircleBtn(
+                                              icon: i == model.defaultPage
+                                                  ? Icons.home_rounded
+                                                  : Icons.home_outlined,
+                                              label: i == model.defaultPage
+                                                  ? 'Default home page'
+                                                  : 'Set as default home page',
+                                              active: i == model.defaultPage,
+                                              onTap: () => _setDefault(i),
+                                            ),
+                                            const SizedBox(width: 18),
+                                            _CircleBtn(
+                                              icon:
+                                                  Icons.delete_outline_rounded,
+                                              label: 'Remove page',
+                                              enabled: model.canRemoveHomePage,
+                                              onTap: () =>
+                                                  unawaited(_removePage(i)),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ],
+                                  ),
                                 ),
                               );
-                            }
-                            return Align(
-                              alignment: Alignment.topCenter,
-                              child: SizedBox(
-                                width: cardW,
-                                child: Column(
-                                  children: [
-                                    _PageCard(
-                                      height: cardH,
-                                      items: model.home[i],
-                                      dock: model.dock,
-                                      cols: model.homeCols,
-                                      rows: model.homeRows,
-                                      index: i,
-                                      total: pages,
-                                      isDefault: i == model.defaultPage,
-                                      current: i == _current,
-                                      onTap: () => _openPage(i),
-                                    ),
-                                    if (!locked) ...[
-                                      const SizedBox(height: 16),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          _CircleBtn(
-                                            icon: i == model.defaultPage
-                                                ? Icons.home_rounded
-                                                : Icons.home_outlined,
-                                            label: i == model.defaultPage
-                                                ? 'Default home page'
-                                                : 'Set as default home page',
-                                            active: i == model.defaultPage,
-                                            onTap: () => _setDefault(i),
-                                          ),
-                                          const SizedBox(width: 18),
-                                          _CircleBtn(
-                                            icon: Icons.delete_outline_rounded,
-                                            label: 'Remove page',
-                                            enabled: model.canRemoveHomePage,
-                                            onTap: () =>
-                                                unawaited(_removePage(i)),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+                            },
+                          ),
                         ),
                       ),
                     ),
