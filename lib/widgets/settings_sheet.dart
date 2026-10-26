@@ -1288,7 +1288,7 @@ class _SearchPage extends StatelessWidget {
           t,
           title: 'Search package names',
           subtitle: s.searchPackageNames
-              ? 'Also matches an app\'s package ID, like \"com.resurrect\"'
+              ? 'Also matches an app\'s package ID, like "com.resurrect"'
               : 'Only app names and tags are searched',
           value: s.searchPackageNames,
           onChanged: s.setSearchPackageNames,
@@ -1592,10 +1592,8 @@ class _BackupSectionState extends State<_BackupSection> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
-    if (message != null) {
-      messenger.showSnackBar(SnackBar(content: Text(message)));
+    messenger.showSnackBar(SnackBar(content: Text(message)));
     }
-  }
 
   Future<bool?> _confirmRestore(LauncherBackup backup) {
     final date = backup.created;
