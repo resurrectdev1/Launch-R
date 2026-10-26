@@ -31,6 +31,7 @@ class LauncherSettings extends ChangeNotifier {
   bool _loopDrawerPages = false;
   bool _showBadges = false;
   bool _reduceAnimations = false;
+  bool _legacyRenderer = false;
   bool _drawerAutoSearch = false;
   bool _swipeUpHome = false;
   bool _doubleTapLock = false;
@@ -84,6 +85,7 @@ class LauncherSettings extends ChangeNotifier {
   bool get loopDrawerPages => _loopDrawerPages;
   bool get showBadges => _showBadges;
   bool get reduceAnimations => _reduceAnimations;
+  bool get legacyRenderer => _legacyRenderer;
   bool get drawerAutoSearch => _drawerAutoSearch;
   bool get swipeUpHome => _swipeUpHome;
   bool get doubleTapLock => _doubleTapLock;
@@ -175,6 +177,7 @@ class LauncherSettings extends ChangeNotifier {
     _showBadges = p.getBool('show_badges') ?? false;
     _reduceAnimations = p.getBool('reduce_animations') ?? false;
     Motion.reduced = _reduceAnimations;
+    _legacyRenderer = p.getBool(legacyRendererKey) ?? false;
     _drawerAutoSearch = p.getBool('drawer_auto_search') ?? false;
     _swipeUpHome = p.getBool('swipe_up_home') ?? false;
     _doubleTapLock = p.getBool('double_tap_lock') ?? false;
@@ -464,6 +467,15 @@ class LauncherSettings extends ChangeNotifier {
     Motion.reduced = v;
     notifyListeners();
     await _prefs?.setBool('reduce_animations', v);
+  }
+
+  static const legacyRendererKey = 'legacy_renderer';
+
+  Future<void> setLegacyRenderer(bool v) async {
+    if (v == _legacyRenderer) return;
+    _legacyRenderer = v;
+    notifyListeners();
+    await _prefs?.setBool(legacyRendererKey, v);
   }
 
   Future<void> setDrawerAutoSearch(bool v) async {
