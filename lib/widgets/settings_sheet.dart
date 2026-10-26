@@ -1168,8 +1168,9 @@ class _IconsPage extends StatelessWidget {
           chevron: true,
           onTap: () => showIconPackPicker(context),
         ),
+        _subHeader(t, 'ICON SHAPE'),
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 6, 24, 10),
+          padding: const EdgeInsets.fromLTRB(24, 10, 24, 10),
           child: Wrap(
             spacing: 16,
             runSpacing: 14,
