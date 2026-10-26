@@ -7,6 +7,7 @@ import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/models/layout_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
+import 'package:launch_r/services/launch_history.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/icon_shapes.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
@@ -290,7 +291,7 @@ class _SettingsSheet extends StatelessWidget {
         category(
           icon: Icons.search_rounded,
           title: 'Search',
-          subtitle: 'Fuzzy search, hidden app search, tags',
+          subtitle: 'Fuzzy search, package names, hidden apps, tags, history',
           onTap: () => _openPage(context, const _SearchPage()),
         ),
         category(
@@ -1267,6 +1268,7 @@ class _SearchPage extends StatelessWidget {
     final t = LaunchRTheme.of(context);
     final s = context.watch<LauncherSettings>();
     final model = context.watch<LauncherModel>();
+    final history = context.watch<LaunchHistory>();
 
     return _SettingsPage(
       title: 'Search',
@@ -1279,6 +1281,15 @@ class _SearchPage extends StatelessWidget {
               : 'Only names that start with or contain your text',
           value: s.fuzzySearch,
           onChanged: s.setFuzzySearch,
+        ),
+        _switchRow(
+          t,
+          title: 'Search package names',
+          subtitle: s.searchPackageNames
+              ? 'Also matches an app\'s package ID, like \"com.google\"'
+              : 'Only app names and tags are searched',
+          value: s.searchPackageNames,
+          onChanged: s.setSearchPackageNames,
         ),
         _hint(
           t,
@@ -1299,8 +1310,43 @@ class _SearchPage extends StatelessWidget {
           chevron: true,
           onTap: () => showTagManager(context),
         ),
+        _subHeader(t, 'HISTORY'),
+        _tile(
+          t,
+          icon: Icons.history_rounded,
+          title: 'Clear history now',
+          subtitle: history.isEmpty
+              ? 'Nothing to clear'
+              : 'Forget recent searches and suggested apps',
+          onTap: history.isEmpty ? null : () => _confirmClearHistory(context),
+        ),
       ],
     );
+  }
+
+  Future<void> _confirmClearHistory(BuildContext context) async {
+    final history = context.read<LaunchHistory>();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Clear history?'),
+        content: const Text(
+          'This removes your recent searches and resets the apps suggested '
+          'in the search bar. Your tags and settings are not affected.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) history.clearAll();
   }
 }
 
