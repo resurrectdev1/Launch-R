@@ -26,8 +26,14 @@ class LaunchHistory extends ChangeNotifier {
 
   bool get isEmpty => _entries.isEmpty && _searches.isEmpty;
 
+  Future<void> reload() async {
+    await init();
+    notifyListeners();
+  }
+
   Future<void> init() async {
     final p = _prefs = await SharedPreferences.getInstance();
+    _entries.clear();
     try {
       final raw = p.getString(_kLaunches);
       if (raw != null) {
