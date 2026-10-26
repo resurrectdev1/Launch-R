@@ -20,6 +20,7 @@ import 'package:launch_r/widgets/drawer_view.dart';
 import 'package:launch_r/widgets/font_sheet.dart';
 import 'package:launch_r/widgets/gesture_sheets.dart';
 import 'package:launch_r/widgets/hidden_apps_sheet.dart';
+import 'package:launch_r/widgets/hold_animator.dart';
 import 'package:launch_r/widgets/home_preview.dart';
 import 'package:launch_r/widgets/icon_pack_sheet.dart';
 import 'package:launch_r/widgets/tag_manager_sheet.dart';
@@ -1185,6 +1186,23 @@ class _IconsPage extends StatelessWidget {
             ],
           ),
         ),
+        _subHeader(t, 'HOLD ANIMATION'),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 10, 24, 10),
+          child: Wrap(
+            spacing: 16,
+            runSpacing: 14,
+            children: [
+              for (final a in HoldAnimation.values)
+                _HoldAnimChoice(
+                  animation: a,
+                  shape: s.iconShape,
+                  selected: s.holdAnimation == a,
+                  onTap: () => unawaited(s.setHoldAnimation(a)),
+                ),
+            ],
+          ),
+        ),
         Padding(
           padding: _rowPadding,
           child: SizedBox(
@@ -1593,7 +1611,7 @@ class _BackupSectionState extends State<_BackupSection> {
       if (mounted) setState(() => _busy = false);
     }
     messenger.showSnackBar(SnackBar(content: Text(message)));
-    }
+  }
 
   Future<bool?> _confirmRestore(LauncherBackup backup) {
     final date = backup.created;
@@ -1700,6 +1718,81 @@ class _ShapeChoice extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 shape.label,
+                maxLines: 1,
+                style: TextStyle(
+                  color: selected ? t.drawerText : t.drawerTextMuted,
+                  fontSize: 12,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HoldAnimChoice extends StatelessWidget {
+  const _HoldAnimChoice({
+    required this.animation,
+    required this.shape,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final HoldAnimation animation;
+  final IconShape shape;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '${animation.label} hold animation',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          unawaited(HapticFeedback.selectionClick());
+          onTap();
+        },
+        child: SizedBox(
+          width: 56,
+          child: Column(
+            children: [
+              SizedBox(
+                width: 56,
+                height: 56,
+                child: Center(
+                  child: HoldAnimator(
+                    style: animation,
+                    intensity: 0.8,
+                    child: SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: ClipPath(
+                        clipper: IconShapeClipper(shape),
+                        child: ColoredBox(
+                          color: selected ? t.accent : t.folderBgDrawer,
+                          child: selected
+                              ? Icon(
+                                  Icons.check_rounded,
+                                  color: t.onAccent,
+                                  size: 20,
+                                )
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                animation.label,
                 maxLines: 1,
                 style: TextStyle(
                   color: selected ? t.drawerText : t.drawerTextMuted,
