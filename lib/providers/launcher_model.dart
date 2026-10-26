@@ -341,6 +341,23 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     return true;
   }
 
+  Future<void> reloadFromPrefs() async {
+    _persistTimer?.cancel();
+    _persistDirty = false;
+    await _persistInFlight;
+    _lastWritten.clear();
+    _prefs = await SharedPreferences.getInstance();
+    _load();
+    final list = await LauncherChannel.instance.getApps();
+    if (list.isNotEmpty) {
+      _applyApps(list);
+    } else {
+      _reconcile();
+    }
+    _commit();
+    unawaited(_preloadIcons());
+  }
+
   Future<int?> reloadApps() async {
     final ch = LauncherChannel.instance;
     final list = await ch.getApps();
