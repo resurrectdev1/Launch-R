@@ -88,10 +88,7 @@ class _LaunchRAppState extends State<LaunchRApp> with WidgetsBindingObserver {
         return Consumer<LauncherSettings>(
           builder: (_, settings, _) {
             final accent = settings.materialYou
-                ? settings
-                          .dynamicSchemeFor(settings.appearance.brightness)
-                          ?.primary ??
-                      settings.accent
+                ? settings.dynamicAccent ?? settings.accent
                 : settings.accent;
             if (settings.hideStatusBar != _statusBarHidden) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
