@@ -13,7 +13,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added 
 
 * Loop live preview support for app drawer & home menu previews aswell as page indicator support for home menu live preview.
-* * Haptics for the home screen editor: widget resizing, resize handles, and the page manager.
+* Haptics for the home screen editor: widget resizing, resize handles, and the page manager.
+* Option to search for apps by package name / app id.
+* Option to clear suggested apps and search history in search settings.
 
 ### TO-DO
 
