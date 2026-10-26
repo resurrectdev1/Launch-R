@@ -7,6 +7,7 @@ import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/models/layout_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/providers/launcher_settings.dart';
+import 'package:launch_r/services/backup_service.dart';
 import 'package:launch_r/services/launch_history.dart';
 import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/icon_shapes.dart';
@@ -303,7 +304,8 @@ class _SettingsSheet extends StatelessWidget {
         category(
           icon: Icons.tune_rounded,
           title: 'System',
-          subtitle: 'Hidden apps, wallpaper, default home app, animations',
+          subtitle:
+              'Hidden apps, wallpaper, backup & restore, default home app, animations',
           onTap: () => _openPage(context, const _SystemPage()),
         ),
         const SizedBox(height: 4),
@@ -1505,6 +1507,8 @@ class _SystemPage extends StatelessWidget {
           title: 'Default home app',
           onTap: ch.openHomeSettings,
         ),
+        _subHeader(t, 'BACKUP & RESTORE'),
+        const _BackupSection(),
         _subHeader(t, 'PERFORMANCE'),
         _switchRow(
           t,
@@ -1513,6 +1517,141 @@ class _SystemPage extends StatelessWidget {
               'Skip transitions and the folder blur. Helps on slower devices',
           value: s.reduceAnimations,
           onChanged: s.setReduceAnimations,
+        ),
+      ],
+    );
+  }
+}
+
+class _BackupSection extends StatefulWidget {
+  const _BackupSection();
+
+  @override
+  State<_BackupSection> createState() => _BackupSectionState();
+}
+
+class _BackupSectionState extends State<_BackupSection> {
+  bool _busy = false;
+
+  String _date(DateTime d) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${d.year}-${two(d.month)}-${two(d.day)}';
+  }
+
+  Future<void> _backUp() async {
+    if (_busy) return;
+    final model = context.read<LauncherModel>();
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    String? message;
+    try {
+      final json = await BackupService.create(model: model);
+      final saved = await LauncherChannel.instance.saveBackup(
+        BackupService.suggestedFileName(),
+        json,
+      );
+      if (saved) message = 'Backup saved';
+    } on PlatformException {
+      message = 'Couldn’t save the backup file';
+    } catch (_) {
+      message = 'Couldn’t create the backup';
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+    if (message != null) {
+      messenger.showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
+  Future<void> _restore() async {
+    if (_busy) return;
+    final settings = context.read<LauncherSettings>();
+    final model = context.read<LauncherModel>();
+    final history = context.read<LaunchHistory>();
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    String? message;
+    try {
+      final raw = await LauncherChannel.instance.pickBackup();
+      if (raw == null) return;
+      final backup = BackupService.parse(raw);
+      if (!mounted) return;
+      final ok = await _confirmRestore(backup);
+      if (ok != true) return;
+      await BackupService.restore(
+        backup,
+        settings: settings,
+        model: model,
+        history: history,
+      );
+      message = 'Backup restored';
+    } on BackupException catch (e) {
+      message = e.message;
+    } on PlatformException {
+      message = 'Couldn’t read that file';
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+    if (message != null) {
+      messenger.showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
+  Future<bool?> _confirmRestore(LauncherBackup backup) {
+    final date = backup.created;
+    final version = backup.appVersion;
+    final origin = [
+      if (date != null) _date(date),
+      if (version != null) 'v$version',
+    ].join(' · ');
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Restore this backup?'),
+        content: Text(
+          '${origin.isEmpty ? '' : 'Backup from $origin.\n\n'}'
+          'This replaces your current settings, home screen, dock, folders, '
+          'tags and history with the ones in the file. Widgets aren’t '
+          'included and will need to be added again.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Restore'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    return Column(
+      children: [
+        _tile(
+          t,
+          icon: Icons.upload_file_rounded,
+          title: 'Back up settings',
+          subtitle: 'Save your settings and layout to a file',
+          onTap: _busy ? null : _backUp,
+        ),
+        _tile(
+          t,
+          icon: Icons.settings_backup_restore_rounded,
+          title: 'Restore from backup',
+          subtitle: 'Load a file made by Launch-R',
+          onTap: _busy ? null : _restore,
+        ),
+        _hint(
+          t,
+          'Backups include settings, home screen and dock layout, folders, '
+          'tags, hidden apps and history. Widgets, pinned shortcuts, your '
+          'custom font and your background image are not included.',
         ),
       ],
     );
