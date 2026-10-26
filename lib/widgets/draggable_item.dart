@@ -1,12 +1,13 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
+import 'package:launch_r/providers/launcher_settings.dart';
 import 'package:launch_r/providers/shell_controller.dart';
 import 'package:launch_r/theme/motion.dart';
+import 'package:launch_r/widgets/hold_animator.dart';
 import 'package:launch_r/widgets/item_actions.dart';
 
 class DraggableItem extends StatefulWidget {
@@ -69,6 +70,9 @@ class _DraggableItemState extends State<DraggableItem> {
   Widget build(BuildContext context) {
     final shell = context.read<ShellController>();
     final model = context.read<LauncherModel>();
+    final holdAnimation = context.select<LauncherSettings, HoldAnimation>(
+      (s) => s.holdAnimation,
+    );
     final data = DragData(
       item: widget.item,
       zone: widget.zone,
@@ -119,7 +123,8 @@ class _DraggableItemState extends State<DraggableItem> {
                       child: SizedBox(
                         width: fs.width,
                         height: fs.height,
-                        child: _HeldSwing(
+                        child: HoldAnimator(
+                          style: holdAnimation,
                           child: Center(child: widget.feedback),
                         ),
                       ),
@@ -161,57 +166,6 @@ class _DraggableItemState extends State<DraggableItem> {
           onTapUp: widget.onTap == null ? null : (_) => _setPressed(false),
           onTapCancel: widget.onTap == null ? null : () => _setPressed(false),
           child: _pressScale(widget.child),
-        ),
-      ),
-    );
-  }
-}
-
-class _HeldSwing extends StatefulWidget {
-  const _HeldSwing({required this.child});
-  final Widget child;
-
-  @override
-  State<_HeldSwing> createState() => _HeldSwingState();
-}
-
-class _HeldSwingState extends State<_HeldSwing>
-    with SingleTickerProviderStateMixin {
-  static const _maxAngle = 0.07;
-  static const _period = Duration(milliseconds: 900);
-
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: _period,
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    if (!Motion.reduced) _c.repeat();
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (Motion.reduced) return widget.child;
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0, end: 1),
-      duration: Motion.slow,
-      curve: Motion.standard,
-      child: widget.child,
-      builder: (context, amp, child) => AnimatedBuilder(
-        animation: _c,
-        child: child,
-        builder: (context, child) => Transform.rotate(
-          angle: math.sin(_c.value * 2 * math.pi) * _maxAngle * amp,
-          alignment: Alignment.topCenter,
-          child: child,
         ),
       ),
     );
