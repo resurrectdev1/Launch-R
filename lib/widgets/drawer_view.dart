@@ -662,7 +662,11 @@ class _DrawerViewState extends State<DrawerView> {
   Widget _results(LaunchRTheme t) {
     final model = context.watch<LauncherModel>();
     final settings = context.watch<LauncherSettings>();
-    final results = model.search(_search.text, fuzzy: settings.fuzzySearch);
+    final results = model.search(
+      _search.text,
+      fuzzy: settings.fuzzySearch,
+      packageNames: settings.searchPackageNames,
+    );
     final homeLook =
         settings.homeLookDrawerFolders && !settings.solidHomeFolders;
     final style = CellStyle(
@@ -900,9 +904,11 @@ class _SearchPill extends StatelessWidget {
               focusNode: focus,
               onChanged: (_) => onChanged(),
               onSubmitted: (q) {
+                final prefs = context.read<LauncherSettings>();
                 final r = context.read<LauncherModel>().search(
                   q,
-                  fuzzy: context.read<LauncherSettings>().fuzzySearch,
+                  fuzzy: prefs.fuzzySearch,
+                  packageNames: prefs.searchPackageNames,
                 );
                 if (r.isNotEmpty) {
                   context.read<LaunchHistory>().recordSearch(q);
