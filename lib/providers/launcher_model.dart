@@ -114,7 +114,11 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
 
   static const hiddenSearchPrefix = '/';
 
-  List<LauncherApp> search(String query, {bool fuzzy = true}) {
+  List<LauncherApp> search(
+    String query, {
+    bool fuzzy = true,
+    bool packageNames = false,
+  }) {
     var q = query.trim();
     final includeHidden = q.startsWith(hiddenSearchPrefix);
     if (includeHidden) q = q.substring(hiddenSearchPrefix.length).trim();
@@ -128,12 +132,22 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     final scored = <(int, LauncherApp)>[];
     for (final a in _apps.values) {
       if (!includeHidden && _hidden.contains(a.package)) continue;
-      final s = scoreApp(
+      var s = scoreApp(
         q,
         a.label,
         _tags[a.package] ?? const <String>{},
         fuzzy,
       );
+      if (packageNames) {
+        // Exact-ish matching only: fuzzy on "com.x.y" produces mostly noise.
+        // The penalty keeps name/tag matches ranked above package matches.
+        final ps = scoreMatch(
+          normalizeSearch(q),
+          a.package.toLowerCase(),
+          fuzzy: false,
+        );
+        if (ps - 100 > s) s = ps - 100;
+      }
       if (s > 0) scored.add((s, a));
     }
     scored.sort((x, y) {
