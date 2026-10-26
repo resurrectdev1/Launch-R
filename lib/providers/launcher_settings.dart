@@ -38,6 +38,7 @@ class LauncherSettings extends ChangeNotifier {
   HomeGesture _swipeRight = const HomeGesture();
   double _gestureSensitivity = 1.0;
   bool _fuzzySearch = true;
+  bool _searchPackageNames = false;
   bool _showVoiceButton = true;
   bool _showClearButton = true;
   bool _drawerSuggestions = true;
@@ -92,6 +93,7 @@ class LauncherSettings extends ChangeNotifier {
   HomeGesture gestureFor(GestureSide side) =>
       side == GestureSide.left ? _swipeLeft : _swipeRight;
   bool get fuzzySearch => _fuzzySearch;
+  bool get searchPackageNames => _searchPackageNames;
   bool get showVoiceButton => _showVoiceButton;
   bool get showClearButton => _showClearButton;
   bool get drawerSuggestions => _drawerSuggestions;
@@ -184,6 +186,7 @@ class LauncherSettings extends ChangeNotifier {
         .clamp(minGestureSensitivity, maxGestureSensitivity)
         .toDouble();
     _fuzzySearch = p.getBool('fuzzy_search') ?? true;
+    _searchPackageNames = p.getBool('search_package_names') ?? false;
     _showVoiceButton = p.getBool('show_voice_button') ?? true;
     _showClearButton = p.getBool('show_clear_button') ?? true;
     _drawerSuggestions = p.getBool('drawer_suggestions') ?? true;
@@ -527,6 +530,13 @@ class LauncherSettings extends ChangeNotifier {
     _fuzzySearch = v;
     notifyListeners();
     await _prefs?.setBool('fuzzy_search', v);
+  }
+
+  Future<void> setSearchPackageNames(bool v) async {
+    if (v == _searchPackageNames) return;
+    _searchPackageNames = v;
+    notifyListeners();
+    await _prefs?.setBool('search_package_names', v);
   }
 
   Future<void> setShowVoiceButton(bool v) async {
