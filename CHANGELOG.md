@@ -16,6 +16,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * Haptics for the home screen editor: widget resizing, resize handles, and the page manager.
 * Option to search for apps by package name / app id.
 * Option to clear suggested apps and search history in search settings.
+* Backup & restore (Settings -> System): save your settings, home screen and dock layout, folders, tags, hidden apps and history to a file, and load it back later or on another device. Widgets, pinned shortcuts, your custom font and your background image are NOT included.
 
 ### Changed
 
