@@ -17,36 +17,36 @@ Tired of the same old ctrl c & ctrl v Android home launchers? So am I and thus I
 1. Open **Launch-R**, or set it as your default home launcher.
 2. Swipe up to open the app drawer and search bar.
 3. Tap and hold an app to drag it around. Drop it on top of another app to make a folder.
-4. Tap the three dots in the top right of the app drawer to open the actions menu.
-5. Tap **Launcher settings** to customize the color, font, icon shapes & much much more.
+4. Long-press an empty spot on the home screen to manage pages, widgets and wallpaper.
+5. Tap the three dots in the top right of the app drawer, then **Launcher settings** to customize the color, font, icon shapes & much much more.
 
 ### Features
 
-🗂️ **App Drawer:** Swipe up for a clean app drawer with a built-in search bar. Choose how many columns you want, and optionally have the drawer open straight into search.
+🗂️ **App Drawer:** Swipe up for a clean drawer with 3-6 columns, voice search, suggestions and recent searches. Optionally open straight into search, loop pages or remember your app positions.
 
-📁 **Folders:** Drag one app onto another to make a folder, recolor it right from inside, and move apps in and out of folders with smooth One UI inspired animations.
+📁 **Folders:** Drag one app onto another to make a folder, recolor it right from inside, and hover an app over a folder to open it and drop it exactly where you want.
 
-🔍 **Fuzzy Search & Tags:** Find apps even with typos, and give apps your own tags so searching a keyword brings up everything you tagged with it.
+🔍 **Fuzzy Search & Tags:** Fuzzy search finds apps even with typos, and your own tags (and optionally package names) bring up everything you tagged.
 
-🏠 **Customizable Home Screen:** Add, remove and reorder pages, pick your default home page, choose your home grid size, and lock the layout so nothing moves by accident. Drag apps and folders straight from the drawer onto your home screen.
+🏠 **Customizable Home Screen:** Add, remove and reorder pages, pick your default page and a grid of up to 6x8, and lock the layout. Choose dots or a line for page indicators and loop pages if you like.
 
-🪟 **Widget Support:** Add and resize Android widgets with a live placement preview that shows exactly how much space they'll take up.
+🪟 **Widgets:** Add, resize and edit Android widgets with a live placement preview.
 
-🎨 **Theming:** Pick any color with a hex color picker and optionally turn on Material You so it works alongside your other theme choices.
+🎨 **Theming:** Orange Factory, AMOLED Black or White Minimal themes, any accent color via hex picker or Material You, and an optional own background image.
 
-🔷 **Icon Shapes & Icon Packs:** Choose your icon shape (circle, square, squircle, hexagon or teardrop) and apply third-party icon packs, with support for adaptive and themed icons.
+🔷 **Icons:** Five icon shapes, third-party icon packs, themed icons, an icon size slider and optional notification badges.
 
-🔤 **Fonts & Text:** Pick a built-in font or load your own custom font, scale text size to your liking and turn on bold text.
+🔤 **Fonts & Text:** Five built-in fonts or import your own, plus text scaling and bold text.
 
 🙈 **Hide Apps:** Keep apps out of sight, and start a search with `/` to find them anyway.
 
-🔔 **Icon Badges:** Optional notification badges on your app icons, off by default until you choose to enable them.
-
-👆 **Swipe Gestures:** Assign actions to home screen swipes, like opening an app, recent apps or the notification panel, plus an optional double tap on an empty spot to lock your screen.
+👆 **Gestures:** Assign actions to home screen swipes (open an app, recent apps, notification panel and more), adjust the sensitivity, and double tap an empty spot to lock your screen.
 
 ⚡ **Shortcuts:** Long-press an app for its shortcuts, and pin "Add to Home screen" shortcuts right on your home screen. *(Default launcher only.)*
 
-📳 **Haptics & Animations:** Subtle haptics and spring animations when dragging, dropping and opening folders.
+💾 **Backup & Restore:** Save your settings, layout, folders, tags and hidden apps to a file and load it back on any device.
+
+📳 **Haptics & Animations:** Subtle haptics and spring animations throughout, or turn on **Reduce animations** for slower devices.
 
 ## What's New
 
