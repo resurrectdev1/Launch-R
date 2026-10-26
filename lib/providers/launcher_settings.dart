@@ -49,6 +49,7 @@ class LauncherSettings extends ChangeNotifier {
   String? _iconPackLabel;
   bool _boldText = false;
   IconShape _iconShape = IconShape.squircle;
+  HoldAnimation _holdAnimation = HoldAnimation.sway;
   bool _themedIcons = false;
   String? _fontId;
   String? _customFontPath;
@@ -129,6 +130,7 @@ class LauncherSettings extends ChangeNotifier {
   static const double minIconScale = 0.7;
   static const double maxIconScale = 1.15;
   IconShape get iconShape => _iconShape;
+  HoldAnimation get holdAnimation => _holdAnimation;
   bool get ownBackground => _ownBackground;
   String? get backgroundPath => _backgroundPath;
   bool get themedIcons => _themedIcons;
@@ -192,6 +194,7 @@ class LauncherSettings extends ChangeNotifier {
     _showClearButton = p.getBool('show_clear_button') ?? true;
     _drawerSuggestions = p.getBool('drawer_suggestions') ?? true;
     _iconShape = IconShape.fromName(p.getString('icon_shape'));
+    _holdAnimation = HoldAnimation.fromName(p.getString('hold_animation'));
     _themedIcons = p.getBool('themed_icons') ?? false;
     _textScale = (p.getDouble('text_scale') ?? 1.0)
         .clamp(minTextScale, maxTextScale)
@@ -573,6 +576,13 @@ class LauncherSettings extends ChangeNotifier {
     _iconShape = v;
     notifyListeners();
     await _prefs?.setString('icon_shape', v.name);
+  }
+
+  Future<void> setHoldAnimation(HoldAnimation v) async {
+    if (v == _holdAnimation) return;
+    _holdAnimation = v;
+    notifyListeners();
+    await _prefs?.setString('hold_animation', v.name);
   }
 
   Future<void> setThemedIcons(bool v) async {
