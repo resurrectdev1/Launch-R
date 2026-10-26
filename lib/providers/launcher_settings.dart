@@ -5,6 +5,7 @@ import 'package:launch_r/models/gesture_models.dart';
 import 'package:launch_r/models/layout_models.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/services/font_service.dart';
+import 'package:launch_r/services/icon_cache.dart';
 import 'package:launch_r/theme/app_fonts.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
@@ -134,6 +135,7 @@ class LauncherSettings extends ChangeNotifier {
 
   Future<void> init() async {
     final p = _prefs = await SharedPreferences.getInstance();
+    _appearance = AppearanceMode.orangeFactory;
     final saved = p.getString('appearance');
     if (saved == 'materialYou') {
       _appearance = AppearanceMode.orangeFactory;
@@ -149,7 +151,7 @@ class LauncherSettings extends ChangeNotifier {
       _materialYou = p.getBool('material_you') ?? false;
     }
     final accentArgb = p.getInt('custom_accent');
-    if (accentArgb != null) _customAccent = Color(accentArgb | 0xFF000000);
+    _customAccent = accentArgb == null ? null : Color(accentArgb | 0xFF000000);
     _darkHomeText = p.getBool('dark_home_text') ?? false;
     _hideStatusBar = p.getBool('hide_status_bar') ?? false;
     _solidHomeFolders = p.getBool('solid_home_folders') ?? false;
@@ -210,6 +212,12 @@ class LauncherSettings extends ChangeNotifier {
     await _restoreFont(p);
   }
 
+  Future<void> reload() async {
+    await init();
+    IconCache.instance.shape = _iconShape;
+    notifyListeners();
+  }
+
   Future<void> setOwnBackground(bool v) async {
     if (v == _ownBackground) return;
     _ownBackground = v;
@@ -236,6 +244,7 @@ class LauncherSettings extends ChangeNotifier {
 
   Future<void> _restoreFont(SharedPreferences p) async {
     final id = p.getString('font_id');
+    _customFontFamily = null;
     _customFontPath = p.getString('custom_font_path');
     _customFontLabel = p.getString('custom_font_label');
     final path = _customFontPath;
