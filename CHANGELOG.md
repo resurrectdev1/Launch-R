@@ -10,6 +10,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+### TO-DO
+
+* Allow home screen dock to utilize reccent apps when empty (option in settings default off). (to be done)
+* Add option to hide action bar at top of screen when moving apps or folders in home menu. (to be done)
+* Add ability to add shortcuts to app drawer and folders. (to be done)
+* Update screenshots and upload demo video or gif. (to be done)
+
+---
+
+## [0.4.8] - 2026-10-25
+
 ### Added 
 
 * Loop live preview support for app drawer & home menu previews aswell as page indicator support for home menu live preview.
@@ -21,14 +32,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-* Prevent Material you in White Minimal theme to changing the material you accent color darker.
-
-### TO-DO
-
-* Allow home screen dock to utilize reccent apps when empty (option in settings default off). (to be done)
-* Add option to hide action bar at top of screen when moving apps or folders in home menu. (to be done)
-* Add ability to add shortcuts to app drawer and folders. (to be done)
-* Update screenshots and upload demo video or gif. (to be done)
+* Prevent Material you in "White Minimal" theme from changing the material you accent color darker then other themes.
 
 ---
 
