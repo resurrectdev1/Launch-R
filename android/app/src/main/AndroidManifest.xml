@@ -76,6 +76,11 @@
             android:name="flutterEmbedding"
             android:value="2"/>
 
+        <!-- FE BUILD: disable Impeller (falls back to Skia) to compare stutter -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false"/>
+
     </application>
 
     <queries>
