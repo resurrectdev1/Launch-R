@@ -28,6 +28,8 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.Process
 import android.speech.RecognizerIntent
 import android.provider.MediaStore
@@ -36,6 +38,7 @@ import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.android.FlutterActivityLaunchConfigs.BackgroundMode
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.FlutterShellArgs
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.io.ByteArrayOutputStream
@@ -116,6 +119,26 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun getBackgroundMode(): BackgroundMode = BackgroundMode.transparent
+
+    override fun getFlutterShellArgs(): FlutterShellArgs {
+        val args = super.getFlutterShellArgs()
+        val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+        if (prefs.getBoolean("flutter.legacy_renderer", false)) {
+            args.add("--enable-impeller=false")
+        }
+        return args
+    }
+
+    private fun restartApp() {
+        val intent = Intent(Intent.ACTION_MAIN)
+            .addCategory(Intent.CATEGORY_HOME)
+            .setPackage(packageName)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        startActivity(intent)
+        Handler(Looper.getMainLooper()).postDelayed({
+            Process.killProcess(Process.myPid())
+        }, 150)
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -501,6 +524,11 @@ class MainActivity : FlutterActivity() {
             "pickBackground" -> pickBackground(result)
             "saveBackup" -> saveBackup(call, result)
             "pickBackup" -> pickBackup(result)
+
+            "restartApp" -> {
+                restartApp()
+                result.success(null)
+            }
 
             "openHomeSettings" -> {
                 try {
