@@ -132,15 +132,8 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     final scored = <(int, LauncherApp)>[];
     for (final a in _apps.values) {
       if (!includeHidden && _hidden.contains(a.package)) continue;
-      var s = scoreApp(
-        q,
-        a.label,
-        _tags[a.package] ?? const <String>{},
-        fuzzy,
-      );
+      var s = scoreApp(q, a.label, _tags[a.package] ?? const <String>{}, fuzzy);
       if (packageNames) {
-        // Exact-ish matching only: fuzzy on "com.x.y" produces mostly noise.
-        // The penalty keeps name/tag matches ranked above package matches.
         final ps = scoreMatch(
           normalizeSearch(q),
           a.package.toLowerCase(),
