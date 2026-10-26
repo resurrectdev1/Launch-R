@@ -97,6 +97,26 @@ class LauncherChannel {
     }
   }
 
+  Future<bool> saveBackup(String fileName, String content) async {
+    try {
+      return await _ch.invokeMethod<bool>('saveBackup', {
+            'name': fileName,
+            'content': content,
+          }) ??
+          false;
+    } on MissingPluginException {
+      return false;
+    }
+  }
+
+  Future<String?> pickBackup() async {
+    try {
+      return await _ch.invokeMethod<String>('pickBackup');
+    } on MissingPluginException {
+      return null;
+    }
+  }
+
   Future<bool> launchApp(String pkg, {Rect? from, double dpr = 1}) async {
     final args = <String, dynamic>{'package': pkg};
     if (from != null) {
