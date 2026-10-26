@@ -43,6 +43,7 @@ class BackupService {
     'custom_font_path',
     'custom_font_label',
     'background_path',
+    'legacy_renderer',
   };
 
   static final _keyPattern = RegExp(r'^[A-Za-z0-9_.\-]{1,80}$');
