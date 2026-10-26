@@ -178,9 +178,7 @@ class _DrawerPagePreviewState extends State<DrawerPagePreview> {
                                 children: [
                                   for (var col = 0; col < cols; col++)
                                     Expanded(
-                                      child: cell(
-                                        p * perPage + r * cols + col,
-                                      ),
+                                      child: cell(p * perPage + r * cols + col),
                                     ),
                                 ],
                               ),
