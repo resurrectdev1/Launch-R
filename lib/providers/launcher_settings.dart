@@ -65,9 +65,9 @@ class LauncherSettings extends ChangeNotifier {
   Color get accent => _customAccent ?? LaunchRTheme.defaultAccent;
 
   bool get dynamicAvailable => _dynamicLight != null || _dynamicDark != null;
-  ColorScheme? dynamicSchemeFor(Brightness b) => b == Brightness.dark
-      ? (_dynamicDark ?? _dynamicLight)
-      : (_dynamicLight ?? _dynamicDark);
+
+  Color? get dynamicAccent =>
+      (_dynamicDark ?? _dynamicLight)?.primary;
   bool get darkHomeText => _darkHomeText;
   bool get hideStatusBar => _hideStatusBar;
   bool get solidHomeFolders => _solidHomeFolders;
