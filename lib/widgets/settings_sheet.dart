@@ -1286,7 +1286,7 @@ class _SearchPage extends StatelessWidget {
           t,
           title: 'Search package names',
           subtitle: s.searchPackageNames
-              ? 'Also matches an app\'s package ID, like \"com.google\"'
+              ? 'Also matches an app\'s package ID, like \"com.resurrect\"'
               : 'Only app names and tags are searched',
           value: s.searchPackageNames,
           onChanged: s.setSearchPackageNames,
