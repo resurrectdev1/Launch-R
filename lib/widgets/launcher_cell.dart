@@ -88,7 +88,9 @@ class _LauncherCellState extends State<LauncherCell> {
   Hover _calc(DragData d, Offset global) {
     if (widget.item == null) return Hover.none;
     final it = widget.item;
-    final canMerge = d.item is AppItem && (it is AppItem || it is FolderItem);
+    final canMerge =
+        (d.item is AppItem || d.item is ShortcutItem) &&
+        (it is AppItem || it is ShortcutItem || it is FolderItem);
     if (widget.zone != Zone.drawer) {
       final model = context.read<LauncherModel>();
       final fromDrawer = d.zone == Zone.drawer;
@@ -142,7 +144,9 @@ class _LauncherCellState extends State<LauncherCell> {
 
   void _armOpen(DragData d) {
     final item = widget.item;
-    if (item is! FolderItem || d.item is! AppItem || d.fromFolder != null) {
+    if (item is! FolderItem ||
+        (d.item is! AppItem && d.item is! ShortcutItem) ||
+        d.fromFolder != null) {
       return;
     }
     if ((widget.zone == Zone.drawer) != (d.zone == Zone.drawer)) return;
