@@ -667,9 +667,13 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
       case AppItem(:final pkg):
         return _isVisible(pkg) ? it : null;
       case final FolderItem f:
-        final pk = f.pkgs.where(_isVisible).toList();
+        final pk = f.pkgs.where((k) {
+          if (!FolderItem.isShortcutKey(k)) return _isVisible(k);
+          final sc = f.shortcuts[k];
+          return sc != null && _apps.containsKey(sc.pkg);
+        }).toList();
         if (pk.length >= 2) return f.copyWith(pkgs: pk);
-        if (pk.length == 1) return AppItem(pk.first);
+        if (pk.length == 1) return f.memberItem(pk.first);
         return null;
       case ShortcutItem(:final pkg):
         return _apps.containsKey(pkg) ? it : null;
@@ -696,19 +700,22 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
       final loc = _findRoot(d.zone, 'f:$fid');
       final f = loc?.item;
       if (loc == null || f is! FolderItem) return null;
-      final pkg = (d.item as AppItem).pkg;
-      final rest = f.pkgs.where((p) => p != pkg).toList();
+      final key = FolderItem.keyOf(d.item);
+      if (key == null) return null;
+      final rest = f.pkgs.where((p) => p != key).toList();
       if (rest.length == f.pkgs.length) return null;
+      final moved = f.memberItem(key);
+      if (moved == null) return null;
       if (rest.length >= 2) {
         loc.list[loc.index] = f.copyWith(pkgs: rest);
       } else if (rest.length == 1) {
-        loc.list[loc.index] = AppItem(rest.first);
+        loc.list[loc.index] = f.memberItem(rest.first);
       } else if (d.zone == Zone.drawer) {
         _vacateDrawerSlot(loc.index);
       } else {
         loc.list[loc.index] = null;
       }
-      return AppItem(pkg);
+      return moved;
     }
     final loc = _findRoot(d.zone, d.item.id);
     if (loc == null) return null;
@@ -856,9 +863,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     final list = z == Zone.dock ? _dock : _home[page];
     final src = d.item;
     final t = list[index];
-    if (t is WidgetItem || t is WidgetCover || t is ShortcutItem) {
-      return DropOutcome.rejected;
-    }
+    if (t is WidgetItem || t is WidgetCover) return DropOutcome.rejected;
 
     if (src is FolderItem) {
       if (t != null) return DropOutcome.rejected;
@@ -881,17 +886,43 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
 
     if (t == null) {
       list[index] = AppItem(src.pkg);
-    } else if (t is AppItem) {
-      list[index] = FolderItem(
-        fid: _newFid(),
-        name: 'Folder',
-        pkgs: [t.pkg, src.pkg],
-      );
+    } else if (t is AppItem || t is ShortcutItem) {
+      list[index] = _newFolderOf(t!, src);
     } else if (t is FolderItem) {
-      list[index] = t.copyWith(pkgs: [...t.pkgs, src.pkg]);
+      list[index] = _folderAdding(t, src);
     }
     _commit();
     return DropOutcome.done;
+  }
+
+  FolderItem _newFolderOf(LItem a, LItem b) => FolderItem(
+    fid: _newFid(),
+    name: 'Folder',
+    pkgs: [FolderItem.keyOf(a)!, FolderItem.keyOf(b)!],
+    shortcuts: {
+      for (final m in [a, b])
+        if (m is ShortcutItem) FolderItem.shortcutKey(m.sid): m,
+    },
+  );
+
+  FolderItem _folderAdding(
+    FolderItem f,
+    LItem m, {
+    String? targetKey,
+    bool after = true,
+  }) {
+    final key = FolderItem.keyOf(m)!;
+    final pk = [...f.pkgs];
+    final at = targetKey == null ? -1 : pk.indexOf(targetKey);
+    if (at < 0) {
+      pk.add(key);
+    } else {
+      pk.insert(after ? at + 1 : at, key);
+    }
+    return f.copyWith(
+      pkgs: pk,
+      shortcuts: m is ShortcutItem ? {...f.shortcuts, key: m} : null,
+    );
   }
 
   DropOutcome slotDrop(DragData d, Zone z, int page, int index) {
@@ -911,21 +942,19 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
       return DropOutcome.done;
     }
 
-    if (d.item is AppItem && (t is AppItem || t is FolderItem)) {
+    final dragged = d.item;
+    if ((dragged is AppItem || dragged is ShortcutItem) &&
+        (t is AppItem || t is ShortcutItem || t is FolderItem)) {
       if (d.fromFolder != null && t is FolderItem && t.fid == d.fromFolder) {
         return DropOutcome.done;
       }
       final moved = _detach(d);
-      if (moved is! AppItem) return DropOutcome.done;
+      if (moved is! AppItem && moved is! ShortcutItem) return DropOutcome.done;
       final cur = list[index];
-      if (cur is AppItem) {
-        list[index] = FolderItem(
-          fid: _newFid(),
-          name: 'Folder',
-          pkgs: [cur.pkg, moved.pkg],
-        );
+      if (cur is AppItem || cur is ShortcutItem) {
+        list[index] = _newFolderOf(cur!, moved!);
       } else if (cur is FolderItem) {
-        list[index] = cur.copyWith(pkgs: [...cur.pkgs, moved.pkg]);
+        list[index] = _folderAdding(cur, moved!);
       }
       _commit();
       return DropOutcome.done;
@@ -1068,10 +1097,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     if (_home.length <= 1 || index < 0 || index >= _home.length) return false;
     final removed = _home[index];
     _home.removeAt(index);
-    for (final it in removed) {
-      if (it is WidgetItem) _releaseWidget(it);
-      if (it is ShortcutItem) _releaseShortcut(it);
-    }
+    removed.forEach(_releaseItem);
     if (index < _pinnedPages) _pinnedPages--;
     if (index == _defaultPage) {
       _defaultPage = 0;
@@ -1125,30 +1151,39 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     final it = loc.item;
     if (it is WidgetItem) {
       _unstampWidget(loc.list, it.wid);
-      _releaseWidget(it);
     } else {
       loc.list[loc.index] = null;
-      if (it is ShortcutItem) _releaseShortcut(it);
     }
+    _releaseItem(it);
     _commit();
   }
 
   void removeDragged(DragData d) {
     final it = _detach(d);
     if (it == null) return;
-    if (it is WidgetItem) _releaseWidget(it);
-    if (it is ShortcutItem) _releaseShortcut(it);
+    _releaseItem(it);
     _commit();
   }
 
+  void _releaseItem(LItem? it) {
+    switch (it) {
+      case WidgetItem():
+        _releaseWidget(it);
+      case ShortcutItem():
+        _releaseShortcut(it);
+      case FolderItem(:final shortcuts):
+        shortcuts.values.forEach(_releaseShortcut);
+      default:
+        break;
+    }
+  }
+
   bool _homeHasShortcut(String pkg, String shortcutId) {
+    bool match(ShortcutItem s) => s.pkg == pkg && s.shortcutId == shortcutId;
     for (final list in _listsOf(Zone.home)) {
       for (final it in list) {
-        if (it is ShortcutItem &&
-            it.pkg == pkg &&
-            it.shortcutId == shortcutId) {
-          return true;
-        }
+        if (it is ShortcutItem && match(it)) return true;
+        if (it is FolderItem && it.shortcuts.values.any(match)) return true;
       }
     }
     return false;
@@ -1268,27 +1303,30 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     String? targetPkg,
     bool after = true,
   }) {
-    if (d.item is! AppItem || d.fromFolder == fid) return;
-    final pkg = (d.item as AppItem).pkg;
+    final key = FolderItem.keyOf(d.item);
+    if (key == null || d.fromFolder == fid) return;
+    if (d.item is ShortcutItem && z == Zone.drawer) return;
     final before = _findRoot(z, 'f:$fid')?.item;
-    if (before is! FolderItem || before.pkgs.contains(pkg)) return;
+    if (before is! FolderItem || before.pkgs.contains(key)) return;
     final moved = _detach(d);
-    if (moved is! AppItem) return;
+    if (moved is! AppItem && moved is! ShortcutItem) return;
     final loc = _findRoot(z, 'f:$fid');
     final f = loc?.item;
     if (loc == null || f is! FolderItem) {
-      _drawer.add(moved);
+      if (moved is ShortcutItem) {
+        _placeInFirstEmpty(moved);
+      } else {
+        _drawer.add(moved!);
+      }
       _commit();
       return;
     }
-    final pk = [...f.pkgs];
-    final at = targetPkg == null ? -1 : pk.indexOf(targetPkg);
-    if (at < 0) {
-      pk.add(pkg);
-    } else {
-      pk.insert(after ? at + 1 : at, pkg);
-    }
-    loc.list[loc.index] = f.copyWith(pkgs: pk);
+    loc.list[loc.index] = _folderAdding(
+      f,
+      moved!,
+      targetKey: targetPkg,
+      after: after,
+    );
     _commit();
   }
 
@@ -1296,7 +1334,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     final loc = _findRoot(z, 'f:$fid');
     final f = loc?.item;
     if (loc == null || f is! FolderItem) return;
-    final apps = f.pkgs.map(AppItem.new).toList();
+    final apps = f.members;
     if (z == Zone.drawer) {
       final at = loc.index;
       _drawer[at] = apps.first;
