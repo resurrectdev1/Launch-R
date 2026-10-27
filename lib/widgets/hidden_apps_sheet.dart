@@ -36,23 +36,31 @@ class _HiddenAppsSheet extends StatelessWidget {
                 style: TextStyle(color: t.drawerTextMuted, fontSize: 15),
               ),
             )
-          : ListView.builder(
-              shrinkWrap: true,
-              padding: const EdgeInsets.only(bottom: 12),
-              itemCount: apps.length,
-              itemBuilder: (context, i) {
-                final app = apps[i];
-                return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                  leading: AppIconImage(pkg: app.package, size: 40),
-                  title: Text(app.label, style: TextStyle(color: t.drawerText)),
-                  trailing: TextButton(
-                    style: TextButton.styleFrom(foregroundColor: t.accentText),
-                    onPressed: () => model.unhideApp(app.package),
-                    child: const Text('Unhide'),
-                  ),
-                );
-              },
+          : SheetScrollbar(
+              builder: (controller) => ListView.builder(
+                controller: controller,
+                shrinkWrap: true,
+                padding: const EdgeInsets.only(bottom: 12),
+                itemCount: apps.length,
+                itemBuilder: (context, i) {
+                  final app = apps[i];
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                    leading: AppIconImage(pkg: app.package, size: 40),
+                    title: Text(
+                      app.label,
+                      style: TextStyle(color: t.drawerText),
+                    ),
+                    trailing: TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: t.accentText,
+                      ),
+                      onPressed: () => model.unhideApp(app.package),
+                      child: const Text('Unhide'),
+                    ),
+                  );
+                },
+              ),
             ),
     );
   }
