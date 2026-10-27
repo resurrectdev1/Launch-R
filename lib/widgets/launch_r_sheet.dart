@@ -41,7 +41,7 @@ class LaunchRSheet extends StatelessWidget {
     final maxHeight = MediaQuery.sizeOf(context).height * size.fraction;
 
     final body = scrollable
-        ? SingleChildScrollView(
+        ? SheetScrollView(
             padding: EdgeInsets.fromLTRB(24, title == null ? 16 : 0, 24, 20),
             child: child,
           )
@@ -114,6 +114,67 @@ class SheetTitle extends StatelessWidget {
           fontSize: 22,
           fontWeight: FontWeight.w700,
         ),
+      ),
+    );
+  }
+}
+
+class SheetScrollbar extends StatefulWidget {
+  const SheetScrollbar({super.key, required this.builder});
+
+  final Widget Function(ScrollController controller) builder;
+
+  @override
+  State<SheetScrollbar> createState() => _SheetScrollbarState();
+}
+
+class _SheetScrollbarState extends State<SheetScrollbar> {
+  final ScrollController _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    return ScrollbarTheme(
+      data: ScrollbarThemeData(
+        thumbColor: WidgetStatePropertyAll(t.accent),
+        thickness: const WidgetStatePropertyAll(4),
+        radius: const Radius.circular(2),
+        crossAxisMargin: 3,
+      ),
+      child: Scrollbar(
+        controller: _controller,
+        thumbVisibility: true,
+        interactive: true,
+        child: widget.builder(_controller),
+      ),
+    );
+  }
+}
+
+class SheetScrollView extends StatelessWidget {
+  const SheetScrollView({
+    super.key,
+    required this.child,
+    this.padding = EdgeInsets.zero,
+  });
+
+  final Widget child;
+
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return SheetScrollbar(
+      builder: (controller) => SingleChildScrollView(
+        controller: controller,
+        padding: padding,
+        child: child,
       ),
     );
   }
