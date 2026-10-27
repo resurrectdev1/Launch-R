@@ -84,60 +84,74 @@ class _IconPackSheetState extends State<_IconPackSheet> {
               padding: EdgeInsets.symmetric(vertical: 32),
               child: Center(child: CircularProgressIndicator()),
             )
-          : ListView(
-              shrinkWrap: true,
-              padding: const EdgeInsets.only(bottom: 12),
-              children: [
-                ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                  leading: Icon(
-                    Icons.phone_android_rounded,
-                    color: t.drawerText,
-                  ),
-                  title: Text(
-                    'System default',
-                    style: TextStyle(color: t.drawerText),
-                  ),
-                  subtitle: Text(
-                    'Original app icons, in your chosen shape',
-                    style: TextStyle(color: t.drawerTextMuted),
-                  ),
-                  trailing: radio(current == null),
-                  onTap: _busy ? null : () => _choose(null),
-                ),
-                for (final p in packs)
+          : SheetScrollbar(
+              builder: (controller) => ListView(
+                controller: controller,
+                shrinkWrap: true,
+                padding: const EdgeInsets.only(bottom: 12),
+                children: [
                   ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                    leading: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Icon(Icons.palette_outlined, color: t.drawerText),
-                        AppIconImage(pkg: p.package, size: 40),
-                      ],
+                    leading: Icon(
+                      Icons.phone_android_rounded,
+                      color: t.drawerText,
                     ),
-                    title: Text(p.label, style: TextStyle(color: t.drawerText)),
-                    trailing: radio(current == p.package),
-                    onTap: _busy ? null : () => _choose(p),
+                    title: Text(
+                      'System default',
+                      style: TextStyle(color: t.drawerText),
+                    ),
+                    subtitle: Text(
+                      'Original app icons, in your chosen shape',
+                      style: TextStyle(color: t.drawerTextMuted),
+                    ),
+                    trailing: radio(current == null),
+                    onTap: _busy ? null : () => _choose(null),
                   ),
-                if (packs.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
-                    child: Text(
-                      'No icon packs found. Install one that supports '
-                      'Nova, ADW or Apex launchers and it will show up here.',
-                      style: TextStyle(color: t.drawerTextMuted, fontSize: 15),
+                  for (final p in packs)
+                    ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                      ),
+                      leading: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Icon(Icons.palette_outlined, color: t.drawerText),
+                          AppIconImage(pkg: p.package, size: 40),
+                        ],
+                      ),
+                      title: Text(
+                        p.label,
+                        style: TextStyle(color: t.drawerText),
+                      ),
+                      trailing: radio(current == p.package),
+                      onTap: _busy ? null : () => _choose(p),
                     ),
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
-                    child: Text(
-                      "Apps the pack doesn't cover keep their original "
-                      'icon, in your chosen shape.',
-                      style: TextStyle(color: t.drawerTextMuted, fontSize: 13),
+                  if (packs.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
+                      child: Text(
+                        'No icon packs found. Install one that supports '
+                        'Nova, ADW or Apex launchers and it will show up here.',
+                        style: TextStyle(
+                          color: t.drawerTextMuted,
+                          fontSize: 15,
+                        ),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+                      child: Text(
+                        "Apps the pack doesn't cover keep their original "
+                        'icon, in your chosen shape.',
+                        style: TextStyle(
+                          color: t.drawerTextMuted,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
     );
   }
