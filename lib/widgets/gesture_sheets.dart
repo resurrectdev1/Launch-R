@@ -132,38 +132,41 @@ class _GestureSheet extends StatelessWidget {
     return LaunchRSheet(
       title: side.label,
       size: SheetSize.standard,
-      child: ListView(
-        shrinkWrap: true,
-        padding: const EdgeInsets.only(bottom: 12),
-        children: [
-          for (final a in GestureAction.values)
-            ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-              leading: Icon(
-                gestureIcon(a),
-                color: current.action == a ? t.accent : t.drawerText,
-              ),
-              title: Text(
-                a.label,
-                style: TextStyle(
-                  color: t.drawerText,
-                  fontWeight: current.action == a
-                      ? FontWeight.w700
-                      : FontWeight.w400,
+      child: SheetScrollbar(
+        builder: (controller) => ListView(
+          controller: controller,
+          shrinkWrap: true,
+          padding: const EdgeInsets.only(bottom: 12),
+          children: [
+            for (final a in GestureAction.values)
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                leading: Icon(
+                  gestureIcon(a),
+                  color: current.action == a ? t.accent : t.drawerText,
                 ),
+                title: Text(
+                  a.label,
+                  style: TextStyle(
+                    color: t.drawerText,
+                    fontWeight: current.action == a
+                        ? FontWeight.w700
+                        : FontWeight.w400,
+                  ),
+                ),
+                subtitle: a == GestureAction.openApp && current.pkg != null
+                    ? Text(
+                        current.label ?? current.pkg!,
+                        style: TextStyle(color: t.drawerTextMuted),
+                      )
+                    : null,
+                trailing: current.action == a
+                    ? Icon(Icons.check_rounded, color: t.accent)
+                    : null,
+                onTap: () => unawaited(_choose(context, a)),
               ),
-              subtitle: a == GestureAction.openApp && current.pkg != null
-                  ? Text(
-                      current.label ?? current.pkg!,
-                      style: TextStyle(color: t.drawerTextMuted),
-                    )
-                  : null,
-              trailing: current.action == a
-                  ? Icon(Icons.check_rounded, color: t.accent)
-                  : null,
-              onTap: () => unawaited(_choose(context, a)),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -236,24 +239,27 @@ class _AppPickerSheetState extends State<_AppPickerSheet> {
                         ),
                       ),
                     )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      padding: const EdgeInsets.only(bottom: 12),
-                      itemCount: apps.length,
-                      itemBuilder: (context, i) {
-                        final app = apps[i];
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                          ),
-                          leading: AppIconImage(pkg: app.package, size: 40),
-                          title: Text(
-                            app.label,
-                            style: TextStyle(color: t.drawerText),
-                          ),
-                          onTap: () => Navigator.of(context).pop(app),
-                        );
-                      },
+                  : SheetScrollbar(
+                      builder: (controller) => ListView.builder(
+                        controller: controller,
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.only(bottom: 12),
+                        itemCount: apps.length,
+                        itemBuilder: (context, i) {
+                          final app = apps[i];
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                            ),
+                            leading: AppIconImage(pkg: app.package, size: 40),
+                            title: Text(
+                              app.label,
+                              style: TextStyle(color: t.drawerText),
+                            ),
+                            onTap: () => Navigator.of(context).pop(app),
+                          );
+                        },
+                      ),
                     ),
             ),
           ],
