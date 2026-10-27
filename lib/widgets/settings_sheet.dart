@@ -23,6 +23,7 @@ import 'package:launch_r/widgets/hidden_apps_sheet.dart';
 import 'package:launch_r/widgets/hold_animator.dart';
 import 'package:launch_r/widgets/home_preview.dart';
 import 'package:launch_r/widgets/icon_pack_sheet.dart';
+import 'package:launch_r/widgets/launch_r_sheet.dart';
 import 'package:launch_r/widgets/tag_manager_sheet.dart';
 
 void showLaunchRSettings(BuildContext context) {
@@ -90,51 +91,44 @@ class _SettingsPage extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.only(top: 10),
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: t.drawerTextMuted,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SheetHandle(),
+            if (showBack)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 24, 0),
+                child: Row(
+                  children: [
+                    IconButton(
+                      tooltip: 'Back',
+                      icon: Icon(Icons.arrow_back_rounded, color: t.drawerText),
+                      onPressed: () {
+                        unawaited(HapticFeedback.selectionClick());
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    Expanded(child: titleText),
+                  ],
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                child: titleText,
+              ),
+            Flexible(
+              child: SheetScrollView(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: children,
                 ),
               ),
-              if (showBack)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 24, 0),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        tooltip: 'Back',
-                        icon: Icon(
-                          Icons.arrow_back_rounded,
-                          color: t.drawerText,
-                        ),
-                        onPressed: () {
-                          unawaited(HapticFeedback.selectionClick());
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      Expanded(child: titleText),
-                    ],
-                  ),
-                )
-              else
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-                  child: titleText,
-                ),
-              ...children,
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
