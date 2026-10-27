@@ -10,18 +10,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+---
+
+## [0.5.0] - 2026-10-27
+
 ### Added
 
 * Customize-able hold animations; pick how an icon moves while you hold and drag it (Sway, Wiggle, Pulse, Bounce, Tilt) in (Settings -> Icons) with a live preview.
 * Shortcuts in folders; drag a pinned shortcut onto an app, another shortcut or a folder on the home screen to group it.
 * Legacy renderer; option found in (Settings -> System). Turns off Flutter's Impeller renderer, which stutters on some devices, especially with home screen widgets. Needs a restart to apply.
 * Header for icon shapes in (Settings -> Icons).
-
-### TO-DO
-
-* Allow home screen dock to utilize reccent apps when empty (option in settings default off). (to be done)
-* Add option to hide action bar at top of screen when moving apps or folders in home menu. (to be done)
-* Update screenshots and upload demo video or gif. (to be done)
 
 ---
 
