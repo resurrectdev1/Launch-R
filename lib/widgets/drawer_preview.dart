@@ -80,8 +80,9 @@ class _DrawerPagePreviewState extends State<DrawerPagePreview> {
       shortcutId: shortcutId,
       size: s,
     ),
-    FolderItem(:final pkgs, :final color) => FolderGlyph(
+    FolderItem(:final pkgs, :final shortcuts, :final color) => FolderGlyph(
       pkgs: pkgs,
+      shortcuts: shortcuts,
       size: s,
       bg: color == null
           ? widget.folderBg
