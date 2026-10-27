@@ -3,6 +3,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
+import 'package:launch_r/widgets/launch_r_sheet.dart';
 
 void showLaunchRAbout(BuildContext context) {
   showModalBottomSheet<void>(
@@ -46,7 +47,7 @@ class _AboutSheetState extends State<_AboutSheet> {
       ),
       child: SafeArea(
         top: false,
-        child: SingleChildScrollView(
+        child: SheetScrollView(
           padding: const EdgeInsets.fromLTRB(24, 10, 24, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
