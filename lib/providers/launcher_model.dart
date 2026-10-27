@@ -887,7 +887,7 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     if (t == null) {
       list[index] = AppItem(src.pkg);
     } else if (t is AppItem || t is ShortcutItem) {
-      list[index] = _newFolderOf(t!, src);
+      list[index] = _newFolderOf(t, src);
     } else if (t is FolderItem) {
       list[index] = _folderAdding(t, src);
     }
