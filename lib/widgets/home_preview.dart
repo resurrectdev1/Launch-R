@@ -64,8 +64,9 @@ class HomePagePreview extends StatelessWidget {
       shortcutId: shortcutId,
       size: s,
     ),
-    FolderItem(:final pkgs, :final color) => FolderGlyph(
+    FolderItem(:final pkgs, :final shortcuts, :final color) => FolderGlyph(
       pkgs: pkgs,
+      shortcuts: shortcuts,
       size: s,
       bg: color != null ? Color(color) : const Color(0x59FFFFFF),
     ),
