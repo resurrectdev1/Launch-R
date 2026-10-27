@@ -134,10 +134,27 @@ sealed class LItem {
         final p = raw['p'];
         final c = raw['c'];
         if (id is String && p is List) {
+          final shortcuts = <String, ShortcutItem>{};
+          final sc = raw['sc'];
+          if (sc is List) {
+            for (final e in sc) {
+              final s = LItem.fromJson(e is Map ? {...e, 't': 's'} : null);
+              if (s is ShortcutItem) {
+                shortcuts[FolderItem.shortcutKey(s.sid)] = s;
+              }
+            }
+          }
           return FolderItem(
             fid: id,
             name: n is String ? n : 'Folder',
-            pkgs: p.whereType<String>().toList(),
+            pkgs: p
+                .whereType<String>()
+                .where(
+                  (k) =>
+                      !FolderItem.isShortcutKey(k) || shortcuts.containsKey(k),
+                )
+                .toList(),
+            shortcuts: shortcuts,
             color: c is int ? c : null,
           );
         }
@@ -202,15 +219,39 @@ class PinRequest {
 class FolderItem extends LItem {
   final String fid;
   final String name;
+
   final List<String> pkgs;
+
+  final Map<String, ShortcutItem> shortcuts;
 
   final int? color;
   const FolderItem({
     required this.fid,
     required this.name,
     required this.pkgs,
+    this.shortcuts = const {},
     this.color,
   });
+
+  static const _shortcutPrefix = 's:';
+
+  static String shortcutKey(String sid) => '$_shortcutPrefix$sid';
+
+  static bool isShortcutKey(String key) => key.startsWith(_shortcutPrefix);
+
+  static String? keyOf(LItem it) => switch (it) {
+    AppItem(:final pkg) => pkg,
+    ShortcutItem(:final sid) => shortcutKey(sid),
+    _ => null,
+  };
+
+  LItem? memberItem(String key) =>
+      isShortcutKey(key) ? shortcuts[key] : AppItem(key);
+
+  List<LItem> get members => [
+    for (final k in pkgs)
+      if (memberItem(k) case final LItem m) m,
+  ];
 
   @override
   String get id => 'f:$fid';
@@ -218,14 +259,23 @@ class FolderItem extends LItem {
   FolderItem copyWith({
     String? name,
     List<String>? pkgs,
+    Map<String, ShortcutItem>? shortcuts,
     int? color,
     bool clearColor = false,
-  }) => FolderItem(
-    fid: fid,
-    name: name ?? this.name,
-    pkgs: pkgs ?? this.pkgs,
-    color: clearColor ? null : (color ?? this.color),
-  );
+  }) {
+    final keys = pkgs ?? this.pkgs;
+    final all = shortcuts ?? this.shortcuts;
+    return FolderItem(
+      fid: fid,
+      name: name ?? this.name,
+      pkgs: keys,
+      shortcuts: {
+        for (final k in keys)
+          if (all[k] != null) k: all[k]!,
+      },
+      color: clearColor ? null : (color ?? this.color),
+    );
+  }
 
   @override
   Map<String, dynamic> toJson() => {
@@ -233,6 +283,8 @@ class FolderItem extends LItem {
     'id': fid,
     'n': name,
     'p': pkgs,
+    if (shortcuts.isNotEmpty)
+      'sc': [for (final s in shortcuts.values) s.toJson()],
     if (color != null) 'c': color,
   };
 }
