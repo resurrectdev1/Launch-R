@@ -412,7 +412,13 @@ Future<void> showItemMenu(
         ),
       );
     case 'remove':
-      model.removeFromHome(item.id);
+      if (fromFolder != null) {
+        model.removeDragged(
+          DragData(item: item, zone: zone, fromFolder: fromFolder),
+        );
+      } else {
+        model.removeFromHome(item.id);
+      }
     case 'hide':
       final pkg = (item as AppItem).pkg;
       final label = model.labelForPkg(pkg);
