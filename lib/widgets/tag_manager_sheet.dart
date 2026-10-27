@@ -4,6 +4,7 @@ import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/services/fuzzy_search.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
+import 'package:launch_r/widgets/launch_r_sheet.dart';
 import 'package:launch_r/widgets/app_icon.dart';
 
 void showTagManager(BuildContext context) {
@@ -142,27 +143,30 @@ class _TagList extends StatelessWidget {
           )
         else
           Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              padding: const EdgeInsets.only(bottom: 12),
-              itemCount: tags.length,
-              itemBuilder: (context, i) {
-                final e = tags[i];
-                return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                  leading: Icon(Icons.sell_outlined, color: t.drawerText),
-                  title: Text(e.key, style: TextStyle(color: t.drawerText)),
-                  subtitle: Text(
-                    e.value == 1 ? '1 app' : '${e.value} apps',
-                    style: TextStyle(color: t.drawerTextMuted),
-                  ),
-                  trailing: Icon(
-                    Icons.chevron_right_rounded,
-                    color: t.drawerTextMuted,
-                  ),
-                  onTap: () => onOpen(e.key),
-                );
-              },
+            child: SheetScrollbar(
+              builder: (controller) => ListView.builder(
+                controller: controller,
+                shrinkWrap: true,
+                padding: const EdgeInsets.only(bottom: 12),
+                itemCount: tags.length,
+                itemBuilder: (context, i) {
+                  final e = tags[i];
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                    leading: Icon(Icons.sell_outlined, color: t.drawerText),
+                    title: Text(e.key, style: TextStyle(color: t.drawerText)),
+                    subtitle: Text(
+                      e.value == 1 ? '1 app' : '${e.value} apps',
+                      style: TextStyle(color: t.drawerTextMuted),
+                    ),
+                    trailing: Icon(
+                      Icons.chevron_right_rounded,
+                      color: t.drawerTextMuted,
+                    ),
+                    onTap: () => onOpen(e.key),
+                  );
+                },
+              ),
             ),
           ),
       ],
@@ -351,46 +355,49 @@ class _TagDetailState extends State<_TagDetail> {
                     style: TextStyle(color: t.drawerTextMuted, fontSize: 15),
                   ),
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  itemCount: apps.length,
-                  itemBuilder: (context, i) {
-                    final app = apps[i];
-                    final has = model.hasTag(app.package, widget.tag);
-                    final blocked = !has && model.tagIsFull(app.package);
-                    return CheckboxListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                      ),
-                      activeColor: t.accent,
-                      checkColor: t.onAccent,
-                      controlAffinity: ListTileControlAffinity.trailing,
-                      secondary: AppIconImage(pkg: app.package, size: 40),
-                      title: Text(
-                        app.label,
-                        style: TextStyle(color: t.drawerText),
-                      ),
-                      subtitle: blocked
-                          ? Text(
-                              'Tag limit reached',
-                              style: TextStyle(
-                                color: t.drawerTextMuted,
-                                fontSize: 12,
-                              ),
-                            )
-                          : null,
-                      value: has,
-                      onChanged: blocked
-                          ? null
-                          : (v) {
-                              if (v == true) {
-                                model.addTag(app.package, widget.tag);
-                              } else {
-                                model.removeTag(app.package, widget.tag);
-                              }
-                            },
-                    );
-                  },
+              : SheetScrollbar(
+                  builder: (controller) => ListView.builder(
+                    controller: controller,
+                    padding: const EdgeInsets.only(bottom: 12),
+                    itemCount: apps.length,
+                    itemBuilder: (context, i) {
+                      final app = apps[i];
+                      final has = model.hasTag(app.package, widget.tag);
+                      final blocked = !has && model.tagIsFull(app.package);
+                      return CheckboxListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                        ),
+                        activeColor: t.accent,
+                        checkColor: t.onAccent,
+                        controlAffinity: ListTileControlAffinity.trailing,
+                        secondary: AppIconImage(pkg: app.package, size: 40),
+                        title: Text(
+                          app.label,
+                          style: TextStyle(color: t.drawerText),
+                        ),
+                        subtitle: blocked
+                            ? Text(
+                                'Tag limit reached',
+                                style: TextStyle(
+                                  color: t.drawerTextMuted,
+                                  fontSize: 12,
+                                ),
+                              )
+                            : null,
+                        value: has,
+                        onChanged: blocked
+                            ? null
+                            : (v) {
+                                if (v == true) {
+                                  model.addTag(app.package, widget.tag);
+                                } else {
+                                  model.removeTag(app.package, widget.tag);
+                                }
+                              },
+                      );
+                    },
+                  ),
                 ),
         ),
       ],
