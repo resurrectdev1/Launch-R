@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:launch_r/widgets/launch_r_sheet.dart';
 import 'package:launch_r/widgets/home_page_controller.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
@@ -201,57 +202,60 @@ class _PickerSheetState extends State<_PickerSheet> {
                           ),
                         ),
                       )
-                    : ListView.builder(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        itemCount: shown.length,
-                        itemBuilder: (context, i) {
-                          final p = shown[i];
-                          final newApp =
-                              i == 0 || shown[i - 1].appLabel != p.appLabel;
-                          final span = model.defaultWidgetSpan(
-                            p,
-                            cellDpW: cell.w,
-                            cellDpH: cell.h,
-                          );
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (newApp)
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    24,
-                                    16,
-                                    24,
-                                    4,
-                                  ),
-                                  child: Text(
-                                    p.appLabel,
-                                    style: TextStyle(
-                                      color: t.accentText,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
+                    : SheetScrollbar(
+                        builder: (controller) => ListView.builder(
+                          controller: controller,
+                          padding: const EdgeInsets.only(bottom: 12),
+                          itemCount: shown.length,
+                          itemBuilder: (context, i) {
+                            final p = shown[i];
+                            final newApp =
+                                i == 0 || shown[i - 1].appLabel != p.appLabel;
+                            final span = model.defaultWidgetSpan(
+                              p,
+                              cellDpW: cell.w,
+                              cellDpH: cell.h,
+                            );
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (newApp)
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      24,
+                                      16,
+                                      24,
+                                      4,
+                                    ),
+                                    child: Text(
+                                      p.appLabel,
+                                      style: TextStyle(
+                                        color: t.accentText,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
                                   ),
+                                ListTile(
+                                  enabled: !_busy,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                  ),
+                                  leading: _Preview(component: p.component),
+                                  title: Text(
+                                    p.label,
+                                    style: TextStyle(color: t.drawerText),
+                                  ),
+                                  subtitle: Text(
+                                    '${span.cols} × ${span.rows}',
+                                    style: TextStyle(color: t.drawerTextMuted),
+                                  ),
+                                  onTap: () => unawaited(_add(p)),
                                 ),
-                              ListTile(
-                                enabled: !_busy,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                ),
-                                leading: _Preview(component: p.component),
-                                title: Text(
-                                  p.label,
-                                  style: TextStyle(color: t.drawerText),
-                                ),
-                                subtitle: Text(
-                                  '${span.cols} × ${span.rows}',
-                                  style: TextStyle(color: t.drawerTextMuted),
-                                ),
-                                onTap: () => unawaited(_add(p)),
-                              ),
-                            ],
-                          );
-                        },
+                              ],
+                            );
+                          },
+                        ),
                       ),
               ),
             ],
