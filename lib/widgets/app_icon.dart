@@ -97,9 +97,12 @@ class FolderGlyph extends StatelessWidget {
     required this.pkgs,
     required this.size,
     required this.bg,
+    this.shortcuts = const {},
   });
 
   final List<String> pkgs;
+
+  final Map<String, ShortcutItem> shortcuts;
   final double size;
   final Color bg;
 
@@ -151,7 +154,14 @@ class FolderGlyph extends StatelessWidget {
                 for (var c = 0; c < rows[r].length; c++)
                   Padding(
                     padding: EdgeInsets.only(left: c > 0 ? gap : 0),
-                    child: AppIconImage(pkg: rows[r][c], size: mini),
+                    child: switch (shortcuts[rows[r][c]]) {
+                      final ShortcutItem s => AppIconImage(
+                        pkg: s.pkg,
+                        shortcutId: s.shortcutId,
+                        size: mini,
+                      ),
+                      null => AppIconImage(pkg: rows[r][c], size: mini),
+                    },
                   ),
               ],
             ),
@@ -242,8 +252,9 @@ class ItemVisual extends StatelessWidget {
         shortcutId: shortcutId,
         size: iconSize,
       ),
-      FolderItem(:final pkgs, :final color) => FolderGlyph(
+      FolderItem(:final pkgs, :final shortcuts, :final color) => FolderGlyph(
         pkgs: pkgs,
+        shortcuts: shortcuts,
         size: iconSize,
         bg: color == null
             ? style.folderBg
