@@ -28,7 +28,7 @@ bool _folderAccepts(ShellController s, DragData d, String fid) {
   return s.folderPeek &&
       !s.folderClosing &&
       s.folder?.fid == fid &&
-      d.item is AppItem &&
+      (d.item is AppItem || d.item is ShortcutItem) &&
       d.fromFolder == null &&
       _sameSpace(d.zone, s.folder?.zone);
 }
@@ -500,6 +500,12 @@ class _FolderPageState extends State<_FolderPage> {
                                                   slice[r * _cols + c],
                                                 ),
                                                 pkg: slice[r * _cols + c],
+                                                shortcut:
+                                                    widget
+                                                        .folder
+                                                        .shortcuts[slice[r *
+                                                            _cols +
+                                                        c]],
                                                 index: r * _cols + c,
                                                 zone: widget.zone,
                                                 fid: widget.folder.fid,
@@ -660,9 +666,10 @@ class _EndSlot extends StatelessWidget {
       },
       onAcceptWithDetails: (d) {
         final dragged = d.data.item;
-        if (dragged is! AppItem) return;
+        final key = FolderItem.keyOf(dragged);
+        if (key == null) return;
         if (d.data.fromFolder == fid) {
-          model.moveToEndInFolder(zone, fid, dragged.pkg);
+          model.moveToEndInFolder(zone, fid, key);
         } else {
           shell.markDropped(null, dragged.id);
           model.dropIntoFolder(zone, fid, d.data);
@@ -694,10 +701,13 @@ class _PopupCell extends StatefulWidget {
     required this.style,
     required this.reveal,
     required this.dot,
+    this.shortcut,
   });
 
   final bool dot;
+
   final String pkg;
+  final ShortcutItem? shortcut;
   final int index;
   final Zone zone;
   final String fid;
@@ -718,7 +728,7 @@ class _PopupCellState extends State<_PopupCell> {
     super.initState();
     _pop = context.read<ShellController>().takeDropped(
       null,
-      AppItem(widget.pkg).id,
+      widget.shortcut?.id ?? AppItem(widget.pkg).id,
     );
   }
 
@@ -745,10 +755,11 @@ class _PopupCellState extends State<_PopupCell> {
       (s) => _folderGridOn(s, widget.fid),
     );
     final pkg = widget.pkg;
-    final item = AppItem(pkg);
+    final sc = widget.shortcut;
+    final LItem item = sc ?? AppItem(pkg);
     final visual = ItemVisual(
       item: item,
-      label: model.labelForPkg(pkg),
+      label: sc?.label ?? model.labelForPkg(pkg),
       badge: model.badgeOf(item),
       iconSize: 54,
       width: widget.width,
@@ -771,12 +782,13 @@ class _PopupCellState extends State<_PopupCell> {
         final dragged = d.data.item;
         final h = _hover == Hover.none ? _side(d.offset) : _hover;
         _setHover(Hover.none);
-        if (dragged is! AppItem) return;
+        final dragKey = FolderItem.keyOf(dragged);
+        if (dragKey == null) return;
         if (d.data.fromFolder == widget.fid) {
           model.insertInFolder(
             widget.zone,
             widget.fid,
-            dragged.pkg,
+            dragKey,
             pkg,
             after: h == Hover.after,
           );
@@ -836,7 +848,7 @@ class _PopupCellState extends State<_PopupCell> {
                 locked: locked,
                 feedbackSize: Size(widget.width, 88),
                 feedback: visual,
-                onTap: () => launchFrom(context, pkg),
+                onTap: () => openItem(context, item, widget.zone),
                 onMenu: (pos) => showItemMenu(
                   context,
                   pos,
