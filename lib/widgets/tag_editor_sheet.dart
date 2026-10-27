@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:launch_r/providers/launcher_model.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
+import 'package:launch_r/widgets/launch_r_sheet.dart';
 import 'package:launch_r/widgets/app_icon.dart';
 
 void showTagEditor(BuildContext context, String pkg) {
@@ -68,7 +69,7 @@ class _TagEditorSheetState extends State<_TagEditorSheet> {
         ),
         child: SafeArea(
           top: false,
-          child: SingleChildScrollView(
+          child: SheetScrollView(
             padding: const EdgeInsets.fromLTRB(24, 10, 24, 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
