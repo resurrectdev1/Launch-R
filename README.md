@@ -55,6 +55,7 @@ Tired of the same old ctrl c & ctrl v Android home launchers? So am I and thus I
 ## Download 
 
 [![Downloads](https://img.shields.io/github/downloads/resurrectdev1/Launch-R/total)](https://github.com/resurrectdev1/Launch-R/releases)
+![Android](https://img.shields.io/badge/Android-7--16-228B22?logo=android&logoColor=white)
 [![Reproducibility](https://img.shields.io/badge/Reproducible%20Build-F--Droid-blue)](https://verification.f-droid.org/packages/com.resurrect.launch_r/)
 
 <a href="https://github.com/resurrectdev1/Launch-R/releases/latest">
