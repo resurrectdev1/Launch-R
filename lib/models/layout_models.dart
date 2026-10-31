@@ -16,6 +16,22 @@ enum PageIndicatorStyle {
   }
 }
 
+enum TagBarPosition {
+  top('Top'),
+  bottom('Bottom'),
+  left('Left');
+
+  const TagBarPosition(this.label);
+  final String label;
+
+  static TagBarPosition fromName(String? name) {
+    for (final p in values) {
+      if (p.name == name) return p;
+    }
+    return TagBarPosition.top;
+  }
+}
+
 class GridLimits {
   const GridLimits._();
 
