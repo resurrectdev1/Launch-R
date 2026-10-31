@@ -44,6 +44,8 @@ class LauncherSettings extends ChangeNotifier {
   bool _showVoiceButton = true;
   bool _showClearButton = true;
   bool _drawerSuggestions = true;
+  bool _tagBar = false;
+  TagBarPosition _tagBarPosition = TagBarPosition.top;
   double _textScale = 1.0;
   double _iconScale = 1.0;
   String? _iconPack;
@@ -100,6 +102,8 @@ class LauncherSettings extends ChangeNotifier {
   bool get showVoiceButton => _showVoiceButton;
   bool get showClearButton => _showClearButton;
   bool get drawerSuggestions => _drawerSuggestions;
+  bool get tagBar => _tagBar;
+  TagBarPosition get tagBarPosition => _tagBarPosition;
   double get textScale => _textScale;
   double get iconScale => _iconScale;
   String? get iconPack => _iconPack;
@@ -196,6 +200,8 @@ class LauncherSettings extends ChangeNotifier {
     _showVoiceButton = p.getBool('show_voice_button') ?? true;
     _showClearButton = p.getBool('show_clear_button') ?? true;
     _drawerSuggestions = p.getBool('drawer_suggestions') ?? true;
+    _tagBar = p.getBool('tag_bar') ?? false;
+    _tagBarPosition = TagBarPosition.fromName(p.getString('tag_bar_position'));
     _iconShape = IconShape.fromName(p.getString('icon_shape'));
     _holdAnimation = HoldAnimation.fromName(p.getString('hold_animation'));
     _themedIcons = p.getBool('themed_icons') ?? false;
@@ -581,6 +587,20 @@ class LauncherSettings extends ChangeNotifier {
     _drawerSuggestions = v;
     notifyListeners();
     await _prefs?.setBool('drawer_suggestions', v);
+  }
+
+  Future<void> setTagBar(bool v) async {
+    if (v == _tagBar) return;
+    _tagBar = v;
+    notifyListeners();
+    await _prefs?.setBool('tag_bar', v);
+  }
+
+  Future<void> setTagBarPosition(TagBarPosition v) async {
+    if (v == _tagBarPosition) return;
+    _tagBarPosition = v;
+    notifyListeners();
+    await _prefs?.setString('tag_bar_position', v.name);
   }
 
   Future<void> setIconShape(IconShape v) async {
