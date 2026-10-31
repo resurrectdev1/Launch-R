@@ -19,7 +19,7 @@ import 'package:launch_r/widgets/drawer_preview.dart';
 import 'package:launch_r/widgets/drawer_view.dart';
 import 'package:launch_r/widgets/font_sheet.dart';
 import 'package:launch_r/widgets/gesture_sheets.dart';
-import 'package:launch_r/widgets/hidden_apps_sheet.dart';
+import 'package:launch_r/widgets/app_icon.dart';
 import 'package:launch_r/widgets/hold_animator.dart';
 import 'package:launch_r/widgets/home_preview.dart';
 import 'package:launch_r/widgets/icon_pack_sheet.dart';
@@ -248,19 +248,13 @@ class _SettingsSheet extends StatelessWidget {
           icon: Icons.color_lens_outlined,
           title: 'Appearance',
           subtitle: materialYou
-              ? '${s.appearance.label} · Material You'
-              : s.appearance.label,
+              ? '${s.appearance.label} · Material You · text, folders'
+              : '${s.appearance.label} · text, folders, background',
           onTap: () async {
             final navigator = Navigator.of(context);
             final closeAll = await _openPage(context, const _AppearancePage());
             if (closeAll == true && navigator.mounted) navigator.pop();
           },
-        ),
-        category(
-          icon: Icons.text_fields_rounded,
-          title: 'Text',
-          subtitle: '${s.fontLabel} · ${(s.textScale * 100).round()}%',
-          onTap: () => _openPage(context, const _TextPage()),
         ),
         category(
           icon: Icons.space_dashboard_outlined,
@@ -273,7 +267,7 @@ class _SettingsSheet extends StatelessWidget {
           title: 'App drawer',
           subtitle:
               '${s.drawerCols} columns · '
-              '${s.showDrawerLabels ? 'labels on' : 'labels off'} · search, swipes',
+              '${s.showDrawerLabels ? 'labels on' : 'labels off'} · swipes',
           onTap: () => _openPage(context, const _DrawerPage()),
         ),
         category(
@@ -287,7 +281,7 @@ class _SettingsSheet extends StatelessWidget {
         category(
           icon: Icons.search_rounded,
           title: 'Search',
-          subtitle: 'Fuzzy search, package names, hidden apps, tags, history',
+          subtitle: 'Search bar, fuzzy search, tags, hidden apps, history',
           onTap: () => _openPage(context, const _SearchPage()),
         ),
         category(
@@ -299,8 +293,7 @@ class _SettingsSheet extends StatelessWidget {
         category(
           icon: Icons.tune_rounded,
           title: 'System',
-          subtitle:
-              'Hidden apps, wallpaper, backup & restore, default home app, animations',
+          subtitle: 'Wallpaper, default home app, backup & restore, animations',
           onTap: () => _openPage(context, const _SystemPage()),
         ),
         const SizedBox(height: 4),
@@ -326,6 +319,76 @@ class _SettingsSheet extends StatelessWidget {
       ],
     );
   }
+}
+
+List<Widget> _textSection(
+  BuildContext context,
+  LaunchRTheme t,
+  LauncherSettings s,
+) {
+  return [
+    _tile(
+      t,
+      icon: Icons.text_fields_rounded,
+      title: 'Font',
+      subtitle: s.fontLabel,
+      chevron: true,
+      onTap: () => showFontPicker(context),
+    ),
+    Padding(
+      padding: _rowPadding,
+      child: SizedBox(
+        height: 40,
+        child: Row(
+          children: [
+            Expanded(
+              child: Text('Text size', style: TextStyle(color: t.drawerText)),
+            ),
+            Text(
+              '${(s.textScale * 100).round()}%',
+              style: TextStyle(color: t.drawerTextMuted),
+            ),
+            SizedBox(
+              width: 40,
+              child: (s.textScale - 1.0).abs() > 0.001
+                  ? IconButton(
+                      tooltip: 'Reset text size',
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(
+                        Icons.restart_alt_rounded,
+                        color: t.drawerTextMuted,
+                      ),
+                      onPressed: () {
+                        unawaited(HapticFeedback.selectionClick());
+                        s.setTextScale(1.0);
+                      },
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    ),
+    Slider(
+      value: s.textScale,
+      min: LauncherSettings.minTextScale,
+      max: LauncherSettings.maxTextScale,
+      divisions: 9,
+      activeColor: t.accent,
+      label: '${(s.textScale * 100).round()}%',
+      onChanged: (v) {
+        HapticFeedback.selectionClick();
+        unawaited(s.setTextScale(v));
+      },
+    ),
+    _switchRow(
+      t,
+      title: 'Bold text',
+      subtitle: 'Makes labels and menus easier to read',
+      value: s.boldText,
+      onChanged: s.setBoldText,
+    ),
+  ];
 }
 
 class _AppearancePage extends StatelessWidget {
@@ -420,6 +483,8 @@ class _AppearancePage extends StatelessWidget {
                   if (changed && navigator.mounted) navigator.pop(true);
                 },
         ),
+        _subHeader(t, 'TEXT'),
+        ..._textSection(context, t, s),
         _subHeader(t, 'HOME SCREEN DISPLAY'),
         _switchRow(
           t,
@@ -488,86 +553,6 @@ class _AppearancePage extends StatelessWidget {
               onTap: () => s.setBackgroundPath(null),
             ),
         ],
-      ],
-    );
-  }
-}
-
-class _TextPage extends StatelessWidget {
-  const _TextPage();
-
-  @override
-  Widget build(BuildContext context) {
-    final t = LaunchRTheme.of(context);
-    final s = context.watch<LauncherSettings>();
-
-    return _SettingsPage(
-      title: 'Text',
-      children: [
-        _tile(
-          t,
-          icon: Icons.text_fields_rounded,
-          title: 'Font',
-          subtitle: s.fontLabel,
-          chevron: true,
-          onTap: () => showFontPicker(context),
-        ),
-        Padding(
-          padding: _rowPadding,
-          child: SizedBox(
-            height: 40,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Text size',
-                    style: TextStyle(color: t.drawerText),
-                  ),
-                ),
-                Text(
-                  '${(s.textScale * 100).round()}%',
-                  style: TextStyle(color: t.drawerTextMuted),
-                ),
-                SizedBox(
-                  width: 40,
-                  child: (s.textScale - 1.0).abs() > 0.001
-                      ? IconButton(
-                          tooltip: 'Reset text size',
-                          visualDensity: VisualDensity.compact,
-                          icon: Icon(
-                            Icons.restart_alt_rounded,
-                            color: t.drawerTextMuted,
-                          ),
-                          onPressed: () {
-                            unawaited(HapticFeedback.selectionClick());
-                            s.setTextScale(1.0);
-                          },
-                        )
-                      : null,
-                ),
-              ],
-            ),
-          ),
-        ),
-        Slider(
-          value: s.textScale,
-          min: LauncherSettings.minTextScale,
-          max: LauncherSettings.maxTextScale,
-          divisions: 9,
-          activeColor: t.accent,
-          label: '${(s.textScale * 100).round()}%',
-          onChanged: (v) {
-            HapticFeedback.selectionClick();
-            unawaited(s.setTextScale(v));
-          },
-        ),
-        _switchRow(
-          t,
-          title: 'Bold text',
-          subtitle: 'Makes labels and menus easier to read',
-          value: s.boldText,
-          onChanged: s.setBoldText,
-        ),
       ],
     );
   }
@@ -756,38 +741,6 @@ class _DrawerPage extends StatelessWidget {
             subtitle: 'Close the empty spots in the app drawer',
             onTap: model.tidyDrawer,
           ),
-        _subHeader(t, 'SEARCH BAR'),
-        _switchRow(
-          t,
-          title: 'Search on open',
-          subtitle: 'Opens the keyboard when the app drawer opens',
-          value: s.drawerAutoSearch,
-          onChanged: s.setDrawerAutoSearch,
-        ),
-        _switchRow(
-          t,
-          title: 'Suggestions & recent searches',
-          subtitle: s.drawerSuggestions
-              ? 'Shows your usual apps and past searches when you tap the search bar'
-              : 'Search bar stays empty until you type',
-          value: s.drawerSuggestions,
-          onChanged: s.setDrawerSuggestions,
-        ),
-        _switchRow(
-          t,
-          title: 'Voice search button',
-          subtitle: 'Shows a mic in the search bar',
-          value: s.showVoiceButton,
-          onChanged: s.setShowVoiceButton,
-        ),
-        _switchRow(
-          t,
-          title: 'Clear button',
-          subtitle: 'Shows an ✕ in the search bar once you type',
-          value: s.showClearButton,
-          onChanged: s.setShowClearButton,
-        ),
-        _hint(t, 'Fuzzy search and tags are in Search.'),
         _subHeader(t, 'SWIPES'),
         _switchRow(
           t,
@@ -1275,6 +1228,51 @@ class _IconsPage extends StatelessWidget {
   }
 }
 
+class _HiddenAppsPage extends StatelessWidget {
+  const _HiddenAppsPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    final model = context.watch<LauncherModel>();
+    final apps = model.hiddenApps;
+
+    return _SettingsPage(
+      title: 'Hidden apps',
+      children: [
+        _hint(
+          t,
+          'Tip: start a search with "${LauncherModel.hiddenSearchPrefix}" '
+          'to include hidden apps. For example, '
+          '"${LauncherModel.hiddenSearchPrefix}bank" searches everything, '
+          'and a lone "${LauncherModel.hiddenSearchPrefix}" lists every '
+          'hidden app.',
+        ),
+        if (apps.isEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            child: Text(
+              'No hidden apps. Long-press an app and choose Hide app.',
+              style: TextStyle(color: t.drawerTextMuted, fontSize: 15),
+            ),
+          )
+        else
+          for (final app in apps)
+            ListTile(
+              contentPadding: _rowPadding,
+              leading: AppIconImage(pkg: app.package, size: 40),
+              title: Text(app.label, style: TextStyle(color: t.drawerText)),
+              trailing: TextButton(
+                style: TextButton.styleFrom(foregroundColor: t.accentText),
+                onPressed: () => model.unhideApp(app.package),
+                child: const Text('Unhide'),
+              ),
+            ),
+      ],
+    );
+  }
+}
+
 class _SearchPage extends StatelessWidget {
   const _SearchPage();
 
@@ -1306,14 +1304,6 @@ class _SearchPage extends StatelessWidget {
           value: s.searchPackageNames,
           onChanged: s.setSearchPackageNames,
         ),
-        _hint(
-          t,
-          'Tip: start a search with "${LauncherModel.hiddenSearchPrefix}" '
-          'to include hidden apps. For example, '
-          '"${LauncherModel.hiddenSearchPrefix}bank" searches everything, '
-          'and a lone "${LauncherModel.hiddenSearchPrefix}" lists every '
-          'hidden app.',
-        ),
         _tile(
           t,
           icon: Icons.sell_outlined,
@@ -1324,6 +1314,48 @@ class _SearchPage extends StatelessWidget {
                     '${model.tagCounts.length == 1 ? 'tag' : 'tags'}',
           chevron: true,
           onTap: () => showTagManager(context),
+        ),
+        _subHeader(t, 'SEARCH BAR'),
+        _switchRow(
+          t,
+          title: 'Search on open',
+          subtitle: 'Opens the keyboard when the app drawer opens',
+          value: s.drawerAutoSearch,
+          onChanged: s.setDrawerAutoSearch,
+        ),
+        _switchRow(
+          t,
+          title: 'Suggestions & recent searches',
+          subtitle: s.drawerSuggestions
+              ? 'Shows your usual apps and past searches when you tap the search bar'
+              : 'Search bar stays empty until you type',
+          value: s.drawerSuggestions,
+          onChanged: s.setDrawerSuggestions,
+        ),
+        _switchRow(
+          t,
+          title: 'Voice search button',
+          subtitle: 'Shows a mic in the search bar',
+          value: s.showVoiceButton,
+          onChanged: s.setShowVoiceButton,
+        ),
+        _switchRow(
+          t,
+          title: 'Clear button',
+          subtitle: 'Shows an ✕ in the search bar once you type',
+          value: s.showClearButton,
+          onChanged: s.setShowClearButton,
+        ),
+        _subHeader(t, 'HIDDEN APPS'),
+        _tile(
+          t,
+          icon: Icons.visibility_off_outlined,
+          title: 'Hidden apps',
+          subtitle: model.hiddenCount == 0
+              ? 'None'
+              : '${model.hiddenCount} hidden',
+          chevron: true,
+          onTap: () => _openPage(context, const _HiddenAppsPage()),
         ),
         _subHeader(t, 'HISTORY'),
         _tile(
@@ -1499,15 +1531,6 @@ class _SystemPage extends StatelessWidget {
     return _SettingsPage(
       title: 'System',
       children: [
-        _tile(
-          t,
-          icon: Icons.visibility_off_outlined,
-          title: 'Hidden apps',
-          subtitle: model.hiddenCount == 0
-              ? 'None'
-              : '${model.hiddenCount} hidden',
-          onTap: () => showHiddenApps(context),
-        ),
         _tile(
           t,
           icon: Icons.wallpaper_rounded,
