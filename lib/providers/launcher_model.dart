@@ -172,6 +172,16 @@ class LauncherModel extends ChangeNotifier with WidgetsBindingObserver {
     });
   }
 
+  List<LauncherApp> appsWithTag(String tag) => [
+    for (final e in _tags.entries)
+      if (e.value.contains(tag) && visibleApp(e.key) != null) _apps[e.key]!,
+  ]..sort(_byLabel);
+
+  List<String> get tagBarTags => [
+    for (final e in tagCounts)
+      if (appsWithTag(e.key).isNotEmpty) e.key,
+  ];
+
   List<LauncherApp> get selectableApps => [
     for (final a in _apps.values)
       if (!_hidden.contains(a.package)) a,
