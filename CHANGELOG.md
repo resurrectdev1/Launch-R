@@ -10,9 +10,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+### Added
+
+* Tag bar for the app drawer; show your tags as quick filters at the top, bottom or left of the drawer and tap one to see only its apps (Settings -> App drawer). Off by default.
+
 ### Changed
 
-* * Settings reorganized. Text (font, size, bold) is now in (Settings -> Appearance). Search bar options (search on open, suggestions, voice, clear button) and Hidden apps (now its own page) are in (Settings -> Search).
+* Settings reorganized. Text (font, size, bold) is now in (Settings -> Appearance). Search bar options (search on open, suggestions, voice, clear button) and Hidden apps (now its own page) are in (Settings -> Search).
 
 ---
 
