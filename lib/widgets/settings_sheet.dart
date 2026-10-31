@@ -1525,7 +1525,6 @@ class _SystemPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = LaunchRTheme.of(context);
     final s = context.watch<LauncherSettings>();
-    final model = context.watch<LauncherModel>();
     final ch = LauncherChannel.instance;
 
     return _SettingsPage(
