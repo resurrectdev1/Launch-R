@@ -47,6 +47,10 @@ int drawerRowsForScreen({
 
 const double drawerTopChrome = 12 + 52 + 14;
 
+const double drawerTagBarHeight = 44;
+
+const double drawerTagBarWidth = 96;
+
 class DrawerView extends StatefulWidget {
   const DrawerView({super.key, required this.drawer});
 
@@ -68,6 +72,7 @@ class _DrawerViewState extends State<DrawerView> {
   bool _loopBuilt = false;
   bool _switching = false;
   bool _autoFocused = false;
+  String? _tag;
 
   @override
   void initState() {
@@ -249,7 +254,7 @@ class _DrawerViewState extends State<DrawerView> {
                           opacity: overlayActive ? 0 : (_reloading ? 0.35 : 1),
                           duration: overlayActive ? Motion.fast : Motion.base,
                           curve: overlayActive ? Motion.exit : Motion.standard,
-                          child: _grid(t),
+                          child: _gridArea(t),
                         ),
                       ),
                     ),
@@ -304,6 +309,53 @@ class _DrawerViewState extends State<DrawerView> {
         ),
       ],
     );
+  }
+
+  Widget _gridArea(LaunchRTheme t) {
+    final settings = context.watch<LauncherSettings>();
+    final model = context.watch<LauncherModel>();
+    final tags = settings.tagBar ? model.tagBarTags : const <String>[];
+    if (tags.isEmpty) return _grid(t);
+    final active = tags.contains(_tag) ? _tag : null;
+    final content = Stack(
+      fit: StackFit.expand,
+      children: [
+        Offstage(offstage: active != null, child: _grid(t)),
+        if (active != null) _tagGrid(t, active),
+      ],
+    );
+    final position = settings.tagBarPosition;
+    final bar = _TagBar(
+      tags: tags,
+      selected: active,
+      vertical: position == TagBarPosition.left,
+      onSelect: (tag) => setState(() => _tag = tag),
+    );
+    return switch (position) {
+      TagBarPosition.top => Column(
+        children: [
+          bar,
+          Expanded(child: content),
+        ],
+      ),
+      TagBarPosition.bottom => Column(
+        children: [
+          Expanded(child: content),
+          bar,
+        ],
+      ),
+      TagBarPosition.left => Row(
+        children: [
+          bar,
+          Expanded(child: content),
+        ],
+      ),
+    };
+  }
+
+  Widget _tagGrid(LaunchRTheme t, String tag) {
+    final model = context.watch<LauncherModel>();
+    return _appGrid(t, model.appsWithTag(tag));
   }
 
   Widget _grid(LaunchRTheme t) {
@@ -660,13 +712,30 @@ class _DrawerViewState extends State<DrawerView> {
   }
 
   Widget _results(LaunchRTheme t) {
-    final model = context.watch<LauncherModel>();
     final settings = context.watch<LauncherSettings>();
-    final results = model.search(
+    final results = context.watch<LauncherModel>().search(
       _search.text,
       fuzzy: settings.fuzzySearch,
       packageNames: settings.searchPackageNames,
     );
+    if (results.isEmpty) {
+      return Center(
+        child: Text(
+          'No apps found',
+          style: TextStyle(color: t.drawerTextMuted, fontSize: 15),
+        ),
+      );
+    }
+    return _appGrid(t, results, recordSearch: true);
+  }
+
+  Widget _appGrid(
+    LaunchRTheme t,
+    List<LauncherApp> apps, {
+    bool recordSearch = false,
+  }) {
+    final model = context.watch<LauncherModel>();
+    final settings = context.watch<LauncherSettings>();
     final homeLook =
         settings.homeLookDrawerFolders && !settings.solidHomeFolders;
     final style = CellStyle(
@@ -679,14 +748,6 @@ class _DrawerViewState extends State<DrawerView> {
           : t.folderPanelBg,
       folderBase: homeLook ? null : t.popupBg,
     );
-    if (results.isEmpty) {
-      return Center(
-        child: Text(
-          'No apps found',
-          style: TextStyle(color: t.drawerTextMuted, fontSize: 15),
-        ),
-      );
-    }
     final cols = settings.drawerCols;
     return LayoutBuilder(
       builder: (context, c) {
@@ -698,15 +759,19 @@ class _DrawerViewState extends State<DrawerView> {
             crossAxisCount: cols,
             mainAxisExtent: _rowPitchFor(settings.showDrawerLabels),
           ),
-          itemCount: results.length,
+          itemCount: apps.length,
           itemBuilder: (context, i) {
-            final app = results[i];
+            final app = apps[i];
             final item = AppItem(app.package);
             return Builder(
               builder: (cellContext) => GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
-                  cellContext.read<LaunchHistory>().recordSearch(_search.text);
+                  if (recordSearch) {
+                    cellContext.read<LaunchHistory>().recordSearch(
+                      _search.text,
+                    );
+                  }
                   launchFrom(cellContext, app.package);
                 },
                 onLongPressStart: (d) => showItemMenu(
@@ -731,6 +796,79 @@ class _DrawerViewState extends State<DrawerView> {
           },
         );
       },
+    );
+  }
+}
+
+class _TagBar extends StatelessWidget {
+  const _TagBar({
+    required this.tags,
+    required this.selected,
+    required this.vertical,
+    required this.onSelect,
+  });
+
+  final List<String> tags;
+  final String? selected;
+  final bool vertical;
+  final ValueChanged<String?> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = LaunchRTheme.of(context);
+    final items = <String?>[null, ...tags];
+
+    Widget chip(String? tag) {
+      final on = tag == selected;
+      return Material(
+        color: on ? t.accent : t.searchBg,
+        shape: const StadiumBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            unawaited(HapticFeedback.selectionClick());
+            onSelect(tag);
+          },
+          child: Align(
+            alignment: vertical ? Alignment.centerLeft : Alignment.center,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Text(
+                tag == null ? 'All' : '#$tag',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: on ? t.onAccent : t.drawerText,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (vertical) {
+      return SizedBox(
+        width: drawerTagBarWidth,
+        child: ListView.separated(
+          padding: const EdgeInsets.fromLTRB(8, 0, 4, 12),
+          itemCount: items.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
+          itemBuilder: (_, i) => chip(items[i]),
+        ),
+      );
+    }
+    return SizedBox(
+      height: drawerTagBarHeight,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        itemCount: items.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (_, i) => chip(items[i]),
+      ),
     );
   }
 }
