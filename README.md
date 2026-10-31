@@ -62,6 +62,10 @@ Tired of the same old ctrl c & ctrl v Android home launchers? So am I and thus I
 <img src="https://user-images.githubusercontent.com/69304392/148696068-0cfea65d-b18f-4685-82b5-329a330b1c0d.png"
 alt="Get it on GitHub" align="center" height="80" /></a>
 
+<a href="https://www.openapk.net/launch-r/com.resurrect.launch_r/">
+<img src="https://www.openapk.net/images/openapk-badge.png"
+alt="OpenAPK.net" align="center" height="80" /></a>
+
 <a href="https://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/resurrectdev1/Launch-R/releases/latest">
 <img src="https://github.com/ImranR98/Obtainium/blob/main/assets/graphics/badge_obtainium.png"
 alt="Get it on Obtainium" align="center" height="80" /></a>
