@@ -10,6 +10,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+### Changed
+
+* * Settings reorganized. Text (font, size, bold) is now in (Settings -> Appearance). Search bar options (search on open, suggestions, voice, clear button) and Hidden apps (now its own page) are in (Settings -> Search).
+
 ---
 
 ## [0.5.0] - 2026-10-27
