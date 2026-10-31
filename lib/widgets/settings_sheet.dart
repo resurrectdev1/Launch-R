@@ -741,6 +741,44 @@ class _DrawerPage extends StatelessWidget {
             subtitle: 'Close the empty spots in the app drawer',
             onTap: model.tidyDrawer,
           ),
+        _subHeader(t, 'TAG BAR'),
+        _switchRow(
+          t,
+          title: 'Tag bar',
+          subtitle:
+              'Show your tags as quick filters in the app drawer. '
+              'Tap a tag to see only its apps',
+          value: s.tagBar,
+          onChanged: s.setTagBar,
+        ),
+        if (s.tagBar) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 6, 24, 0),
+            child: Text(
+              'Tag bar position',
+              style: TextStyle(color: t.drawerText, fontSize: 16),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 4),
+            child: Wrap(
+              spacing: 8,
+              children: [
+                for (final pos in TagBarPosition.values)
+                  ChoiceChip(
+                    label: Text(pos.label),
+                    selected: s.tagBarPosition == pos,
+                    onSelected: (_) => s.setTagBarPosition(pos),
+                  ),
+              ],
+            ),
+          ),
+          _hint(
+            t,
+            'Tags are created and managed in Search. The bar appears once '
+            'at least one app has a tag, and hides while you search.',
+          ),
+        ],
         _subHeader(t, 'SWIPES'),
         _switchRow(
           t,
