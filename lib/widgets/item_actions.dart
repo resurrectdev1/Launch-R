@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
@@ -13,7 +13,13 @@ import 'package:launch_r/widgets/folder_color_picker.dart';
 import 'package:launch_r/widgets/tag_editor_sheet.dart';
 import 'package:launch_r/theme/motion.dart';
 
+void launcherTapFeedback(BuildContext context) {
+  unawaited(Feedback.forTap(context));
+  unawaited(HapticFeedback.selectionClick());
+}
+
 void launchFrom(BuildContext context, String pkg) {
+  launcherTapFeedback(context);
   Rect? from;
   final box = context.findRenderObject();
   if (box is RenderBox && box.attached) {
@@ -47,6 +53,7 @@ void openItem(BuildContext context, LItem item, Zone zone) {
       if (box is RenderBox && box.attached) {
         from = box.localToGlobal(Offset.zero) & box.size;
       }
+      launcherTapFeedback(context);
       context.read<ShellController>().closeFolder();
       unawaited(
         LauncherChannel.instance.startShortcut(
