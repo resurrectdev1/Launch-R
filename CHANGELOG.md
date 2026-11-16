@@ -14,6 +14,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 * Haptic feedback when holding an app in search results.
 
+### Changed
+
+* Swiping to another app drawer page now closes the keyboard if it is open.
+
 ---
 
 ## [0.5.2] - 2026-11-02
