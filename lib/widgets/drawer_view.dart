@@ -426,6 +426,9 @@ class _DrawerViewState extends State<DrawerView> {
                     child: PageView.builder(
                       controller: _pages,
                       itemCount: _loopBuilt ? null : pages,
+                      onPageChanged: (_) {
+                        if (_focus.hasFocus) _focus.unfocus();
+                      },
                       itemBuilder: (context, v) {
                         final p = _pages.logicalOf(v);
                         final page = Padding(
