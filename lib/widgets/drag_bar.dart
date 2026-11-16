@@ -106,7 +106,7 @@ class _DragActionBarState extends State<DragActionBar> {
                 ),
               ),
               child: show
-                  ? _Bar(key: const ValueKey('bar'), data: d!)
+                  ? _Bar(key: const ValueKey('bar'), data: d)
                   : const SizedBox.shrink(key: ValueKey('none')),
             ),
           ),
