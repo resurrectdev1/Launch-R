@@ -34,6 +34,8 @@ class ShellController extends ChangeNotifier {
 
   final ValueNotifier<Offset?> widgetDragPos = ValueNotifier<Offset?>(null);
 
+  final ValueNotifier<Offset?> dragPos = ValueNotifier<Offset?>(null);
+
   bool leftFolder = false;
 
   bool folderPeek = false;
@@ -182,11 +184,13 @@ class ShellController extends ChangeNotifier {
     leftFolder = false;
     dragToHome = false;
     widgetDragPos.value = null;
+    dragPos.value = null;
     _setInBand(false, notify: false);
     notifyListeners();
   }
 
   void dragMove(DragData d, Offset pos) {
+    dragPos.value = pos;
     if (d.item is WidgetItem) widgetDragPos.value = pos;
     _trackFolderExit(d, pos);
     _trackHomeBand(d, pos);
@@ -271,6 +275,7 @@ class ShellController extends ChangeNotifier {
     dragToHome = false;
     drag = null;
     widgetDragPos.value = null;
+    dragPos.value = null;
     leftFolder = false;
     _peekStray?.cancel();
     _peekStray = null;
@@ -290,6 +295,7 @@ class ShellController extends ChangeNotifier {
     _dwell?.cancel();
     _peekStray?.cancel();
     widgetDragPos.dispose();
+    dragPos.dispose();
     searchRequest.dispose();
     drawer.dispose();
     super.dispose();
