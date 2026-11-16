@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:launch_r/models/launcher_models.dart';
 import 'package:launch_r/providers/launcher_model.dart';
@@ -103,8 +105,14 @@ class _Action extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DragTarget<DragData>(
-      onWillAcceptWithDetails: (_) => true,
-      onAcceptWithDetails: (d) => onDrop(d.data),
+      onWillAcceptWithDetails: (_) {
+        unawaited(HapticFeedback.selectionClick());
+        return true;
+      },
+      onAcceptWithDetails: (d) {
+        unawaited(HapticFeedback.mediumImpact());
+        onDrop(d.data);
+      },
       builder: (context, candidate, rejected) {
         final active = candidate.isNotEmpty;
         return AnimatedContainer(
