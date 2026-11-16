@@ -9,34 +9,108 @@ import 'package:launch_r/services/launcher_channel.dart';
 import 'package:launch_r/theme/launch_r_theme.dart';
 import 'package:launch_r/theme/motion.dart';
 
-class DragActionBar extends StatelessWidget {
+class DragActionBar extends StatefulWidget {
   const DragActionBar({super.key});
+
+  @override
+  State<DragActionBar> createState() => _DragActionBarState();
+}
+
+class _DragActionBarState extends State<DragActionBar> {
+  static const _revealStrip = 24.0;
+  static const _barTop = 10.0;
+  static const _barHeight = 70.0;
+  static const _hideMargin = 14.0;
+
+  late final ShellController _shell;
+  bool _revealed = false;
+  double _inset = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _shell = context.read<ShellController>();
+    _shell.dragPos.addListener(_onPos);
+  }
+
+  @override
+  void dispose() {
+    _shell.dragPos.removeListener(_onPos);
+    super.dispose();
+  }
+
+  void _onPos() {
+    if (!mounted) return;
+    final pos = _shell.dragPos.value;
+    if (pos == null) {
+      if (_revealed) setState(() => _revealed = false);
+      return;
+    }
+    if (!_revealed && pos.dy <= _inset + _revealStrip) {
+      unawaited(HapticFeedback.selectionClick());
+      setState(() => _revealed = true);
+    } else if (_revealed &&
+        pos.dy > _inset + _barTop + _barHeight + _hideMargin) {
+      setState(() => _revealed = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final shell = context.watch<ShellController>();
     final d = shell.drag;
-    final show = d != null && (d.fromFolder == null || shell.leftFolder);
-    final top = MediaQuery.paddingOf(context).top + 10;
+    final eligible = d != null && (d.fromFolder == null || shell.leftFolder);
+    final show = eligible && _revealed;
+    _inset = MediaQuery.paddingOf(context).top;
+    final top = _inset + _barTop;
     return Positioned(
-      top: top,
+      top: 0,
       left: 16,
       right: 16,
-      child: AnimatedSwitcher(
-        duration: Motion.fast,
-        transitionBuilder: (child, anim) => FadeTransition(
-          opacity: anim,
-          child: SlideTransition(
-            position: Tween(
-              begin: const Offset(0, -0.3),
-              end: Offset.zero,
-            ).animate(anim),
-            child: child,
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          Positioned(
+            top: _inset + 5,
+            child: IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: eligible && !show ? 1 : 0,
+                duration: Motion.fast,
+                curve: Motion.standard,
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.75),
+                    borderRadius: BorderRadius.circular(3),
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x55000000), blurRadius: 4),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-        child: show
-            ? _Bar(key: const ValueKey('bar'), data: d)
-            : const SizedBox.shrink(key: ValueKey('none')),
+          Padding(
+            padding: EdgeInsets.only(top: top),
+            child: AnimatedSwitcher(
+              duration: Motion.fast,
+              transitionBuilder: (child, anim) => FadeTransition(
+                opacity: anim,
+                child: SlideTransition(
+                  position: Tween(
+                    begin: const Offset(0, -0.3),
+                    end: Offset.zero,
+                  ).animate(anim),
+                  child: child,
+                ),
+              ),
+              child: show
+                  ? _Bar(key: const ValueKey('bar'), data: d!)
+                  : const SizedBox.shrink(key: ValueKey('none')),
+            ),
+          ),
+        ],
       ),
     );
   }
