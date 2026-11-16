@@ -10,6 +10,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+### Added
+
+* Custom app icon and name editor only shown in launcher. (to be done)
+* Animation for holding an app in the app drawer search
+
 ---
 
 ## [0.5.4] - 2026-11-16
