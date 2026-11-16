@@ -631,12 +631,17 @@ class _DrawerViewState extends State<DrawerView> {
                                           cellContext,
                                           app.package,
                                         ),
-                                        onLongPressStart: (d) => showItemMenu(
-                                          cellContext,
-                                          d.globalPosition,
-                                          item,
-                                          Zone.drawer,
-                                        ),
+                                        onLongPressStart: (d) {
+                                          unawaited(
+                                            HapticFeedback.mediumImpact(),
+                                          );
+                                          showItemMenu(
+                                            cellContext,
+                                            d.globalPosition,
+                                            item,
+                                            Zone.drawer,
+                                          );
+                                        },
                                         child: Center(
                                           child: ItemVisual(
                                             item: item,
@@ -774,12 +779,15 @@ class _DrawerViewState extends State<DrawerView> {
                   }
                   launchFrom(cellContext, app.package);
                 },
-                onLongPressStart: (d) => showItemMenu(
-                  cellContext,
-                  d.globalPosition,
-                  item,
-                  Zone.drawer,
-                ),
+                onLongPressStart: (d) {
+                  unawaited(HapticFeedback.mediumImpact());
+                  showItemMenu(
+                    cellContext,
+                    d.globalPosition,
+                    item,
+                    Zone.drawer,
+                  );
+                },
                 child: Center(
                   child: ItemVisual(
                     item: item,
