@@ -13,10 +13,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 * Haptic feedback when holding an app in search results.
+* Haptic feedback to drag action bar.
 
 ### Changed
 
 * Swiping to another app drawer page now closes the keyboard if it is open.
+* The drag action bar (Remove, App info, Uninstall, Ungroup) no longer covers the top row of the home screen while you drag. It now slides in when you drag an item to the very top of the screen and hides again when you move back down. A small handle at the top hints that it is there.
 
 ---
 
