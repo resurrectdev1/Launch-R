@@ -10,6 +10,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 > Changes staged for the next release go here. Move them down when you cut a tag.
 
+---
+
+## [0.5.4] - 2026-11-16
+
 ### Added
 
 * Haptic feedback when holding an app in search results.
